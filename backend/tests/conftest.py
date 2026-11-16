@@ -17,6 +17,21 @@ if TYPE_CHECKING:
     from tests.auth_helpers import AuthKit
 
 
+@pytest.fixture(autouse=True)
+def _hermetic_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests never read a developer's ``backend/.env`` or ambient ``FACTORYMIND_*`` variables;
+    a test that needs a setting passes it explicitly or sets it with ``monkeypatch``."""
+    import os
+
+    from factorymind.config import Settings, get_settings
+
+    monkeypatch.setitem(Settings.model_config, "env_file", None)
+    for name in list(os.environ):
+        if name.upper().startswith("FACTORYMIND_"):
+            monkeypatch.delenv(name)
+    get_settings.cache_clear()
+
+
 def simulate_apu(
     start: str,
     periods: int,
