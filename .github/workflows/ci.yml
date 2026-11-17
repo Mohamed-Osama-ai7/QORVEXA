@@ -33,6 +33,10 @@ jobs:
         run: uv run mypy
       - name: Tests (includes OpenAPI contract drift check)
         run: uv run pytest
+      - name: Evaluation benchmarks validate (offline, no dataset)
+        run: |
+          uv run python -m factorymind.evaluation validate benchmarks/qorvexa/rca_cases.v0.jsonl
+          uv run python -m factorymind.evaluation validate benchmarks/qorvexa/retrieval_cases.v0.jsonl
 
   frontend:
     runs-on: ubuntu-latest

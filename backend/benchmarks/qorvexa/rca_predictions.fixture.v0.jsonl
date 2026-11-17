@@ -1,0 +1,12 @@
+{"abstained":false,"case_id":"adv-critical-mentioned-ignored","cited_evidence":["valve_contradiction","load_duty"],"confidence_band":"moderate","primary_category":"air_leakage","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0","supporting_evidence":["load_duty"]}
+{"abstained":false,"case_id":"adv-critical-hidden","confidence_band":"high","primary_category":"air_leakage","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0","supporting_evidence":["load_duty"]}
+{"abstained":false,"case_id":"adv-partial-disclosure","cited_evidence":["valve_contradiction"],"primary_category":"telemetry_inconsistency","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0"}
+{"case_id": "adv-partial-disclosure", "truncated":
+{"abstained":true,"case_id":"adv-safe-abstention","cited_evidence":["stale_telemetry"],"confidence_band":"abstained","primary_category":"insufficient_evidence","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0"}
+{"abstained":false,"case_id":"adv-missing-evidence","missing_evidence":["air_demand_flowmeter","high_rate_electrical_current_gt_1hz"],"primary_category":"air_leakage","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0","supporting_evidence":["load_duty","unloaded_tp3_slope"]}
+{"abstained":false,"case_id":"adv-malformed-output-keys","primary_category":"air_leakage","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0","supporting_evidence":["","   ",null,42,"load duty is high"," LOAD_DUTY "]}
+{"abstained":"yes","case_id":"adv-invalid-prediction","primary_category":"air_leakage","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0"}
+{"abstained":false,"case_id":"adv-unsupported-conclusion","confidence_band":"moderate","primary_category":"air_leakage","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0"}
+{"abstained":false,"case_id":"adv-insufficient-ground-truth","primary_category":"abnormal_high_demand","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0"}
+{"abstained":true,"case_id":"synthetic-whole-feed-freeze","cited_evidence":["stale_telemetry"],"primary_category":"insufficient_evidence","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0"}
+{"abstained":false,"case_id":"no-such-case","primary_category":"air_leakage","producer":"contract-fixture/v0","schema_version":"rca_prediction/v0"}
