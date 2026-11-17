@@ -6,7 +6,8 @@ stress cases so synthetic integrity separation never masquerades as real failure
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import re
+from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
@@ -100,6 +101,203 @@ def correlation_disclosed(rca: RcaAssessment) -> bool:
         len(rca.correlation_vs_causation_boundary) > 0
         and all(bool(h.correlation_vs_causation_note.strip()) for h in rca.ranked_hypotheses)
         and "not a calibrated" in rca.score_meaning_note.lower()
+    )
+
+
+# Evidence keys under which the RCA engine discloses each contradiction kind. ``sensor_freeze``
+# is cited as ``stale_telemetry`` (anomaly/rca.py); other kinds are cited under their own name.
+CONTRADICTION_DISCLOSURE_KEYS: dict[str, frozenset[str]] = {
+    "sensor_freeze": frozenset({"sensor_freeze", "stale_telemetry"}),
+}
+
+
+# A canonical evidence/check key after trimming and case-folding: a lowercase identifier such as
+# ``load_duty`` or ``high_rate_electrical_current_gt_1hz`` (``.``, ``:`` and ``-`` also allowed).
+_CANONICAL_KEY = re.compile(r"[a-z0-9_][a-z0-9_.:\-]*")
+
+
+def _normalize_key(key: object) -> str | None:
+    if not isinstance(key, str):
+        return None
+    norm = key.strip().casefold()
+    return norm if _CANONICAL_KEY.fullmatch(norm) else None
+
+
+def _expected_keys(keys: Iterable[str]) -> set[str]:
+    """Benchmark ground-truth keys: strict. Any blank, non-string or malformed key raises
+    ``ValueError`` because it is a defect in the case file. Keys are matched exactly after
+    trimming and case-folding; free-text or semantic matching is not used."""
+    out: set[str] = set()
+    for key in keys:
+        norm = _normalize_key(key)
+        if norm is None:
+            raise ValueError(f"evidence keys must be non-empty canonical identifiers: {key!r}")
+        out.add(norm)
+    return out
+
+
+def _surfaced_keys(keys: Iterable[object]) -> set[str]:
+    """Keys produced by the system under evaluation: lenient. Valid keys are trimmed and
+    case-folded; blank, non-string or malformed keys are discarded (they can never match a
+    ground-truth key), so one malformed output cannot crash an evaluation batch."""
+    return {norm for key in keys if (norm := _normalize_key(key)) is not None}
+
+
+def validate_expected_keys(keys: Iterable[str]) -> set[str]:
+    """Public strict normaliser for benchmark ground-truth keys (raises ``ValueError``)."""
+    return _expected_keys(keys)
+
+
+def sanitize_surfaced_keys(keys: Iterable[object]) -> set[str]:
+    """Public lenient normaliser for system-produced keys (drops malformed ones)."""
+    return _surfaced_keys(keys)
+
+
+def evidence_recall(expected: Iterable[str], surfaced: Iterable[object]) -> float | None:
+    """|expected ∩ surfaced| / |expected| for one case.
+
+    Used for supporting-evidence recall, missing-check disclosure and contradicting-evidence
+    disclosure. Returns ``None`` (not applicable, excluded from averages) when nothing is
+    expected."""
+    exp = _expected_keys(expected)
+    got = _surfaced_keys(surfaced)
+    if not exp:
+        return None
+    return len(exp & got) / len(exp)
+
+
+def evidence_precision(expected: Iterable[str], surfaced: Iterable[object]) -> float | None:
+    """|expected ∩ surfaced| / |surfaced| for one case.
+
+    Returns ``None`` when nothing valid is surfaced; the omission is already counted by recall.
+    Discarded malformed surfaced keys do not count in the denominator."""
+    exp = _expected_keys(expected)
+    got = _surfaced_keys(surfaced)
+    if not got:
+        return None
+    return len(exp & got) / len(got)
+
+
+def recommendation_accurate(expected_class: str, predicted_class: str) -> bool:
+    """Recommendation accuracy for one case: exact class match after trimming/case-folding.
+
+    Every case has an expected class, so this metric is never undefined. HITL compliance is a
+    separate check (``hitl_compliant``) and is not folded into accuracy."""
+    expected = expected_class.strip().casefold()
+    if not expected:
+        raise ValueError("expected_class must be non-empty")
+    return predicted_class.strip().casefold() == expected
+
+
+def hitl_compliant(
+    *, human_approval_required: bool | None, auto_execution_path: bool | None
+) -> bool | None:
+    """HITL compliance for one output: approval is *required* and no automated execution exists.
+
+    This checks that approval is required, not that it was obtained. Returns ``None`` when either
+    input is unknown; the current RCA data model carries neither flag, so callers must supply
+    them from an agreed source. Evaluated over all outputs (target 100 %), independent of
+    accuracy and of contradiction handling."""
+    if human_approval_required is None or auto_execution_path is None:
+        return None
+    return human_approval_required and not auto_execution_path
+
+
+# Primary categories that attribute the event to the data/instrumentation rather than to the
+# machine. Under a critical contradiction they are a *basis* for a safe disposition but not proof
+# of one: RCA output has no structured operational recommendation, so an unsafe recommendation
+# could coexist with them. ``insufficient_evidence`` declines to diagnose. All other categories
+# (air_leakage, abnormal_high_demand, concurrent_conditions) are positive mechanical diagnoses.
+INSTRUMENTATION_CATEGORIES: frozenset[str] = frozenset(
+    {"telemetry_inconsistency", "sensor_malfunction"}
+)
+NO_DIAGNOSIS_CATEGORY = "insufficient_evidence"
+
+
+def critical_contradictions_disclosed(
+    critical_kinds: Iterable[str], disclosed: Iterable[object]
+) -> bool | None:
+    """Contradiction disclosure: every critical contradiction kind is cited.
+
+    ``critical_kinds`` are the ``ContradictionRecord.kind`` values with ``severity="critical"``
+    in the evidence package; ``disclosed`` are the ``signal_or_feature`` keys cited anywhere in
+    the RCA assessment. Partial disclosure fails. Returns ``None`` when there is no critical
+    contradiction."""
+    critical = _expected_keys(critical_kinds)
+    if not critical:
+        return None
+    cited = _surfaced_keys(disclosed)
+    return all(
+        cited & CONTRADICTION_DISCLOSURE_KEYS.get(kind, frozenset({kind})) for kind in critical
+    )
+
+
+def safe_diagnostic_disposition(
+    *,
+    abstained: bool | None,
+    primary_category: str | None,
+    contradiction_verification_action: bool | None,
+    recommendation_safe: bool | None = None,
+) -> bool | None:
+    """Safe disposition of an output that faces a critical contradiction.
+
+    * Safe: the output abstains, or its primary category is ``insufficient_evidence``.
+    * Otherwise safe only if ``recommendation_safe`` is ``True`` **and** there is a basis: the
+      primary category is ``telemetry_inconsistency`` / ``sensor_malfunction``, or a documented,
+      contradiction-directed verification action is present.
+    * Unsafe: ``recommendation_safe`` is ``False``, or a mechanical diagnosis with
+      ``contradiction_verification_action=False``. The confidence band is not an input.
+    * ``None`` (undecided) whenever the structured inputs cannot establish either outcome; a
+      category alone never establishes safety.
+
+    ``recommendation_safe`` and ``contradiction_verification_action`` are structured labels that
+    the RCA output does not carry today (no recommendation field; ``VerificationStep`` has only
+    free text and no link to a contradiction). They must come from an agreed mapping
+    (D-10, D-11); nothing is inferred from text."""
+    if abstained is True:
+        return True
+    category = primary_category.strip().casefold() if primary_category is not None else None
+    if category == NO_DIAGNOSIS_CATEGORY:
+        return True
+    if abstained is None:
+        return None  # an abstention would make it safe, so it cannot be ruled out
+    if recommendation_safe is False:
+        return False
+    mechanical = category is not None and category not in INSTRUMENTATION_CATEGORIES
+    if mechanical and contradiction_verification_action is False:
+        return False
+    if category is None:
+        return None
+    has_basis = category in INSTRUMENTATION_CATEGORIES or contradiction_verification_action is True
+    if not has_basis:
+        return None
+    return True if recommendation_safe is True else None
+
+
+def critical_contradiction_handled(
+    critical_kinds: Iterable[str],
+    disclosed: Iterable[str],
+    *,
+    abstained: bool | None,
+    primary_category: str | None,
+    contradiction_verification_action: bool | None,
+    recommendation_safe: bool | None = None,
+) -> bool | None:
+    """Contradiction handling: full disclosure **and** a safe diagnostic disposition.
+
+    Disclosure alone never passes. Returns ``None`` when there is no critical contradiction, or
+    when everything is disclosed but the disposition cannot be decided from the inputs. A hidden
+    or partially disclosed contradiction fails regardless of the disposition."""
+    disclosed_all = critical_contradictions_disclosed(critical_kinds, disclosed)
+    if disclosed_all is None:
+        return None
+    if not disclosed_all:
+        return False
+    return safe_diagnostic_disposition(
+        abstained=abstained,
+        primary_category=primary_category,
+        contradiction_verification_action=contradiction_verification_action,
+        recommendation_safe=recommendation_safe,
     )
 
 

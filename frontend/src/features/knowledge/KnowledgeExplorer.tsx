@@ -428,7 +428,8 @@ export function KnowledgeExplorer() {
                 </caption>
                 <thead>
                   <tr className="text-left text-muted">
-                    {['Retriever mode', 'Queries', 'Recall@5', 'MRR@10', 'nDCG@5'].map((h) => (
+                    {/* `recall_at_5` is a hit rate: share of queries with ≥1 relevant chunk in the top 5. */}
+                    {['Retriever mode', 'Queries', 'Hit rate@5', 'MRR@10', 'nDCG@5'].map((h) => (
                       <th key={h} scope="col" className="pr-4 font-normal">
                         {h}
                       </th>

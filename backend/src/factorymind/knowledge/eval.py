@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 from typing import Final
 
@@ -109,6 +110,64 @@ DEFAULT_OOS_EVAL_QUERIES: Final[tuple[str, ...]] = (
 )
 
 
+def _top_k_unique(ranked_ids: Sequence[str], k: int) -> list[str]:
+    if k < 1:
+        raise ValueError(f"k must be >= 1, got {k}")
+    seen: dict[str, None] = {}
+    for item in ranked_ids:
+        if len(seen) == k:
+            break
+        seen.setdefault(item, None)
+    return list(seen)
+
+
+def hit_rate_at_k(ranked_ids: Sequence[str], relevant_ids: Collection[str], k: int) -> float | None:
+    """1.0 if at least one relevant passage is in the top ``k``, else 0.0.
+
+    Returns ``None`` when the item has no relevant passages: Hit Rate is undefined for it and
+    the item belongs to the abstention metrics instead."""
+    relevant = set(relevant_ids)
+    top = _top_k_unique(ranked_ids, k)
+    if not relevant:
+        return None
+    return 1.0 if relevant.intersection(top) else 0.0
+
+
+def recall_at_k(ranked_ids: Sequence[str], relevant_ids: Collection[str], k: int) -> float | None:
+    """|top-k retrieved ∩ relevant| / |relevant| for one item; duplicates count once.
+
+    Returns ``None`` when the item has no relevant passages (0/0 is undefined, not 0 or 1)."""
+    relevant = set(relevant_ids)
+    top = _top_k_unique(ranked_ids, k)
+    if not relevant:
+        return None
+    return len(relevant.intersection(top)) / len(relevant)
+
+
+def macro_average(values: Iterable[float | None]) -> float | None:
+    """Mean over the items where the metric is defined; ``None`` if it is defined for none."""
+    defined = [v for v in values if v is not None]
+    if not defined:
+        return None
+    return sum(defined) / len(defined)
+
+
+def macro_recall_at_k(
+    items: Iterable[tuple[Sequence[str], Collection[str]]], k: int
+) -> float | None:
+    """Macro-averaged Recall@K over ``(ranked_ids, relevant_ids)`` pairs.
+
+    Items with no relevant passages are excluded from the average."""
+    return macro_average(recall_at_k(ranked, relevant, k) for ranked, relevant in items)
+
+
+def macro_hit_rate_at_k(
+    items: Iterable[tuple[Sequence[str], Collection[str]]], k: int
+) -> float | None:
+    """Macro-averaged Hit Rate@K, with the same exclusion rule as ``macro_recall_at_k``."""
+    return macro_average(hit_rate_at_k(ranked, relevant, k) for ranked, relevant in items)
+
+
 def _is_relevant(chunk_id: str, prefixes: tuple[str, ...]) -> bool:
     return any(chunk_id.startswith(p) for p in prefixes)
 
@@ -119,7 +178,11 @@ def evaluate_retrieval_modes(
     tenant_id: str,
     allowed_asset_ids: set[str],
 ) -> RetrievalEvalResponse:
-    """Evaluate Recall@5, MRR@10, and nDCG@5 strictly over caller-accessible benchmark cases."""
+    """Evaluate Hit Rate@5, MRR@10, and nDCG@5 strictly over caller-accessible benchmark cases.
+
+    The response field ``recall_at_5`` holds Hit Rate@5 (share of cases with at least one
+    relevant chunk in the top 5), not passage recall; the field name is kept for API
+    compatibility. Use ``recall_at_k`` / ``macro_recall_at_k`` for true Recall@K."""
     scoped_chunks = index.accessible_chunks(
         tenant_id=tenant_id, allowed_asset_ids=allowed_asset_ids
     )
