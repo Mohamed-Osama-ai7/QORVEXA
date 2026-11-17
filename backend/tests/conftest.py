@@ -11,25 +11,24 @@ import pandas as pd
 import pytest
 
 from factorymind.data.metropt3 import ANALOG_SENSORS, DIGITAL_SENSORS
+from tests.settings_isolation import hermetic_settings
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from factorymind.anomaly.service import AnomalyService
     from tests.auth_helpers import AuthKit
 
 
 @pytest.fixture(autouse=True)
-def _hermetic_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+def _hermetic_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """Tests never read a developer's ``backend/.env`` or ambient ``FACTORYMIND_*`` variables;
-    a test that needs a setting passes it explicitly or sets it with ``monkeypatch``."""
-    import os
+    a test that needs a setting passes it explicitly or sets it with ``monkeypatch``.
 
-    from factorymind.config import Settings, get_settings
-
-    monkeypatch.setitem(Settings.model_config, "env_file", None)
-    for name in list(os.environ):
-        if name.upper().startswith("FACTORYMIND_"):
-            monkeypatch.delenv(name)
-    get_settings.cache_clear()
+    ``monkeypatch`` is set up before this fixture and torn down after it, so on teardown the
+    cache is cleared first and the original environment and ``env_file`` are then restored."""
+    with hermetic_settings(monkeypatch):
+        yield
 
 
 def simulate_apu(
