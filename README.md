@@ -81,5 +81,11 @@ npm run dev    # http://localhost:5173/anomaly
 
 ## Team
 
-FactoryMind CDT is a graduation project. Team Leader: Mohamed Adel Ramadan. Technical direction,
-architecture and implementation: Mohamed Osama.
+FactoryMind CDT is a graduation project.
+Team : 
+1)- Mohamed Adel Ramadan.
+2)- Mohamed Osama.
+3)- Ahmed essam
+4)- Ali moatasem
+5)- Beshoy saad
+6)- Ziad ahmed
