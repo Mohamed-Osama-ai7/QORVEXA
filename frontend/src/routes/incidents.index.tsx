@@ -19,7 +19,7 @@ function IncidentsPage() {
       </h1>
       <p className="mt-1 text-sm text-muted">
         Alarm episodes recorded for investigation and human review. Open an incident to inspect its
-        multi-phase evidence package, quality checks, and chronological timeline. FactoryMind never
+        multi-phase evidence package, quality checks, and chronological timeline. QORVEXA never
         acts on equipment.
       </p>
       <div className="mt-4">

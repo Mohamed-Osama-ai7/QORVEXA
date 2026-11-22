@@ -53,7 +53,7 @@ function AnomalyPage() {
         </h1>
         <p className="mt-1 text-sm text-muted">
           Replays recorded MetroPT-3 air-compressor telemetry through the deployed detector. Alarms
-          are advisory and require human review; FactoryMind never controls equipment.
+          are advisory and require human review; QORVEXA never controls equipment.
         </p>
       </header>
 
