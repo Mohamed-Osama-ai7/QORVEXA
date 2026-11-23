@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability Reporting
+    url: https://github.com/Mohamed-Osama-ai7/QORVEXA/security/advisories/new
+    about: Privately report a security vulnerability or physical OT safety concern.
+  - name: Engineering Standards & Workflow
+    url: https://github.com/Mohamed-Osama-ai7/QORVEXA/blob/collaboration/qorvexa-current/CONTRIBUTING.md
+    about: Read our team engineering standards and quality gates.

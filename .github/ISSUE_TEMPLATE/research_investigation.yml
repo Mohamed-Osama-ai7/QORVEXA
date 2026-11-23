@@ -1,0 +1,51 @@
+name: Research / Technical Investigation
+description: Propose an empirical research spike, benchmark evaluation, or mathematical model investigation
+title: "research([subsystem]): [investigation title]"
+labels: ["research", "investigation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for research spikes, mathematical formulations, algorithmic benchmarking, or epistemic boundary evaluations.
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Research Workstream
+      options:
+        - "Workstream 1 — Core Intelligence Architecture & GraphRAG"
+        - "Workstream 2 — RAG & Semantic Retrieval Evaluation"
+        - "Workstream 3 — Mathematical Optimization & Combinatorial Formulations"
+        - "Workstream 4 — Causal Intelligence & Industrial RCA"
+        - "Workstream 5 — Multi-Agent Coordination & Safety Bounds"
+        - "Workstream 6 — Stochastic Simulation & Digital Twin Dynamics"
+    validations:
+      required: true
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Core Hypothesis / Research Question
+      description: What specific mathematical, algorithmic, or empirical question does this investigation test?
+      placeholder: "e.g., Can Reciprocal Rank Fusion of BM25 + dense vectors improve MetroPT-3 fault retrieval MRR by >= 15%?"
+    validations:
+      required: true
+  - type: textarea
+    id: methodology
+    attributes:
+      label: Experimental Methodology & Data Grounding
+      description: Which dataset (e.g., MetroPT-3 APU 2020, AI4I 2020, synthetic planning cases) and evaluation splits will be used?
+    validations:
+      required: true
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Quantitative Evaluation Metrics
+      description: Define the exact mathematical evaluation criteria (e.g., Precision@K, Duality Gap, Execution Time, Coverage).
+    validations:
+      required: true
+  - type: textarea
+    id: safety_boundaries
+    attributes:
+      label: Epistemic & Safety Invariants
+      description: Detail how this investigation maintains rigorous epistemic boundaries (e.g., separating correlation from causation, zero physical OT actuation).
+    validations:
+      required: true

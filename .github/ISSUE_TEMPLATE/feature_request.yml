@@ -1,0 +1,57 @@
+name: Feature Request
+description: Propose a new capability, solver adapter, formulation, or analytical model
+title: "feat([subsystem]): [concise description]"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Propose a new feature, mathematical formulation, solver adapter, or industrial capability.
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Target Workstream
+      description: Select the workstream that will design and implement this feature.
+      options:
+        - "Workstream 1 — Technical Lead & Core Intelligence Architecture"
+        - "Workstream 2 — Advanced RAG & Retrieval Engineering"
+        - "Workstream 3 — Advanced Optimization Engineering"
+        - "Workstream 4 — Causal Intelligence & Industrial Analytics"
+        - "Workstream 5 — Advanced Multi-Agent Orchestration & Governance"
+        - "Workstream 6 — Digital Twin, Simulation, Industrial Integration & Observability"
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Problem & Industrial Motivation
+      description: What operational or mathematical industrial challenge does this feature address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_design
+    attributes:
+      label: Proposed Solution & Architecture
+      description: Detailed description of the algorithms, data structures, and architectural integration.
+    validations:
+      required: true
+  - type: checkboxes
+    id: contract_impact
+    attributes:
+      label: Shared Contract Impact
+      description: Does this feature alter or extend existing shared interfaces?
+      options:
+        - label: "Modifies shared data models in `qorvexa/contracts/`"
+        - label: "Modifies core Solver Fabric worker contracts"
+        - label: "Modifies public FastAPI schemas or endpoints"
+        - label: "Requires new third-party Python/Node dependencies"
+        - label: "Pure subsystem-internal enhancement (no shared contract impact)"
+    validations:
+      required: true
+  - type: textarea
+    id: verification_plan
+    attributes:
+      label: Verification & Benchmarking Plan
+      description: How will this feature be hermetically tested and benchmarked?
+    validations:
+      required: true

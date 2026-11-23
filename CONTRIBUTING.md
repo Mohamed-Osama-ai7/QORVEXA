@@ -4,21 +4,22 @@ Welcome to the **QORVEXA** engineering team.
 
 QORVEXA is an Industrial Decision Intelligence Platform built for high-stakes manufacturing and process optimization. We maintain rigorous standards for mathematical correctness, type safety, operational reproducibility, and industrial safety.
 
-This guide defines the engineering workflow, branch conventions, review standards, and architectural control gates for our five-person engineering team.
+This guide defines the engineering workflow, branch conventions, review standards, and architectural control gates for our six-person engineering team.
 
 ---
 
 ## 1. Team Structure & Workstream Ownership
 
-Engineering ownership is divided into five distinct workstreams:
+Engineering ownership is divided into six distinct, non-overlapping workstreams:
 
-- **Workstream 1 — Project Architect (Mohamed Osama):** Overall system architecture, Core Solver Fabric, mathematical solver adapters, independent mathematical verifier, solver selection/routing, Adaptive Multi-Paradigm Problem Solving (AMPPS), advanced GraphRAG architecture, multi-hop retrieval architecture, agentic retrieval planning, cross-engine contracts, and final integration review.
-- **Workstream 2 — Advanced Optimization Engineering:** Specialized optimization classes (scheduling, sequencing, network flow, bin packing, CP-SAT/MILP), formulation benchmarks, and solver adapter testing.
-- **Workstream 3 — Advanced Retrieval & Knowledge Engineering (Ahmed Essam):** Retrieval engine internals, hybrid BM25 + dense vector retrieval, document structural parsing, reranking, multilingual support, CAG, and retrieval benchmarks.
-- **Workstream 4 — Causal & Industrial Intelligence:** Structural causal models (SCMs), causal graphs, Root-Cause Analysis (RCA), counterfactual reasoning, uncertainty-aware causal inference, and domain validation.
-- **Workstream 5 — Simulation, Multi-Agent & Industrial Integration:** Discrete-Event Digital Twin (DES) extensions, stochastic Monte Carlo simulations, read-only industrial connectors (OPC UA, MQTT, Historian), multi-agent supervisor/runtime, and end-to-end integration testing.
+- **Workstream 1 — Technical Lead & Core Intelligence Architect (Mohamed Osama, `@Mohamed-Osama-ai7`):** Overall system architecture, Core Solver Fabric architecture, mathematical solver adapters, independent mathematical verifier, solver selection/routing, Adaptive Multi-Paradigm Problem Solving (AMPPS), advanced GraphRAG architecture, multi-hop retrieval architecture, agentic retrieval planning, cross-engine contracts, and final integration review.
+- **Workstream 2 — Advanced RAG & Retrieval Engineering (Ahmed Essam, `@a7medessam196`):** Document ingestion, structure-aware parsing, chunking, multilingual normalization, embedding adapters, BM25/dense search, hybrid fusion (RRF), reranking, multi-query execution, CAG caching, and retrieval benchmarks.
+- **Workstream 3 — Advanced Optimization Engineering (Mohamed Adel):** Industrial mathematical formulations, LP/MILP/MIQP models, production planning and scheduling models, constraint programming (CP-SAT), multi-objective optimization, stochastic and robust optimization implementations, problem-specific solver adapters, and mathematical validation benchmarks.
+- **Workstream 4 — Causal Intelligence & Industrial Analytics (Beshoy):** Structural Causal Models (SCMs), causal graphs, industrial Root-Cause Analysis (RCA), fault diagnosis, failure propagation analysis, counterfactual reasoning, predictive maintenance, degradation curves, and RUL analytics. All causal claims must remain evidence-based.
+- **Workstream 5 — Advanced Multi-Agent Orchestration & Governance (Ziad):** Supervisor and specialized-agent execution architecture, task decomposition, workflow coordination, dependency-aware execution, agent communication, context handoffs, execution budgets, timeouts, retry, permissions, and audit trails. Agents cannot approve industrial decisions autonomously or control physical equipment.
+- **Workstream 6 — Digital Twin, Simulation, Industrial Integration, Deployment & Observability (Ali Motassem):** Digital Twin foundations, discrete-event simulation (DES), stochastic Monte Carlo simulations, production KPI and capacity analysis, simulation-based evaluation of optimization schedules, read-only industrial connectivity (OPC UA, MQTT, Historian), deployment execution, CI/CD, and platform observability. Absolutely zero PLC writes or equipment actuation.
 
-For full details on boundaries and interfaces, consult [TEAM_WORKSTREAMS.md](docs/qorvexa/TEAM_WORKSTREAMS.md).
+For full details on boundaries, interfaces, and module matrices, consult [TEAM_WORKSTREAMS.md](docs/qorvexa/TEAM_WORKSTREAMS.md).
 
 ---
 

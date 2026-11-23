@@ -58,9 +58,21 @@ Before formal commercialization, the following historical contribution clearance
   - [x] Changes scoped to `backend/src/qorvexa/knowledge/rag.py` and `backend/tests/test_knowledge_rag_kg.py`.
   - [ ] Contributor License Agreement signed by Ahmed Essam confirming assignment of commit `59c88d01` and subsequent retrieval contributions to Mohamed Osama / QORVEXA.
 
-- [ ] **Team Members 2, 4, and 5 (Pending Formal Invitation):**
-  - [ ] Role placeholder converted to named contributor.
-  - [ ] CLA executed prior to first commit or PR merge into `collaboration/qorvexa-current`.
+- [ ] **Mohamed Adel (`[GitHub Handle Pending]`):**
+  - [ ] Role specification confirmed for Workstream 3 (Advanced Optimization Engineering).
+  - [ ] Contributor License Agreement signed prior to merging first pull request.
+
+- [ ] **Beshoy (`[GitHub Handle Pending]`):**
+  - [ ] Role specification confirmed for Workstream 4 (Causal Intelligence & Industrial Analytics).
+  - [ ] Contributor License Agreement signed prior to merging first pull request.
+
+- [ ] **Ziad (`[GitHub Handle Pending]`):**
+  - [ ] Role specification confirmed for Workstream 5 (Advanced Multi-Agent Orchestration & Governance).
+  - [ ] Contributor License Agreement signed prior to merging first pull request.
+
+- [ ] **Ali Motassem (`[GitHub Handle Pending]`):**
+  - [ ] Role specification confirmed for Workstream 6 (Digital Twin, Simulation, Industrial Integration, Deployment & Observability).
+  - [ ] Contributor License Agreement signed prior to merging first pull request.
 
 ---
 
