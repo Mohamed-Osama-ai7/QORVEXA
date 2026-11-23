@@ -6,7 +6,7 @@
 **Current Branch:** `docs/qorvexa/master-project-blueprint`  
 **Starting Commit SHA:** `73872cc37f9a1f5a1a87a7ea8a5a0c1ef21a8d7b`  
 **Test Suite Baseline:** 1,924 Backend Hermetic Tests · 75 Frontend Tests · 0 Failures  
-**License:** Proprietary / Closed-Source / All Rights Reserved (See [LICENSING_TRANSITION.md](LICENSING_TRANSITION.md))
+**License Status by Branch:** Collaboration branch (`collaboration/qorvexa-current`) is Proprietary / All Rights Reserved; `main` branch retains legacy MIT license; public forks hold historical snapshot terms (See [LICENSING_TRANSITION.md](LICENSING_TRANSITION.md))
 
 ---
 
@@ -51,12 +51,15 @@ Under the technical direction of Lead Architect Mohamed Osama (`@Mohamed-Osama-a
 | **M4-WP2: Controlled Industrial Copilot** | PR #15 (`a67542d`) | Read-only copilot runtime, citation grounding, red-team prompt guardrails, zero-actuation enforcement. | **IMPLEMENTED** |
 | **M5-WP0: Read-Only OT Connectors** | PR #16 (`77cbeb0`) | Edge connector descriptors for OPC UA, MQTT, and Historians; URL syntax validation, batch preflight check. | **PARTIALLY IMPLEMENTED** |
 
-### 1.3 Re-Branding to QORVEXA & Commercial Transition
+### 1.3 Re-Branding to QORVEXA & Branch Licensing Discrepancy
 In late November 2026, the project underwent a formal strategic re-positioning:
 - **Product Name:** **QORVEXA**
 - **Descriptor:** **Industrial AI Research Lab**
 - **Product Category:** **Industrial Decision Intelligence Platform**
-- **Licensing Transition:** The codebase transitioned from its historical open-source MIT evaluation window (commits `77cbeb0` through `2335e58`) to a closed-source **Proprietary / All Rights Reserved** commercial license (commit `bb04cba` onward). The legal boundaries and non-retroactivity principles are documented in [LICENSING_TRANSITION.md](LICENSING_TRANSITION.md).
+- **Branch-Specific License Divergence:**
+  - **`main` Branch:** Retains the historical open-source **MIT License** (`Copyright (c) 2026 FactoryMind CDT Contributors`). As a result, the unauthenticated GitHub REST API reports the repository license as MIT.
+  - **`collaboration/qorvexa-current` Branch:** Transitioned in commit `bb04cba` to a closed-source **Proprietary / All Rights Reserved** commercial license (`Copyright (c) 2026 Mohamed Osama / QORVEXA. All rights reserved. PROPRIETARY AND CONFIDENTIAL`).
+  - **Historical Snapshot & Fork Implications:** Public forks created during the MIT window (`beshoysaad468-sys/QORVEXA` and `AliMotassem164/FactoryMind-CDT`) and local clones retain MIT rights to historical snapshots up to their respective fork dates. Under copyright law non-retroactivity principles, the repository does not have a single unified license across all branches. This document provides factual repository observations and does not constitute a legal opinion. Full transition details are documented in [LICENSING_TRANSITION.md](LICENSING_TRANSITION.md).
 
 ---
 
@@ -64,124 +67,161 @@ In late November 2026, the project underwent a formal strategic re-positioning:
 
 ```mermaid
 flowchart LR
-    Market["High-Stakes Industrial Operations\n(Food & Beverage · Cable · Chemicals · Process)"] --> Problem["Operational Breakdown\nColloquial Shift Language vs Rigid Solvers\nLLM Hallucinations vs High Safety Risks"]
-    Problem --> Qorvexa["QORVEXA Solution\nGrounded NLP + Unit Validation + Isolated Solvers\nDigital Twin DES + Pareto Decision Intelligence"]
-    Qorvexa --> Commercial["Commercial Value\nReduced Scrap · Lower Downtime · Certified Plans\nZero Liability (Strictly Advisory / Read-Only)"]
+    Market["Proposed Market Opportunity\n(Food & Beverage · Cable · Chemicals · Process)"] --> Problem["Research Hypothesis\nColloquial Shift Language vs Rigid Solvers\nLLM Hallucinations vs High Safety Risks"]
+    Problem --> Qorvexa["QORVEXA Platform Architecture\nGrounded NLP + Unit Validation + Isolated Solvers\nDigital Twin DES + Pareto Decision Intelligence"]
+    Qorvexa --> Commercial["Approved Product Direction\nReduced Scrap · Lower Downtime · Certified Plans\nZero Liability (Strictly Advisory / Read-Only)"]
 ```
 
-### 2.1 Target Industry Verticals
-QORVEXA targets complex manufacturing and process environments characterized by:
-1. **Multi-Stage Dependent Production:** Lines where upstream starvation or downstream blocking cascades across machines (e.g., continuous cable extrusion, beverage packaging).
-2. **Shift-Based Dialectal Reporting:** Plants where operators log events in colloquial dialects (e.g., Egyptian Arabic, Arabizi, multilingual jargon) that standard ERP/MES systems cannot parse.
+### 2.1 Target Industry Verticals (`PROPOSED MARKET OPPORTUNITY`)
+The following manufacturing sectors have been identified as proposed commercial opportunities based on architectural alignment; they represent research targets rather than validated customer engagements:
+1. **Multi-Stage Dependent Production:** Continuous lines where upstream starvation or downstream blocking cascades across machines (e.g., continuous cable extrusion, beverage packaging).
+2. **Shift-Based Dialectal Reporting:** Plants where operators log events in colloquial dialects (e.g., Egyptian Arabic, Arabizi, multilingual shop-floor jargon) that standard ERP/MES systems fail to parse.
 3. **Strict Dimensional & Scrap Constraints:** Operations where material wastage, specific energy consumption, and unit mismatches carry heavy financial penalties.
 4. **High Downtime Costs:** Facilities where unpredicted compressor or motor failure halts entire production sections ($>\$10,000/\text{hr}$).
 
-### 2.2 Commercial Operating Model
-- **Enterprise Platform Licensing:** Tiered commercial licensing based on connected facilities, monitored assets, and solver worker concurrency.
-- **Factory-Isolated Data Tenancy:** Append-only SQLite WAL ledgers and terminology dictionaries isolated per factory ID. No cross-tenant data leakage.
-- **Strict Advisory Boundary:** QORVEXA enforces an absolute read-only architectural invariant. The software provides mathematically verified decision packages and recommendations to authorized human managers, completely eliminating physical liability for industrial actuation.
+### 2.2 Operational Breakdown & Closed-Loop Solution (`RESEARCH HYPOTHESIS`)
+The core research hypothesis of QORVEXA posits that combining deterministic dialectal natural language grounding, formal dimensional unit validation, isolated mathematical optimization, and discrete-event simulation into an evidence-justified co-orchestration loop can significantly reduce operational scrap and scheduling downtime compared to standalone heuristics or ungrounded generative AI.
+
+### 2.3 Commercial Operating Model (`APPROVED PRODUCT DIRECTION`)
+- **Enterprise Platform Licensing:** Tiered commercial licensing modeled on connected facilities, monitored physical assets, and solver worker concurrency.
+- **Factory-Isolated Data Tenancy:** Append-only SQLite WAL ledgers and terminology dictionaries isolated per factory ID. Zero cross-tenant data leakage.
+- **Strict Advisory Safety Boundary:** QORVEXA enforces an absolute read-only architectural invariant. The software provides mathematically verified decision packages and recommendations to authorized human managers, completely eliminating physical liability for industrial actuation.
+- **Commercial Traction Status:** QORVEXA is currently an advanced research platform and engineering prototype. **There are no active customer contracts, commercial traction, enterprise deployments, or industrial partnerships at this stage.** All operational evaluations rely strictly on peer-reviewed historical datasets and synthetic simulation benchmarks.
 
 ---
 
-## 3. Full System Architecture & 12-Stage Workflow
+## 3. Platform Workflows: Conceptual Vision vs. Implemented Baseline
 
-The core architecture operates as an asynchronous, deterministic pipeline spanning from dialectal text intake to human sign-off:
+QORVEXA maintains a strict distinction between the complete intended platform conceptual architecture and the currently verified, operational workflow baseline.
+
+### 3.1 Complete Intended Platform Conceptual Pipeline (`TARGET ARCHITECTURAL VISION`)
+
+The complete architectural vision of QORVEXA encompasses a 14-stage lifecycle integrating cognitive text understanding, causal diagnosis, mathematical optimization, physical simulation, and continuous learning:
 
 ```mermaid
 flowchart TD
-    S1["1. Factory Language Intake\n(Colloquial Shift Notes, Audio Transcripts, Operator Logs)"] --> S2["2. Language Understanding & Grounding\n(13-Stage Extraction · Quote Offsets · Contradiction Checks)"]
-    S2 --> S3["3. Factory Terminology Resolution\n(Isolated SQLite Dictionary · Versioned Reviewed Terms)"]
-    S3 --> S4["4. Untrusted Proposal Generation\n(Tagged Candidate Claims · Evidence Bounding)"]
-    S4 --> S5["5. Fact Ledger Admission\n(Append-Only SQLite WAL · SHA-256 Tamper-Evident Hash Chain)"]
-    S5 --> S6["6. Strict Dimensional Units Gate\n([M]^a [L]^b [T]^c [Theta]^d Dimensional Invariant Verification)"]
-    S6 --> S7["7. Canonical Formulation Compiler\n(c^T x · A x <= b · Variable Lower/Upper Bounds)"]
-    S7 --> S8["8. Core Solver Fabric\n(Isolated HiGHS Subprocess · Win32 Job Object · JSON-IPC)"]
-    S8 --> S9["9. Independent Mathematical Verifier\n(Double-Precision Primal/Dual Residuals · Duality Gap · Farkas Rays)"]
-    S9 --> S10["10. Discrete-Event Digital Twin\n(1-Second Integer Tick Clock · Micro-States · Stochastic Seeds)"]
-    S10 --> S11["11. OSCO Co-Orchestration Loop\n(Solve <--> Simulate Iterative Refinement · Bottleneck Tuning)"]
-    S11 --> S12["12. Decision Intelligence & Governance\n(Multi-Scenario Pareto Frontier · Authenticated Sign-off · Audit Log)"]
+    C1["1. Industrial Intake & Signal Capture\n(Dialectal Shift Notes · Voice · Telemetry Anomaly Streams)"] --> C2["2. Evidence Retrieval\n(Hybrid Sparse/Dense RAG · Asset Passports · Maintenance SOPs)"]
+    C2 --> C3["3. Dialectal Language Understanding\n(13-Stage Parsing · Quote Grounding · Contradiction Analysis)"]
+    C3 --> C4["4. Ontology & Context Resolution\n(Plant Taxonomic Graph · Entity Hierarchy · Scope Binding)"]
+    C4 --> C5["5. Causal Diagnosis & Root-Cause Attribution\n(Structural Causal Models · DAG Traversal · Sensor Fault Isolation)"]
+    C5 --> C6["6. Uncertainty Assessment & Degradation Modeling\n(Remaining Useful Life · Weibull Curves · Sensor Drift Margins)"]
+    C6 --> C7["7. Proposal Generation & Fact Ledger Admission\n(Untrusted Proposals · Cryptographic SHA-256 Hash Chaining)"]
+    C7 --> C8["8. Strict Dimensional Units Validation\n([M]^a [L]^b [T]^c [Theta]^d Physical Invariant Verification)"]
+    C8 --> C9["9. Canonical Formulation Compilation\n(c^T x · A x <= b · Variable Lower/Upper Bounds)"]
+    C9 --> C10["10. Adaptive Solver Selection (AMPPS)\n(Dynamic Problem Classifier · Continuous LP · MILP · CP-SAT)"]
+    C10 --> C11["11. Isolated Solver Execution & Decoupled Verification\n(Subprocess Worker · Dual Rays · Duality Gap · Farkas Certificates)"]
+    C11 --> C12["12. Discrete-Event Digital Twin Stress-Testing (OSCO)\n(1s Ticks · Micro-States · Stochastic Seeds · Bottleneck Refinement)"]
+    C12 --> C13["13. Multi-Criteria Decision Evaluation\n(Exact 50-Digit Decimal Pareto Frontier · Executive Briefs)"]
+    C13 --> C14["14. Human Approval, Outcome Verification & Learning\n(Authenticated Sign-Off · Audit Vault · Closed-Loop Bayesian Feedback)"]
 ```
 
-### The 12 Pipeline Stages
+### 3.2 Currently Implemented End-to-End Workflow (`ACTIVE BASELINE`)
 
-1. **Factory Language Intake:** Ingests raw, unstructured operational shift notes, maintenance logs, and spoken operator inputs in colloquial Egyptian Arabic (`عامية مصري`), Arabizi, formal Arabic, and English.
-2. **Language Understanding & Grounding:** Executes a 13-stage deterministic extraction pipeline. Every extracted quantity, constraint, or event is grounded with character-exact offsets against the original raw source text.
-3. **Factory Terminology Resolution:** Resolves informal nicknames ("الكمبروسر الكبير", "خط التعبئة 2") against a factory-scoped, auditable dictionary of confirmed plant assets.
-4. **Untrusted Proposal Generation:** Emits structured proposal candidates. All extracted claims remain explicitly tagged as `UNTRUSTED` proposals until verified.
-5. **Fact Ledger Admission:** Validates proposals against existing knowledge. Admitted facts are committed to an append-only SQLite WAL ledger linked by cryptographic SHA-256 hash chains.
-6. **Strict Dimensional Units Gate:** Verifies physical dimensional consistency ($[M]^a [L]^b [T]^c [\Theta]^d$) across all quantities, rejecting dimensionally incompatible constraints (e.g., adding hours to kilograms).
-7. **Canonical Formulation Compiler:** Translates verified facts into a standard canonical optimization model $\min c^T x \text{ s.t. } A x \le b, l \le x \le u$.
-8. **Core Solver Fabric:** Dispatches the canonical formulation to an isolated mathematical solver worker enclosed in a Win32 Job Object or POSIX cgroup with strict CPU time, memory (4GB default), and JSON-IPC communication.
-9. **Independent Mathematical Verifier:** Independently recalculates primal and dual residuals, duality gaps, and Farkas infeasibility certificates in double-precision arithmetic, without trusting solver status flags.
-10. **Discrete-Event Digital Twin:** Ingests the verified mathematical plan into a 1-second tick simulation kernel to model real-world machine micro-states (`PROCESSING`, `STARVED`, `BLOCKED`, `DOWN`), buffer capacities, and scrap generation.
-11. **Optimization–Simulation Co-Orchestration (OSCO):** Closes the loop between mathematical optimization and simulation. Identifies where optimal plans fail operationally, proposes evidence-justified capacity adjustments, and re-solves.
-12. **Decision Intelligence & Governance:** Constructs multi-criteria Pareto trade-off packages, presents ranked operational scenarios, requires authenticated human sign-off, and writes permanent audit trail records.
+The active baseline implementation deployed in the Production Planning & Decision Studio currently executes an operational 11-stage subset of this pipeline, covered by 1,924 automated tests:
+
+```mermaid
+flowchart TD
+    I1["1. Factory Language Intake\n(Colloquial Egyptian Arabic · Arabizi · Shift Notes)"] --> I2["2. Language Understanding & Grounding\n(13-Stage Extraction Pipeline · Character Quote Offsets)"]
+    I2 --> I3["3. Factory Terminology Resolution\n(Isolated SQLite Dictionary · Versioned Confirmed Terms)"]
+    I3 --> I4["4. Untrusted Proposal Generation\n(Tagged Candidate Claims · Evidence Offsets)"]
+    I4 --> I5["5. Fact Ledger Admission\n(Append-Only SQLite WAL · SHA-256 Tamper-Evident Hash Chain)"]
+    I5 --> I6["6. Strict Dimensional Units Gate\n(Exact Dimensional Analysis · Incompatible Units Blocked)"]
+    I6 --> I7["7. Canonical Formulation Compiler\n(Deterministic Mapping to c^T x · A x <= b)"]
+    I7 --> I8["8. Core Solver Fabric Execution\n(Isolated HiGHS Subprocess · Win32 Job Object · JSON-IPC)"]
+    I8 --> I9["9. Independent Mathematical Verifier\n(Double-Precision Primal/Dual Residuals · Duality Gap · Farkas Rays)"]
+    I9 --> I10["10. Digital Twin Simulation & OSCO Loop\n(1s Integer Tick DES · Machine Micro-States · Bottleneck Refinement)"]
+    I10 --> I11["11. Decision Package & Human Approval\n(Exact 50-Digit Decimal Pareto Frontier · Executive Brief · Audit Log)"]
+```
 
 ---
 
 ## 4. The Four Core Platform Engines
 
-QORVEXA is structured around four foundational engines:
+QORVEXA is structured around four authoritative platform engines that coordinate specialized analytical, numerical, and simulation subsystems:
 
 ```mermaid
 flowchart TD
-    subgraph E1["Engine 1: Industrial Understanding & Terminology"]
-        direction TB
-        E1_1["13-Stage Extraction Pipeline"]
-        E1_2["Colloquial Arabic & Arabizi Parser"]
-        E1_3["Factory Terminology Dictionary"]
-        E1_4["Deterministic Quote Grounding"]
+    subgraph E1["1. Ontology & Context Engine"]
+        E1_1["Factory Knowledge Fabric"]
+        E1_2["Asset Taxonomic Hierarchy"]
+        E1_3["Event-Sourced SQLite Graph"]
+        E1_4["Entity Mention Resolver"]
     end
 
-    subgraph E2["Engine 2: Core Solver Fabric & Optimization"]
-        direction TB
-        E2_1["Canonical LP Compiler"]
-        E2_2["Isolated HiGHS Subprocess Worker"]
-        E2_3["Independent Verifier (Primal/Dual/Farkas)"]
-        E2_4["Adaptive Solver Router (AMPPS)"]
+    subgraph E2["2. Workflow Orchestration Engine"]
+        E2_1["Pipeline State Machine"]
+        E2_2["OSCO Solve <--> Simulate Loop"]
+        E2_3["Bottleneck Capacity Refiner"]
+        E2_4["Candidate Lifecycle & Dedupe"]
     end
 
-    subgraph E3["Engine 3: Discrete-Event Digital Twin & Simulation"]
-        direction TB
-        E3_1["Integer Tick (1s) DES Kernel"]
-        E3_2["Machine Micro-State Engine"]
-        E3_3["Stochastic SHA-256 Pseudo-Random Streams"]
-        E3_4["OSCO Closed-Loop Co-Orchestrator"]
+    subgraph E3["3. Decision Intelligence Engine"]
+        E3_1["Multi-Criteria Pareto Frontier"]
+        E3_2["50-Digit Exact Decimal Comparisons"]
+        E3_3["Constraint Binding Tracker"]
+        E3_4["Executive Decision Packages"]
     end
 
-    subgraph E4["Engine 4: Decision Intelligence & Governance"]
-        direction TB
-        E4_1["Fact Ledger (SHA-256 Hash Chain)"]
-        E4_2["Dimensional Units Gate"]
-        E4_3["Pareto Frontier Multi-Scenario Ranker"]
-        E4_4["Human Sign-off & Audit Vault"]
+    subgraph E4["4. Governed Agent Engine"]
+        E4_1["Supervisor Agent Runtime"]
+        E4_2["Dependency-Aware Task Graph"]
+        E4_3["Execution Budgets & Timeouts"]
+        E4_4["Red-Team Guardrails & Audit"]
     end
 
-    E1 --> E4
-    E4 --> E2
-    E2 --> E3
-    E3 --> E4
+    E1 -->|Context & Hierarchy| E2
+    E2 -->|Evaluated Candidates| E3
+    E4 -->|Orchestrated Invocations| E2
+    E3 -->|Governed Packages| E4
 ```
 
-### Engine 1: Industrial Language Understanding & Factory Terminology
-- **Package Path:** `backend/src/qorvexa/industrial/understanding/`
-- **Active Tests:** 43 tests in `tests/test_industrial_understanding.py`
-- **Capabilities:** 13-stage deterministic pipeline (`qorvexa-understanding/1`). Normalizes Egyptian Arabic (`عامية مصري`), Arabizi, and English; extracts numbers in Arabic-Indic and spoken formats; binds entities via `TerminologyStore`; enforces character-exact quote grounding; detects contradictions only within identical operational scopes.
+### Engine 1: Ontology & Context Engine
+- **Package Path:** `backend/src/qorvexa/industrial/ontology/`
+- **Active Tests:** 70 tests in `tests/test_industrial_ontology.py`
+- **Core Responsibilities:**
+  - Maintains the factory knowledge fabric as an event-sourced, append-only SQLite WAL property graph.
+  - Enforces versioned concept and relation schemas (24 concepts, 14 relations), including asset containment (`CONTAINS`), equipment feeds (`FEEDS`), and operational scoping.
+  - Provides deterministic entity resolution and mention linking, mapping colloquial aliases to canonical plant assets.
+  - Maintains temporal validity windows and structural integrity checks without allowing cycles.
+- **Key Interfaces:** `Ontology`, `ConceptSchema`, `RelationSchema`, `GraphState`, `FactoryOntology`, `OntologyStore`, `EntityRecord`.
 
-### Engine 2: Core Solver Fabric & Mathematical Optimization
-- **Package Path:** `backend/src/qorvexa/solver_fabric/`
-- **Active Tests:** 21 tests in `tests/test_sf_highs_adapter.py`, 12 tests in `tests/test_sf_verifier.py`
-- **Capabilities:** Isolated worker process model communicating over standard JSON-IPC; HiGHS 1.16.0 continuous LP solving; decoupled `IndependentVerifier` validating primal feasibility $\|Ax^* - b\|_\infty \le \epsilon_{\text{feas}}$, dual feasibility $\|A^T y^* - c\|_\infty \le \epsilon_{\text{dual}}$, and relative duality gap $|c^T x^* - b^T y^*| / (1 + |c^T x^*|) \le \epsilon_{\text{gap}}$.
+### Engine 2: Workflow Orchestration Engine
+- **Package Path:** `backend/src/qorvexa/industrial/co_orchestration/`
+- **Active Tests:** 24 tests in `tests/test_optimization_simulation_orchestration.py`
+- **Core Responsibilities:**
+  - Coordinates multi-stage operational pipelines, enforcing the closed-loop Optimization–Simulation Co-Orchestration (OSCO) lifecycle.
+  - Dispatches canonical problem formulations to the mathematical solver fabric and routes verified plans to discrete-event simulation.
+  - Identifies operational bottlenecks from simulated machine micro-states and formulates evidence-justified capacity refinements.
+  - Manages candidate deduplication (SHA-256 problem/twin hashing), execution budgets, and cancellation signals.
+- **Key Interfaces:** `CoOrchestrator`, `contracts.py`, `optimize.py`, `evaluate.py`, `refine.py`, `decision.py`, `store.py`.
 
-### Engine 3: Discrete-Event Digital Twin & Operational Simulation
-- **Package Path:** `backend/src/qorvexa/industrial/digital_twin/` & `qorvexa/industrial/co_orchestration/`
-- **Active Tests:** 55 tests in `test_industrial_digital_twin.py`, 24 tests in `test_optimization_simulation_orchestration.py`
-- **Capabilities:** Discrete-event simulation running on an exact 1-second integer tick clock; machine state accounting (`PROCESSING`, `STARVED`, `BLOCKED`, `DOWN`); scrap generation and buffer tracking; deterministic SHA-256 seeded pseudo-random streams per replication; OSCO closed-loop refinement loop between HiGHS plans and simulation bottlenecks.
+### Engine 3: Decision Intelligence Engine
+- **Package Path:** `backend/src/qorvexa/industrial/decision_intelligence/`
+- **Active Tests:** 84 tests in `tests/test_decision_intelligence*.py`
+- **Core Responsibilities:**
+  - Evaluates multi-scenario candidate portfolios across competing economic and physical criteria (throughput, margin, overtime cost, makespan, energy).
+  - Calculates non-dominated Pareto frontiers using high-precision 50-digit exact `Decimal` arithmetic.
+  - Tracks constraint state transitions (`BECAME_BINDING`, `NO_LONGER_BINDING`) on verified primal vectors.
+  - Formulates structured, human-readable decision packages and executive trade-off briefs for plant leadership.
+- **Key Interfaces:** `ParetoFrontier`, `DecisionPackage`, `MetricObjective`, `HardConstraint`, `Preference`, `RankingMode`.
 
-### Engine 4: Industrial Decision Intelligence & Fact Governance
-- **Package Path:** `backend/src/qorvexa/industrial/governance/` & `qorvexa/industrial/decision_intelligence/`
-- **Active Tests:** 13 tests in `test_governance.py`, 84 tests in `test_decision_intelligence*.py`
-- **Capabilities:** Append-only SQLite WAL persistence with cryptographic SHA-256 hash chaining; untrusted proposal review lifecycle; strict dimensional units analysis ($[M]^a [L]^b [T]^c [\Theta]^d$); multi-scenario Pareto frontier calculation, 50-digit exact `Decimal` comparisons, and executive decision briefs.
+### Engine 4: Governed Agent Engine
+- **Package Path:** `backend/src/qorvexa/copilot/` & `backend/src/qorvexa/agents/`
+- **Active Tests:** Hermetic agent and copilot suites in `tests/test_copilot_*.py` and `tests/test_agent_*.py`
+- **Core Responsibilities:**
+  - Orchestrates supervisor and specialized sub-agent execution across query decomposition, evidence retrieval, diagnostic reasoning, and simulation invocation.
+  - Enforces per-task token budgets, wall-clock timeout caps, and cooperative task cancellation.
+  - Sandboxes untrusted model outputs into structured proposals, strictly preventing agents from directly mutating the Fact Ledger or bypassing admission gates.
+  - Enforces red-team prompt guardrails against prompt injection and autonomous actuation commands.
+  - **Zero Actuation Invariant:** Agents cannot approve industrial decisions autonomously or control physical equipment.
+- **Key Interfaces:** `SupervisorAgent`, `AgentTask`, `ExecutionContext`, `CopilotService`, `GuardrailRule`.
+
+### Architectural Mapping of Specialized Subsystems
+Specialized numerical and analytical capabilities integrate directly into these four engines rather than existing as standalone platform engines:
+- **Language Understanding & Factory Terminology:** Ingestion frontend and entity extractor feeding Engine 1 (Detailed in Section 5.3).
+- **Core Solver Fabric & Mathematical Solvers:** Numerical execution workers dispatched by Engine 2 (Detailed in Section 6).
+- **Discrete-Event Digital Twin:** Operational validation simulator invoked by Engine 2 (Detailed in Section 8).
+- **Fact Ledger & Dimensional Units Gate:** Immutable state store and physical verification gate guarding Engine 3 (Detailed in Section 11).
 
 ---
 
@@ -201,6 +241,26 @@ flowchart TD
 - **Documentation:** [INDUSTRIAL_ONTOLOGY.md](INDUSTRIAL_ONTOLOGY.md)
 - **Architecture:** Authored by Technical Lead Mohamed Osama (`@Mohamed-Osama-ai7`). Specifies multi-hop graph traversal across factory equipment hierarchies, asset failure modes, and operational constraints. Distinguishes structural graph reachability from unverified text embeddings.
 - **Implementation Status:** The underlying relational ontology store is implemented (`test_industrial_ontology.py`), but autonomous multi-hop agentic graph traversal is currently in **Research / Design Only** status.
+
+### 5.3 Industrial Language Understanding & Grounding (IMPLEMENTED)
+- **Package Path:** `backend/src/qorvexa/industrial/understanding/`
+- **Active Tests:** 43 tests in `tests/test_industrial_understanding.py`
+- **Architectural Role:** Serves as the untrusted ingestion frontend and deterministic entity extractor for the Ontology & Context Engine. It processes unstructured, noisy factory language—specifically Egyptian colloquial Arabic (`عامية مصري`), Arabizi, English, and mixed shift jargon—into grounded, candidate claims without granting unverified natural language authority over system state.
+- **13-Stage Deterministic Extraction Pipeline:**
+  1. `input_normalization`: Normalizes Unicode, whitespace, and Arabic-Indic numerals (`١٢٣` $\to$ `123`).
+  2. `script_detection`: Identifies Arabic, Latin/Arabizi, and mixed script segments.
+  3. `dialect_arabizi_expansion`: Maps Egyptian dialect idioms and Arabizi transliterations (e.g., `3attal`, `el-khatt el-tani`) to standardized vocabulary.
+  4. `tokenization_segmentation`: Deconstructs text into sentence and clause units with character offsets.
+  5. `entity_candidate_extraction`: Extracts candidate plant assets, lines, tanks, machines, and components.
+  6. `quantity_unit_extraction`: Extracts numerical quantities and dimensional physical units (e.g., hours, liters, kg, bars).
+  7. `temporal_window_extraction`: Extracts operational shift boundaries, downtimes, and duration windows.
+  8. `claim_boundary_attribution`: Binds extracted quantities and temporal scopes to specific candidate entities.
+  9. `verbatim_quote_grounding`: Computes exact start and end character offsets (`quote_start`, `quote_end`) linking every claim to verbatim source text.
+  10. `contradiction_detection`: Identifies conflicting assertions (e.g., simultaneous claims of a line being down for 2 hours and running at full capacity).
+  11. `gap_analysis`: Identifies missing critical parameters required for downstream mathematical optimization.
+  12. `clarification_planning`: Formulates targeted, structured clarification prompts when required parameters are ambiguous or missing.
+  13. `untrusted_proposal_emission`: Packages grounded claims into immutable, tagged candidate proposals (`emit_proposals`) routed to the Fact Ledger admission gate.
+- **Safety Invariant:** The extraction pipeline emits untrusted proposals only. It cannot directly mutate the Fact Ledger, bypass the Units Gate, or trigger optimization without validation.
 
 ---
 
@@ -357,38 +417,70 @@ To ensure absolute zero risk of industrial accidents or property damage:
 
 ## 13. First Industrial Vertical & Applied Use Cases
 
-### 13.1 Use Case 1: Industrial APU Compressor Health & Anomaly Management
+### 13.1 Use Case 1: Industrial APU Compressor Health & Anomaly Management (`EVALUATED BENCHMARK ON REAL HISTORICAL TELEMETRY`)
+- **Benchmark Dataset:** UCI MetroPT-3 APU Dataset (#791, 2020), consisting of continuous 1-second physical sensor telemetry from an electric passenger train APU compressor in Lisbon, Portugal.
+- **Classification:** `EVALUATED BENCHMARK ON REAL HISTORICAL TELEMETRY`.
 - **Industrial Setting:** Rail transportation, pneumatic automation, factory compressed-air utilities.
 - **Problem:** Unpredicted compressor failures cause emergency braking or line depressurization, halting factory operations.
-- **QORVEXA Solution:** Grounded sensor telemetry ingests into the 4-regime classifier; `duty_rule` and `pca_spe` detect early valve or line leakage $50\text{ minutes}$ prior to catastrophic failure; RCA engine attributes failure to air dryer vs. valve seal.
+- **QORVEXA Solution:** Grounded sensor telemetry ingests into the 4-regime classifier; `duty_rule` and `pca_spe` detect early valve or line leakage $50\text{ minutes}$ prior to catastrophic failure; RCA engine attributes failure to air dryer vs. valve seal. Evaluated via nested Leave-One-Event-Out (LOEO) cross-validation.
 
-### 13.2 Use Case 2: Multi-Line Food & Beverage Bottling Optimization (Cairo Benchmark)
+### 13.2 Use Case 2: Multi-Line Food & Beverage Bottling Optimization (`SYNTHETIC PLANNING BENCHMARK & PROPOSED COMMERCIAL SCENARIO`)
+- **Benchmark Dataset:** `planning_cases.v0.jsonl` & `planning_cases.v1.jsonl` (Cairo Food Processing Plant #1).
+- **Classification:** `SYNTHETIC PLANNING BENCHMARK & PROPOSED COMMERCIAL SCENARIO`.
+- **Grounding Note:** High-fidelity synthetic planning scenario designed to model Egyptian food packaging operations; represents a proposed commercial market application and synthetic evaluation benchmark, not an active connected customer plant.
 - **Industrial Setting:** High-speed consumer goods packaging (Cairo Food Processing Plant #1).
 - **Problem:** Production planners receive colloquial shift handoff notes ("الخط التاني فيه مشكلة في البكر والإنتاج واقف بقاله ساعتين"). Planning manually in spreadsheets leads to stockouts and late shipments.
 - **QORVEXA Solution:** Egyptian Arabic shift note is ingested; entity resolution binds Line 2; Fact Ledger records the 2-hour downtime; canonical formulation compiler generates shift-bounded optimization; HiGHS solves line quantities; Digital Twin DES verifies that packaging buffer capacities are not exceeded; Pareto decision brief is delivered to the plant manager for approval.
 
-### 13.3 Use Case 3: Energy-Constrained Cable Extrusion Scheduling (Alexandria Benchmark)
+### 13.3 Use Case 3: Energy-Constrained Cable Extrusion Scheduling (`SYNTHETIC PLANNING BENCHMARK & RESEARCH HYPOTHESIS`)
+- **Benchmark Dataset:** Alexandria Cable Manufacturing continuous extrusion model (`planning_cases.v1.jsonl`).
+- **Classification:** `SYNTHETIC PLANNING BENCHMARK & RESEARCH HYPOTHESIS`.
+- **Grounding Note:** High-fidelity synthetic scheduling model designed to test energy-tariff constraints and continuous setup scrap in heavy manufacturing; represents an evaluated research hypothesis and benchmark scenario, not a live connected factory deployment.
 - **Industrial Setting:** Continuous heavy manufacturing (Alexandria Cable Manufacturing).
 - **Problem:** Annealing ovens and continuous extrusion lines face heavy penalty tariffs during peak grid energy hours. Scrap increases exponentially if a continuous run is halted prematurely.
 - **QORVEXA Solution:** Multi-period canonical formulation models energy peak tariffs and minimum continuous run lengths; OSCO loop simulates scrap accumulation during machine setup phases; refined decision package balances overtime labor against electrical peak tariffs.
 
 ---
 
-## 14. Mohamed Osama's Architecture & Technical Direction
+## 14. Mohamed Osama's Architecture, Technical Direction & Attribution
 
-### 14.1 Foundational Architecture Leadership
-Mohamed Osama (`@Mohamed-Osama-ai7`) conceived, architected, and led the development of QORVEXA from its inception as FactoryMind CDT through its commercial enterprise evolution. His direct technical contributions encompass:
+To maintain rigorous historical integrity and clear attribution across the engineering team, contributions are divided into five distinct categories:
 
+### 14.1 Architecture Personally Designed or Directed by Mohamed Osama
+Technical Lead Mohamed Osama (`@Mohamed-Osama-ai7`) conceived, architected, and led the development of QORVEXA from its inception as FactoryMind CDT through its enterprise evolution. Architectural direction personally authored and directed includes:
 1. **Core Architectural Specifications:** Authored the foundational Architecture Decision Records (ADRs), the canonical Research Lab to Solver Fabric contract ([PROBLEM_SOLVER_CONTRACT_ARCHITECTURE.md](PROBLEM_SOLVER_CONTRACT_ARCHITECTURE.md)), the Options A & B architecture contracts, and the 22-subsystem maturity matrix.
-2. **Solver Fabric & Verification Contracts:** Conceived the decoupled Independent Verifier architecture, establishing the epistemic principle that solver status flags must never be trusted without double-precision mathematical auditing.
-3. **Evaluation Harness & Provenance:** Implemented the strict benchmark evaluation harness (`qorvexa.evaluation`), establishing frozen split manifests, evaluation leakage audits, and tamper-evident run tracking.
-4. **Safety & Security Invariants:** Established the non-negotiable physical OT read-only safety boundary, preventing autonomous actuation and guaranteeing that all system decisions require authenticated human sign-off.
+2. **Four Core Platform Engines Architecture:** Structured the platform around the four canonical engines (Ontology & Context, Workflow Orchestration, Decision Intelligence, Governed Agent Engine) and defined the 14-stage conceptual workflow.
+3. **Solver Fabric & Verification Contracts:** Conceived the decoupled Independent Mathematical Verifier architecture, establishing the epistemic principle that solver status flags must never be trusted without double-precision residual auditing.
+4. **Safety & Security Invariants:** Established the non-negotiable physical OT read-only safety boundary (zero actuation invariant) and guaranteed that all operational decisions require authenticated human sign-off.
+5. **GraphRAG Reasoning Architecture:** Authored the multi-hop relational GraphRAG and equipment traversal specifications ([INDUSTRIAL_ONTOLOGY.md](INDUSTRIAL_ONTOLOGY.md)).
 
-### 14.2 Separation of Technical Leadership from Collaborator Contributions
-To maintain rigorous historical integrity:
-- Mohamed Osama directed overall system architecture, contracts, and core platforms.
-- Ahmed Essam (`@a7medessam196`) contributed hybrid RAG enhancements and search evaluation (commit `59c88d01`).
-- AI implementation subagents (Claude Code, Antigravity) operated under Mohamed Osama's explicit design prompts and architecture specifications to implement modules, repair quality gates, and maintain hermetic test suites.
+### 14.2 Code Directly Attributable Through Repository Evidence
+Direct code authorship attributable to Mohamed Osama in repository version control includes:
+1. **Baseline Milestones (M0–M5):** Core foundational modules, data schemas, mathematical abstractions, and initial solver interfaces committed across early development milestones.
+2. **Strict Benchmark Evaluation Harness:** Authored `backend/src/qorvexa/evaluation/`, establishing frozen split manifests, evaluation leakage audits, contamination detection, and tamper-evident run tracking.
+3. **Core Platform Contracts & Interfaces:** Authored shared contracts under `backend/src/qorvexa/contracts/` governing problem representations, solver payloads, and evaluation records.
+
+### 14.3 AI-Assisted Implementation Under Architectural Prompts
+Subsystem implementation scaling was executed by advanced AI coding agents (Claude Code, Antigravity) operating under Mohamed Osama's explicit prompt specifications, ADR contracts, and interface schemas:
+1. **Industrial Language Understanding Pipeline:** 14 modules in `backend/src/qorvexa/industrial/understanding/` covering 13-stage deterministic extraction, dialect/Arabizi normalization, quote offsets, and 43 tests.
+2. **Event-Sourced Industrial Ontology Store:** Schema definitions, event-sourced SQLite WAL property graph, and 70 tests in `backend/src/qorvexa/industrial/ontology/`.
+3. **Discrete-Event Digital Twin (DES):** 1-second integer tick clock, machine micro-states, scrap tracking, and 55 tests in `backend/src/qorvexa/industrial/digital_twin/`.
+4. **Optimization–Simulation Co-Orchestration (OSCO):** 24 tests and state machines in `backend/src/qorvexa/industrial/co_orchestration/`.
+5. **Production Planning Studio Frontend:** React 19 / TypeScript 5.7 UI components, Vitest test suite (75 tests), and Vite setup in `frontend/src/features/planning/`.
+6. **Quality Gate Stabilization & Test Suite Expansion:** Scaling the backend regression suite to 1,924 hermetic tests and resolving CI lint/type regressions.
+
+### 14.4 Work Implemented by Human Collaborators
+1. **Ahmed Essam (`@a7medessam196`):** Contributed hybrid RAG search enhancements, dense vector + BM25 Reciprocal Rank Fusion (RRF), document chunking, and search retrieval evaluation (commit `59c88d01`). Designated forward ownership: Member 2 (Advanced RAG & Retrieval Engineering).
+2. **Forward Human Ownership Workstreams (Members 3, 4, 5, and 6):** As documented in Section 16, Members 3 through 6 are beginning their designated engineering workstreams. Their assigned areas represent forward-looking ownership and development boundaries:
+   - **Mohamed Adel (Member 3):** Advanced optimization, MILP/CP-SAT formulations, and scheduling adapters.
+   - **Beshoy (Member 4):** Causal SCMs, industrial RCA, and sensor degradation models.
+   - **Ziad (Member 5):** Multi-agent runtime, task graphs, execution budgets, and red-team guardrails.
+   - **Ali Motassem (Member 6):** Digital twin scaling, read-only OT connectors, CI/CD pipelines, and observability.
+
+### 14.5 Technical Review, Gatekeeper Oversight & Final Acceptance
+1. **Architectural Review Authority:** Mohamed Osama serves as the sole architectural gatekeeper and code review authority for all modifications to core contracts, Solver Fabric protocols, REST APIs, and safety invariants.
+2. **Quality Gate Enforcement:** Enforced strict testing standards across all PRs—mandating hermetic, offline CPU execution, zero skipped tests, zero weakened assertions, and full Mypy/Biome compliance prior to merge.
+3. **Scientific & Legal Honesty Oversight:** Audited repository documentation to eliminate ungrounded commercial claims, distinguish real telemetry benchmarks from synthetic planning cases, and clarify licensing across Git branches.
 
 ---
 
