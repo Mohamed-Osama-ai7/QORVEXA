@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.anomaly.evaluation import AlarmPolicy, episodes, evaluate, window_labels
-from factorymind.data.metropt3 import FailureReport
+from qorvexa.anomaly.evaluation import AlarmPolicy, episodes, evaluate, window_labels
+from qorvexa.data.metropt3 import FailureReport
 
 W = pd.Timedelta("10min")
 REPORT = FailureReport("R1", datetime(2020, 1, 2, 0, 0), datetime(2020, 1, 2, 2, 0), "Air leak")

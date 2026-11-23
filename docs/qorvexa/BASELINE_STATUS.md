@@ -130,6 +130,13 @@ Checked against the code on 2026-11-16. "Implemented" means code plus tests exis
 - Limits: F1-F4 are development cases; n = 4; no evidence, abstention or recommendation labels; the source archive hash is declared, not re-verified; recommendation accuracy and HITL compliance remain unavailable (D-10), contradiction handling remains undecided where a critical contradiction exists (D-11).
 - Environment: another pytest process was using the default `pytest-tmp` directory during this task, which caused file-lock errors (an environment collision, not a code failure); the clean full run used `D:\FactoryMind\pytest-tmp-03a`.
 
+### 7.3 Task 03B: reliability, leakage controls and statistical reporting (uncommitted) [V]
+
+- Implemented (details and limits in `EVALUATION_STRATEGY.md` §E): split roles with a frozen manifest, refusal of test cases outside `--final`, a final-mode gate (clean Git tree, manifest and hashes, candidate code fingerprint) with a local ledger; cluster-aware intervals that are unavailable when dependence is unknown; conservative undecided-as-failure rates for explicitly binary metrics; a heuristic leakage audit; deterministic reports with environment metadata kept separate; v1 case schemas with origin, language, content origin, relevance source and clustering; a retrieval runner that handles explicit chunk ids, stale labels and unrepresentable (Arabic) queries.
+- **Data reality:** no validation or test case exists. F1-F4 stay development-only, and all starter retrieval cases are team-authored development cases. No held-out evidence was created, and no independent author or annotator is recorded.
+- **Not claimed:** diagnostic accuracy, retrieval quality on real manuals, Arabic retrieval capability (the retrieval tokenizer returns no tokens for Arabic), or any protection against deliberate tampering with the manifest or ledger.
+- The `leakage.py`, `report.py`, `stats.py` and `AUTHORING.md` files and the additional development cases in the v1 case files were contributed by a second contributor working in the same tree; the harness CLI integrates them.
+
 ## 8. Known limitations (carry into every claim)
 
 1. No live plant data; MetroPT-3 is a single train APU, Feb–Aug 2020, ~0.1 Hz, with 4 coarse operator reports.

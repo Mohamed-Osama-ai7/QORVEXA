@@ -13,10 +13,10 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from factorymind.anomaly.service import AnomalyService
-from factorymind.auth.tokens import RemoteJwks, TokenError
-from factorymind.config import Settings
-from factorymind.db.audit import verify_chain
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.auth.tokens import RemoteJwks, TokenError
+from qorvexa.config import Settings
+from qorvexa.db.audit import verify_chain
 from tests.auth_helpers import ASSET, KID, AuthKit, b64, make_client
 
 RS, RE = "2020-01-09T00:00:00", "2020-01-09T12:00:00"

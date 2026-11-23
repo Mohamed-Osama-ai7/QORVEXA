@@ -1,12 +1,13 @@
 [project]
-name = "factorymind"
+name = "qorvexa"
 version = "0.1.0"
-description = "FactoryMind CDT: uncertainty-aware, evidence-grounded industrial decision support (research prototype)."
+description = "QORVEXA: uncertainty-aware, evidence-grounded industrial decision support and optimization fabric."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "MIT"
 dependencies = [
     "fastapi>=0.162.2",
+    "highspy==1.16.0",
     "numpy>=2.3",
     "pandas>=3.1.1",
     "pyarrow>=26.0.1",
@@ -33,7 +34,7 @@ requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/factorymind"]
+packages = ["src/qorvexa", "src/factorymind"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -56,7 +57,7 @@ ignore = []
 python_version = "3.12"
 strict = true
 mypy_path = "src"
-packages = ["factorymind"]
+packages = ["qorvexa"]
 plugins = ["pydantic.mypy"]
 
 # scikit-learn and joblib ship no type information.

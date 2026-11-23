@@ -7,12 +7,12 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from factorymind.anomaly import experiment
-from factorymind.anomaly.evaluation import AlarmPolicy, evaluate
-from factorymind.anomaly.experiment import Candidate, SelectionConfig, choose_default
-from factorymind.anomaly.features import window_features
-from factorymind.anomaly.service import ModelUnavailableError, load_bundle
-from factorymind.data.metropt3 import FailureReport
+from qorvexa.anomaly import experiment
+from qorvexa.anomaly.evaluation import AlarmPolicy, evaluate
+from qorvexa.anomaly.experiment import Candidate, SelectionConfig, choose_default
+from qorvexa.anomaly.features import window_features
+from qorvexa.anomaly.service import ModelUnavailableError, load_bundle
+from qorvexa.data.metropt3 import FailureReport
 from tests.conftest import simulate_apu
 
 REPORTS = (
@@ -381,7 +381,7 @@ def test_threshold_grid_validation() -> None:
 
 
 def test_repository_config_is_valid() -> None:
-    from factorymind.anomaly.cli import DEFAULT_CONFIG
+    from qorvexa.anomaly.cli import DEFAULT_CONFIG
 
     cfg = experiment.ExperimentConfig.load(DEFAULT_CONFIG)
     assert cfg.experiment == "metropt3-anomaly" and len(cfg.fingerprint()) == 10
@@ -394,7 +394,7 @@ def test_repository_config_is_valid() -> None:
 def _candidate(
     detected: list[bool], fa: float, delays: list[float | None], label: str = "x"
 ) -> Candidate:
-    from factorymind.anomaly.evaluation import EvaluationResult, EventResult
+    from qorvexa.anomaly.evaluation import EvaluationResult, EventResult
 
     events = [EventResult(f"E{i + 1}", d, delays[i] if d else None) for i, d in enumerate(detected)]
     result = EvaluationResult(

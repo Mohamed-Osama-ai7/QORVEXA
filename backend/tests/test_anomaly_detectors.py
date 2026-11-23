@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.anomaly.detectors import FeatureProfile, build_detector
-from factorymind.anomaly.features import FEATURE_NAMES, WindowSpec, window_features
+from qorvexa.anomaly.detectors import FeatureProfile, build_detector
+from qorvexa.anomaly.features import FEATURE_NAMES, WindowSpec, window_features
 from tests.conftest import simulate_apu
 
 

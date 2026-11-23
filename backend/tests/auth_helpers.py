@@ -16,10 +16,10 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
-from factorymind.anomaly.service import AnomalyService
-from factorymind.api.anomaly import get_anomaly_service
-from factorymind.api.app import create_app
-from factorymind.config import Settings
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.api.anomaly import get_anomaly_service
+from qorvexa.api.app import create_app
+from qorvexa.config import Settings
 
 ISSUER = "https://idp.test/realms/factory"
 AUDIENCE = "factorymind-api"

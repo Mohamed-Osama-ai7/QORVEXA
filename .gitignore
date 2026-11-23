@@ -15,7 +15,7 @@ htmlcov/
 .env.*
 !.env.example
 
-# Data, models and experiment artefacts live outside Git (D:\FactoryMind\...)
+# Data, models and experiment artefacts live outside Git (D:\QORVEXA\...)
 data/raw/
 data/processed/
 *.parquet

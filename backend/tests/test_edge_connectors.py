@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from factorymind.connectors import (
+from qorvexa.connectors import (
     DEFAULT_EDGE_SOURCES,
     EdgeSecurityError,
     EdgeValidationError,
@@ -28,7 +28,7 @@ from factorymind.connectors import (
     validate_edge_endpoint,
     verify_non_pickle_manifest,
 )
-from factorymind.contracts.connectors import (
+from qorvexa.contracts.connectors import (
     EdgeSampleValidationRequest,
     EdgeSourceConfig,
     EdgeTelemetrySampleInput,

@@ -6,9 +6,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.exc import DatabaseError
 
-from factorymind.anomaly.service import AnomalyService
-from factorymind.db.audit import compute_hash, verify_chain
-from factorymind.db.session import Database, SchemaMismatchError
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.db.audit import compute_hash, verify_chain
+from qorvexa.db.session import Database, SchemaMismatchError
 from tests.auth_helpers import ASSET, AuthKit, make_client
 
 RANGE_START, RANGE_END = "2020-01-09T00:00:00", "2020-01-09T12:00:00"
@@ -288,7 +288,7 @@ def test_audit_hash_is_deterministic_and_chained() -> None:
 
 
 def test_audit_details_are_bounded(world: World) -> None:
-    from factorymind.db.audit import MAX_DETAIL_VALUE, append_audit
+    from qorvexa.db.audit import MAX_DETAIL_VALUE, append_audit
 
     db: Database = world.client.app.state.db  # type: ignore[attr-defined]
     with db.session() as session:

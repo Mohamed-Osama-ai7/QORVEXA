@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.anomaly.faults import FAULT_TYPES, build_cases, inject
-from factorymind.anomaly.features import WindowSpec, window_features
-from factorymind.data.metropt3 import FailureReport
+from qorvexa.anomaly.faults import FAULT_TYPES, build_cases, inject
+from qorvexa.anomaly.features import WindowSpec, window_features
+from qorvexa.data.metropt3 import FailureReport
 from tests.conftest import simulate_apu
 
 SPEC = WindowSpec()

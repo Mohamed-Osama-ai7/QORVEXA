@@ -9,15 +9,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.contracts.ml_engine import ABSTENTION_MESSAGE
-from factorymind.data import ai4i2020
-from factorymind.ml.ai4i_benchmark import save_ai4i_artifacts, train_and_evaluate_ai4i
-from factorymind.ml.orchestrator import (
+from qorvexa.contracts.ml_engine import ABSTENTION_MESSAGE
+from qorvexa.data import ai4i2020
+from qorvexa.ml.ai4i_benchmark import save_ai4i_artifacts, train_and_evaluate_ai4i
+from qorvexa.ml.orchestrator import (
     BenchmarkUnavailableError,
     MultiModelOrchestrator,
     load_verified_ai4i_bundle,
 )
-from factorymind.ml.uncertainty import MahalanobisOodDetector, expected_calibration_error
+from qorvexa.ml.uncertainty import MahalanobisOodDetector, expected_calibration_error
 from tests.auth_helpers import AuthKit, make_client
 
 

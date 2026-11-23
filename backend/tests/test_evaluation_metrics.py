@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from factorymind.anomaly.rca_eval import (
+from qorvexa.anomaly.rca_eval import (
     critical_contradiction_handled,
     critical_contradictions_disclosed,
     evidence_precision,
@@ -13,7 +13,7 @@ from factorymind.anomaly.rca_eval import (
     recommendation_accurate,
     safe_diagnostic_disposition,
 )
-from factorymind.knowledge.eval import (
+from qorvexa.knowledge.eval import (
     hit_rate_at_k,
     macro_average,
     macro_hit_rate_at_k,

@@ -35,7 +35,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <h1 className="text-xl font-semibold">Authentication is not configured</h1>
         <p role="alert" className="text-sm text-muted">
           This build has no identity provider. Set VITE_OIDC_AUTHORITY and VITE_OIDC_CLIENT_ID and
-          rebuild. FactoryMind does not serve data to unauthenticated users.
+          rebuild. QORVEXA does not serve data to unauthenticated users.
         </p>
       </Centered>
     )
@@ -43,7 +43,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   return (
     <Centered>
-      <h1 className="text-xl font-semibold">FactoryMind CDT</h1>
+      <h1 className="text-xl font-semibold">QORVEXA Core</h1>
       <p className="text-sm text-muted">
         Advisory decision support. Sign in with your organisation account to continue.
       </p>

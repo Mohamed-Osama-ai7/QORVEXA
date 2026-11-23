@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.data import metropt3
-from factorymind.data.metropt3 import (
+from qorvexa.data import metropt3
+from qorvexa.data.metropt3 import (
     DataValidationError,
     assess_quality,
     clean,

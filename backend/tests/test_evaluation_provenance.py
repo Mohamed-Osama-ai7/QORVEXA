@@ -10,27 +10,27 @@ from typing import Any
 
 import pytest
 
-from factorymind.evaluation.__main__ import main
-from factorymind.evaluation.jsonl import (
+from qorvexa.evaluation.__main__ import main
+from qorvexa.evaluation.jsonl import (
     CaseFileError,
     load_cases,
     load_rca_predictions,
     sha256_file,
     write_jsonl,
 )
-from factorymind.evaluation.provenance import (
+from qorvexa.evaluation.provenance import (
     COMPONENT_FILES,
     code_fingerprint,
     git_info,
     verify_run,
 )
-from factorymind.evaluation.rca import (
+from qorvexa.evaluation.rca import (
     RCA_METRICS,
     predictions_from_service,
     run_engine,
     score_rca_cases,
 )
-from factorymind.evaluation.schemas import RcaCase
+from qorvexa.evaluation.schemas import RcaCase
 from tests.auth_helpers import ASSET
 from tests.test_evaluation_harness import RCA_CASES, RCA_PREDS, _rca_case, _write
 from tests.test_evidence_foundation import _make_wp_a_service
@@ -192,7 +192,7 @@ def test_run_engine_keeps_provenance_and_handles_empty_windows(tmp_path: Path) -
 def test_run_engine_isolates_a_failing_case(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from factorymind.anomaly import evidence_package
+    from qorvexa.anomaly import evidence_package
 
     real = evidence_package.build_event_evidence_package
 

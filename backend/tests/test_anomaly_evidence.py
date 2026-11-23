@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 
-from factorymind.anomaly.detectors import FeatureProfile
-from factorymind.anomaly.evidence import GROUP_LABELS, build_evidence, group_of, meaning_of
-from factorymind.anomaly.features import FEATURE_NAMES, WindowSpec, window_features
+from qorvexa.anomaly.detectors import FeatureProfile
+from qorvexa.anomaly.evidence import GROUP_LABELS, build_evidence, group_of, meaning_of
+from qorvexa.anomaly.features import FEATURE_NAMES, WindowSpec, window_features
 from tests.conftest import simulate_apu
 
 

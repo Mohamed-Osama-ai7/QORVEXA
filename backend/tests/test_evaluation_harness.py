@@ -9,27 +9,27 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from factorymind.anomaly.evidence_package import build_event_evidence_package
-from factorymind.anomaly.rca import analyze_event_evidence
-from factorymind.evaluation.__main__ import main
-from factorymind.evaluation.jsonl import (
+from qorvexa.anomaly.evidence_package import build_event_evidence_package
+from qorvexa.anomaly.rca import analyze_event_evidence
+from qorvexa.evaluation.__main__ import main
+from qorvexa.evaluation.jsonl import (
     CaseFileError,
     load_cases,
     load_rca_predictions,
     write_jsonl,
 )
-from factorymind.evaluation.rca import (
+from qorvexa.evaluation.rca import (
     RCA_METRICS,
     prediction_from_assessment,
     predictions_from_service,
     score_rca_case,
 )
-from factorymind.evaluation.retrieval import (
+from qorvexa.evaluation.retrieval import (
     RetrievalSystem,
     reciprocal_rank_at_k,
     run_retrieval_case,
 )
-from factorymind.evaluation.schemas import RcaCase, RetrievalCase
+from qorvexa.evaluation.schemas import RcaCase, RetrievalCase
 from tests.auth_helpers import ASSET
 from tests.test_evidence_foundation import _make_wp_a_service
 
@@ -305,7 +305,7 @@ def test_prediction_from_real_rca_output(tmp_path: Path) -> None:
     preds = predictions_from_service(svc, [case], asset_id=ASSET)
     assert len(preds) == 1
     pred = preds[0]
-    assert pred.producer == "factorymind.anomaly.rca"
+    assert pred.producer == "qorvexa.anomaly.rca"
     assert pred.package_critical_contradictions is not None
     res = score_rca_case(case, pred)
     assert res.status == "scored"

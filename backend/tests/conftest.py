@@ -10,13 +10,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.data.metropt3 import ANALOG_SENSORS, DIGITAL_SENSORS
+from qorvexa.data.metropt3 import ANALOG_SENSORS, DIGITAL_SENSORS
 from tests.settings_isolation import hermetic_settings
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from factorymind.anomaly.service import AnomalyService
+    from qorvexa.anomaly.service import AnomalyService
     from tests.auth_helpers import AuthKit
 
 
@@ -104,9 +104,9 @@ def kit(tmp_path: Path) -> AuthKit:
 @pytest.fixture(scope="session")
 def anomaly_service(tmp_path_factory: pytest.TempPathFactory) -> AnomalyService:
     """A real model trained on simulated telemetry plus that telemetry for replay."""
-    from factorymind.anomaly import experiment
-    from factorymind.anomaly.service import AnomalyService, load_bundle, load_warning_bundle
-    from factorymind.data import metropt3
+    from qorvexa.anomaly import experiment
+    from qorvexa.anomaly.service import AnomalyService, load_bundle, load_warning_bundle
+    from qorvexa.data import metropt3
     from tests.test_anomaly_experiment import REPORTS, config, telemetry
 
     output = experiment.run(config(), telemetry(), REPORTS)

@@ -11,12 +11,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.exc import DatabaseError
 
-from factorymind.anomaly import experiment
-from factorymind.anomaly.evidence_eval import evaluate_package, evaluate_service_report_events
-from factorymind.anomaly.evidence_package import build_event_evidence_package
-from factorymind.anomaly.service import AnomalyService, load_bundle, load_warning_bundle
-from factorymind.data import metropt3
-from factorymind.db.session import Database
+from qorvexa.anomaly import experiment
+from qorvexa.anomaly.evidence_eval import evaluate_package, evaluate_service_report_events
+from qorvexa.anomaly.evidence_package import build_event_evidence_package
+from qorvexa.anomaly.service import AnomalyService, load_bundle, load_warning_bundle
+from qorvexa.data import metropt3
+from qorvexa.db.session import Database
 from tests.auth_helpers import ASSET, AuthKit, make_client
 from tests.conftest import simulate_apu
 from tests.test_anomaly_events import _wp2_config
@@ -318,7 +318,7 @@ def test_schema_v2_refuses_v1_database(tmp_path: Any) -> None:
     db.ensure_ready()
     with db.engine.begin() as conn:
         conn.execute(text("UPDATE schema_meta SET value = '1'"))
-    from factorymind.db.session import SchemaMismatchError
+    from qorvexa.db.session import SchemaMismatchError
 
     with pytest.raises(SchemaMismatchError):
         Database(url).ensure_ready()

@@ -7,15 +7,15 @@ from pathlib import Path
 import pandas as pd
 from fastapi.testclient import TestClient
 
-from factorymind.anomaly.evidence_package import build_event_evidence_package
-from factorymind.anomaly.rca import analyze_event_evidence
-from factorymind.anomaly.rca_eval import (
+from qorvexa.anomaly.evidence_package import build_event_evidence_package
+from qorvexa.anomaly.rca import analyze_event_evidence
+from qorvexa.anomaly.rca_eval import (
     evaluate_rca_case,
     evaluate_service_report_rca,
     evaluate_unlabeled_warning_slice,
 )
-from factorymind.anomaly.service import AnomalyService
-from factorymind.data import metropt3
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.data import metropt3
 from tests.auth_helpers import ASSET, AuthKit, make_client
 from tests.test_evidence_foundation import _make_wp_a_service
 
@@ -238,9 +238,9 @@ def test_rca_api_rbac_tenant_isolation_and_human_observation_incorporation(
         f"/api/v1/incidents/{inc_id}/evidence-package",
         headers=kit.headers(roles=["viewer"]),
     ).json()
-    from factorymind.anomaly.rca_eval import citations_grounded
-    from factorymind.contracts.events import EventEvidencePackage
-    from factorymind.contracts.rca import RcaAssessment
+    from qorvexa.anomaly.rca_eval import citations_grounded
+    from qorvexa.contracts.events import EventEvidencePackage
+    from qorvexa.contracts.rca import RcaAssessment
 
     assert citations_grounded(
         EventEvidencePackage.model_validate(pkg),
@@ -327,7 +327,7 @@ def test_rca_regression_for_frozen_motor_zero_nonstale_fake_pca_negated_obs_and_
         event_start=pd.Timestamp("2020-01-04 08:00"),
         event_end=pd.Timestamp("2020-01-04 08:30"),
     )
-    from factorymind.anomaly.rca_eval import citations_grounded
+    from qorvexa.anomaly.rca_eval import citations_grounded
 
     rca_v = analyze_event_evidence(pkg_v)
     assert citations_grounded(pkg_v, rca_v)
@@ -349,7 +349,7 @@ def test_rca_regression_for_frozen_motor_zero_nonstale_fake_pca_negated_obs_and_
     assert rca_norm.primary_category == "insufficient_evidence"
 
     # 5. Negated human observation must not boost leak or sensor fault
-    from factorymind.contracts.events import HumanObservationOut
+    from qorvexa.contracts.events import HumanObservationOut
 
     obs_neg = HumanObservationOut(
         id="obsneg",

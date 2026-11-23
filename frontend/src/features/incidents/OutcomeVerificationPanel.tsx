@@ -80,7 +80,7 @@ export function OutcomeVerificationPanel({ incident }: OutcomeVerificationPanelP
       </h2>
       <p className="text-xs text-muted">
         Append-only human verification records comparing incident diagnoses against maintenance
-        checks (separate from observed telemetry; FactoryMind never actuates equipment).
+        checks (separate from observed telemetry; QORVEXA never actuates equipment).
       </p>
 
       {outcomes.length === 0 ? (

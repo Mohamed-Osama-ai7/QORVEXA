@@ -23,11 +23,14 @@ function Shell() {
   return (
     <div className="flex min-h-full">
       <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-panel p-4">
-        <p className="text-lg font-semibold tracking-tight">FactoryMind CDT</p>
+        <p className="text-lg font-semibold tracking-tight">QORVEXA Core</p>
         <p className="mt-1 text-xs text-muted">Advisory decision support</p>
         <nav aria-label="Primary" className="mt-6 flex flex-col gap-1 text-sm">
           <Link to="/" className={LINK} activeProps={ACTIVE}>
             Overview
+          </Link>
+          <Link to="/planning" className={LINK} activeProps={ACTIVE}>
+            Planning Studio
           </Link>
           {permissions.has('asset:read') && (
             <Link to="/assets" className={LINK} activeProps={ACTIVE}>

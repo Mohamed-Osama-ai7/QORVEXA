@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.anomaly.alarm import AlarmPolicy, AlarmTracker, episodes
+from qorvexa.anomaly.alarm import AlarmPolicy, AlarmTracker, episodes
 
 W = pd.Timedelta("10min")
 

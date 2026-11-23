@@ -16,6 +16,7 @@ import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as EdgeRouteImport } from './routes/edge'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
 import { Route as ModelsRouteImport } from './routes/models'
+import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as TwinRouteImport } from './routes/twin'
 import { Route as AssetsIndexRouteImport } from './routes/assets.index'
 import { Route as AssetsAssetIdRouteImport } from './routes/assets.$assetId'
@@ -58,6 +59,11 @@ const ModelsRoute = ModelsRouteImport.update({
   path: '/models',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlanningRoute = PlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TwinRoute = TwinRouteImport.update({
   id: '/twin',
   path: '/twin',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/edge': typeof EdgeRoute
   '/knowledge': typeof KnowledgeRoute
   '/models': typeof ModelsRoute
+  '/planning': typeof PlanningRoute
   '/twin': typeof TwinRoute
   '/assets/$assetId': typeof AssetsAssetIdRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/edge': typeof EdgeRoute
   '/knowledge': typeof KnowledgeRoute
   '/models': typeof ModelsRoute
+  '/planning': typeof PlanningRoute
   '/twin': typeof TwinRoute
   '/assets/$assetId': typeof AssetsAssetIdRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/edge': typeof EdgeRoute
   '/knowledge': typeof KnowledgeRoute
   '/models': typeof ModelsRoute
+  '/planning': typeof PlanningRoute
   '/twin': typeof TwinRoute
   '/assets/$assetId': typeof AssetsAssetIdRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/edge'
     | '/knowledge'
     | '/models'
+    | '/planning'
     | '/twin'
     | '/assets/$assetId'
     | '/auth/callback'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/edge'
     | '/knowledge'
     | '/models'
+    | '/planning'
     | '/twin'
     | '/assets/$assetId'
     | '/auth/callback'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/edge'
     | '/knowledge'
     | '/models'
+    | '/planning'
     | '/twin'
     | '/assets/$assetId'
     | '/auth/callback'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   EdgeRoute: typeof EdgeRoute
   KnowledgeRoute: typeof KnowledgeRoute
   ModelsRoute: typeof ModelsRoute
+  PlanningRoute: typeof PlanningRoute
   TwinRoute: typeof TwinRoute
   AssetsAssetIdRoute: typeof AssetsAssetIdRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -250,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModelsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/twin': {
       id: '/twin'
       path: '/twin'
@@ -303,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   EdgeRoute: EdgeRoute,
   KnowledgeRoute: KnowledgeRoute,
   ModelsRoute: ModelsRoute,
+  PlanningRoute: PlanningRoute,
   TwinRoute: TwinRoute,
   AssetsAssetIdRoute: AssetsAssetIdRoute,
   AuthCallbackRoute: AuthCallbackRoute,

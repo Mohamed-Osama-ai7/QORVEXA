@@ -2,13 +2,13 @@ import time
 
 import pytest
 
-from factorymind.auth.principal import (
+from qorvexa.auth.principal import (
     IdentityError,
     Permission,
     Role,
     principal_from_claims,
 )
-from factorymind.auth.tokens import MAX_TOKEN_CHARS, TokenError, TokenVerifier
+from qorvexa.auth.tokens import MAX_TOKEN_CHARS, TokenError, TokenVerifier
 from tests.auth_helpers import ASSET, AUDIENCE, ISSUER, AuthKit
 
 

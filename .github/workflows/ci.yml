@@ -35,8 +35,12 @@ jobs:
         run: uv run pytest
       - name: Evaluation benchmarks validate (offline, no dataset)
         run: |
-          uv run python -m factorymind.evaluation validate benchmarks/qorvexa/rca_cases.v0.jsonl
-          uv run python -m factorymind.evaluation validate benchmarks/qorvexa/retrieval_cases.v0.jsonl
+          uv run python -m qorvexa.evaluation validate benchmarks/qorvexa/rca_cases.v0.jsonl
+          uv run python -m qorvexa.evaluation validate benchmarks/qorvexa/retrieval_cases.v0.jsonl
+          uv run python -m qorvexa.evaluation validate benchmarks/qorvexa/rca_cases.v1.jsonl
+          uv run python -m qorvexa.evaluation validate benchmarks/qorvexa/retrieval_cases.v1.jsonl
+          uv run python -m qorvexa.evaluation splits check --manifest benchmarks/qorvexa/splits.v1.json
+          uv run python -m qorvexa.evaluation audit --rca-cases benchmarks/qorvexa/rca_cases.v1.jsonl --retrieval-cases benchmarks/qorvexa/retrieval_cases.v1.jsonl --strict
 
   frontend:
     runs-on: ubuntu-latest

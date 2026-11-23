@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from factorymind.config import Settings, get_settings
+from qorvexa.config import Settings, get_settings
 from tests.settings_isolation import hermetic_settings
 
 AMBIENT = "FACTORYMIND_ENVIRONMENT"
@@ -14,7 +14,9 @@ AMBIENT = "FACTORYMIND_ENVIRONMENT"
 
 def test_autouse_fixture_is_active_for_every_test() -> None:
     assert Settings.model_config["env_file"] is None
-    assert not [name for name in os.environ if name.upper().startswith("FACTORYMIND_")]
+    assert not [
+        name for name in os.environ if name.upper().startswith(("FACTORYMIND_", "QORVEXA_"))
+    ]
     assert get_settings().environment == "development"
 
 

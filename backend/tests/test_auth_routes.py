@@ -5,8 +5,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from factorymind.anomaly.service import AnomalyService
-from factorymind.db.models import AuditEvent
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.db.models import AuditEvent
 from tests.auth_helpers import ASSET, AuthKit, make_client
 from tests.route_helpers import all_operations
 
@@ -15,7 +15,13 @@ HEALTH = "/api/v1/health"
 
 
 def fill(path: str) -> str:
-    return path.replace("{incident_id}", ZERO_ID).replace("{asset_id}", ASSET)
+    return (
+        path.replace("{incident_id}", ZERO_ID)
+        .replace("{asset_id}", ASSET)
+        .replace("{session_id}", "s1")
+        .replace("{factory_id}", "fac-1")
+        .replace("{term_id}", "T-0001")
+    )
 
 
 def audit_rows(client: TestClient, tenant: str) -> list[AuditEvent]:

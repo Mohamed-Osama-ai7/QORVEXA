@@ -1,0 +1,85 @@
+{
+  "assignments": {
+    "rca": {
+      "adv-critical-hidden": "fixture",
+      "adv-critical-mentioned-ignored": "fixture",
+      "adv-insufficient-ground-truth": "fixture",
+      "adv-invalid-prediction": "fixture",
+      "adv-malformed-output-keys": "fixture",
+      "adv-missing-evidence": "fixture",
+      "adv-missing-prediction": "fixture",
+      "adv-partial-disclosure": "fixture",
+      "adv-safe-abstention": "fixture",
+      "adv-unsupported-conclusion": "fixture",
+      "metropt3-f1-air-leak-report": "development",
+      "metropt3-f2-air-leak-report": "development",
+      "metropt3-f3-air-leak-report": "development",
+      "metropt3-f4-air-leak-report": "development",
+      "synthetic-motor-valve-mismatch": "unassigned",
+      "synthetic-whole-feed-freeze": "unassigned"
+    },
+    "retrieval": {
+      "oos-arabic-compressor-probe": "development",
+      "oos-binary-search": "development",
+      "oos-capital-france": "development",
+      "oos-cooking-recipe-pasta": "development",
+      "oos-quantum-computing-gate": "development",
+      "oos-stock-market-options": "development",
+      "oos-turbine-blade": "development",
+      "ret-abnormal-demand-ventilation": "development",
+      "ret-ai4i-abstention": "development",
+      "ret-ai4i-heat-dissipation-failure": "development",
+      "ret-ai4i-tool-wear-failure": "development",
+      "ret-air-demand-unobserved": "development",
+      "ret-air-leak-decay-slope": "development",
+      "ret-causal-vs-correlation": "development",
+      "ret-compressor-duty-limit": "development",
+      "ret-cross-asset-ood": "development",
+      "ret-digital-twin-physics-coupling": "development",
+      "ret-hitl-human-verification-step": "development",
+      "ret-isolation-forest-contamination": "development",
+      "ret-leak-tp3-decay": "development",
+      "ret-metropt3-pdf-sensors": "development",
+      "ret-multivariate-spe-residuals": "development",
+      "ret-oil-temp-anomaly": "development",
+      "ret-pca-spe-short-query": "development",
+      "ret-pca-spe-tiers": "development",
+      "ret-regime-transition-boundary": "development",
+      "ret-robust-zscore-normalization": "development",
+      "ret-sensor-freeze-rule": "development",
+      "ret-stale-telemetry-isolation": "development",
+      "ret-valve-contradiction": "development"
+    }
+  },
+  "case_files": {
+    "rca_cases.v0.jsonl": {
+      "frozen": true,
+      "sha256": "1f7d34e28a9ac544a53b67a4a734c8cce3538cf884a29705cd81a011824370ea"
+    },
+    "rca_cases.v1.jsonl": {
+      "frozen": false,
+      "sha256": "102d2bcf1fc861755571c54e378d74cf932501646fdd47f539a2f32e04f6ed4c"
+    },
+    "retrieval_cases.v0.jsonl": {
+      "frozen": true,
+      "sha256": "dff37b753d7490c2f4a02291af40c88eaf00ba20ba1a6a0f1bee5eddec5c35ff"
+    },
+    "retrieval_cases.v1.jsonl": {
+      "frozen": false,
+      "sha256": "aa92e89a31092376bb4ce4c2f72529cd5a599d3181153be53eef6664192df7df"
+    }
+  },
+  "changelog": [
+    {
+      "date": "2026-11-17",
+      "notes": "Task 03B initial frozen manifest covering v0 legacy and v1 expanded benchmarks",
+      "version": "1.0.0"
+    }
+  ],
+  "datasets": {
+    "metropt3_telemetry_sha256": "453f8cbbbba1bc287dd6aae92fd51aa53285b42ff71e097d96f136056102e582",
+    "retrieval_corpus_sha256": "762d280f0599804b20c3b0d9d7a58525e06680bd9b030c71836e7af4d1ba64fc"
+  },
+  "manifest_version": "1.0.0",
+  "schema_version": "splits/v1"
+}

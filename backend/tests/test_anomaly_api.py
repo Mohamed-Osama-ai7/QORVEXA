@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from factorymind.anomaly.service import AnomalyService
-from factorymind.data import metropt3
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.data import metropt3
 from tests.auth_helpers import AuthKit, make_client
 from tests.conftest import simulate_apu
 

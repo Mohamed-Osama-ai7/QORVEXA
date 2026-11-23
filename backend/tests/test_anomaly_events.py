@@ -8,16 +8,16 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from factorymind.anomaly import cli, experiment
-from factorymind.anomaly.events import classify_window_event
-from factorymind.anomaly.regimes import RegimeAssessment
-from factorymind.anomaly.service import (
+from qorvexa.anomaly import cli, experiment
+from qorvexa.anomaly.events import classify_window_event
+from qorvexa.anomaly.regimes import RegimeAssessment
+from qorvexa.anomaly.service import (
     AnomalyService,
     ModelUnavailableError,
     load_bundle,
     load_warning_bundle,
 )
-from factorymind.data import metropt3
+from qorvexa.data import metropt3
 from tests.conftest import simulate_apu
 
 

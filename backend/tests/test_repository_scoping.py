@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
-from factorymind.auth.principal import Principal, Role
-from factorymind.db.repository import DuplicateIncidentError, IncidentRepo
-from factorymind.db.session import Database
+from qorvexa.auth.principal import Principal, Role
+from qorvexa.db.repository import DuplicateIncidentError, IncidentRepo
+from qorvexa.db.session import Database
 from tests.auth_helpers import ASSET
 
 START = datetime(2020, 1, 9, 6, 0)

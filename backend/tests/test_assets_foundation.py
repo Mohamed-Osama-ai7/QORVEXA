@@ -6,9 +6,9 @@ import json
 import zipfile
 from pathlib import Path
 
-from factorymind.assets.passport import get_asset_passport, read_active_model_version
-from factorymind.data.foundation import inspect_metropt3_dataset, verify_dataset_integrity
-from factorymind.data.metropt3 import (
+from qorvexa.assets.passport import get_asset_passport, read_active_model_version
+from qorvexa.data.foundation import inspect_metropt3_dataset, verify_dataset_integrity
+from qorvexa.data.metropt3 import (
     ANALOG_SENSORS,
     ARCHIVE_SHA256,
     DIGITAL_SENSORS,

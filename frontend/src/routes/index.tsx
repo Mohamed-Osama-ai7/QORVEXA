@@ -13,7 +13,7 @@ function OverviewPage() {
       </h1>
       <p className="mt-1 text-sm text-muted">
         Research prototype on public and simulated data. Recommendations require human review;
-        FactoryMind never controls equipment.
+        QORVEXA never controls equipment.
       </p>
       <div className="mt-6">
         <SystemStatus />

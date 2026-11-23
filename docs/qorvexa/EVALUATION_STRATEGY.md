@@ -2,7 +2,7 @@
 
 This document specifies **how** retrieval, diagnosis and the digital twin will be measured. It does not report new results.
 
-**Implementation status (2026-11-16, branch `fix/hermetic-test-settings`, uncommitted):**
+**Implementation status (updated for Task 03B; the 02A/02B/03A work is committed on `feat/qorvexa-eval-harness`, the 03B work is uncommitted):**
 
 | Part | Status |
 |---|---|
@@ -10,9 +10,10 @@ This document specifies **how** retrieval, diagnosis and the digital twin will b
 | Diagnosis evidence, contradiction, recommendation and HITL scoring rules (§B.3) | **Implemented** as pure functions in `anomaly/rca_eval.py`, unit-tested on toy data. Inputs for recommendation class and HITL flags: **pending** (D-10). |
 | Twin MAE / RMSE / skill vs persistence and train-mean (§C.1) | **Implemented** in `twin/physics.py` (existing). |
 | Twin prediction intervals, coverage, width, interval score, regime breakdown (§C.2) | **Specified only.** The twin computes no interval. (The conformal-style p-values in `anomaly/calibration.py` calibrate anomaly scores; they are not twin prediction intervals.) |
-| Harness foundation (§D): v0 JSONL schemas, strict case loader, lenient prediction loader, RCA scoring, retrieval runner, deterministic results writer, CLI, CI validation step | **Implemented (Task 02B, uncommitted)** in `backend/src/factorymind/evaluation/`, with tests in `tests/test_evaluation_harness.py`. |
-| Starter benchmark sets | **Implemented, small:** 16 RCA cases, 13 retrieval cases in `backend/benchmarks/qorvexa/`. Not statistically powered; no real manuals; no dev/test split. |
-| Full §A.2 / §B.1 schemas (bilingual fields, author, licence, dev/test split), bootstrap CIs, evidence-package generator for synthetic scenarios, RCA engine runs on MetroPT-3 from the CLI | **Specified only / pending.** |
+| Harness foundation (§D): v0 JSONL schemas, strict case loader, lenient prediction loader, RCA scoring, retrieval runner, deterministic results writer, CLI, CI validation step | **Implemented (Task 02B, 03A)** in `backend/src/factorymind/evaluation/`, with tests in `tests/test_evaluation_harness.py` and `tests/test_evaluation_provenance.py`. |
+| Starter benchmark sets | **Implemented, small:** v0: 16 RCA, 13 retrieval cases; v1 files hold the same plus later development additions (retrieval v1: 30 cases, all `development`, `authored_team`). Not statistically powered; no real manuals; no validation or test data. |
+| Splits, frozen manifest, final mode and ledger; cluster-aware intervals and conservative binary rates; leakage audit; deterministic reports; retrieval v1 runner (explicit chunk ids, stale labels, Arabic tokenizer gate) (§E) | **Implemented (Task 03B, uncommitted).** Mechanics only: there are no validation or test cases, no independent authors, and the protections have documented bypasses (§E.4). |
+| Licence fields, evidence-package generator for synthetic scenarios, independent authoring and annotation, wiring of paired comparisons | **Pending.** (RCA engine runs on MetroPT-3 from the CLI: implemented in 03A.) |
 
 Any future component (neural embeddings, rerankers, LLMs, new twin models) is accepted only if it beats the baselines below **on the same frozen evaluation sets**.
 
@@ -352,3 +353,83 @@ uv run python -m factorymind.evaluation verify <run_dir> [--check-code]
 
 All four agree with the coarse label (`air_leakage` or `concurrent_conditions`). **This is not a diagnostic accuracy result:** n = 4, one fault class, day-level operator labels, no repair record, a label that accepts two categories, and development cases. Evidence-key labels, abstention and recommendation/HITL metrics are `unlabelled` or `unavailable`. The run only shows that the adapter and provenance work on real data.
 
+
+
+---
+
+## E. Reliability, leakage controls and statistical reporting (Task 03B)
+
+Implemented in `backend/src/factorymind/evaluation/` (`schemas.py`, `upgrade.py`, `splits.py`, `intervals.py`, `stats.py`, `leakage.py`, `report.py`, `retrieval.py`, `__main__.py`) with tests in `tests/test_evaluation_{splits,intervals,stats,cli_wiring,retrieval_v1}.py`. v0 case files and old run directories keep working and verifying.
+
+### E.1 Splits and what each is for
+| Split | Use | Rules |
+|---|---|---|
+| `development` | tuning, inspection | any case may be used to develop the system |
+| `validation` | model selection | not `derived_from_dev` origin |
+| `test` | frozen final evaluation | requires an `authored_independent` origin with a named author, independent relevance labels (retrieval), registration in the frozen manifest, and `--final` |
+| `fixture` | tests the scoring code | only RCA `adversarial_contract` cases; excluded from intervals and from any quality claim |
+| `unassigned` | legacy or unvetted | default for v0 cases without a role |
+
+**Nothing is promoted automatically.** No code path assigns `test`; the v0 to v1 upgrade only emits `development`, `unassigned` or `fixture`. A v0 case can never be `test`. `metropt3_observed` cases can never be `test` (F1-F4 are the dataset's only labelled failures and are development cases).
+
+**Current data:** no validation or test case exists for RCA or retrieval, so every report states "test: none". Nothing was invented to change that.
+
+### E.2 Boundaries (what was used for what)
+| Activity | Data used | Status |
+|---|---|---|
+| Detector training / calibration | MetroPT-3 Feb-Mar 2020 windows (model card `training_period`, `calibration_period`) | before F1 (April); says nothing about the RCA rules |
+| RCA thresholds and rules | derivation undocumented; developed with F1-F4 in view | F1-F4 are development-only |
+| Retrieval development | `DEFAULT_EVAL_CASES`, `DEFAULT_OOS_EVAL_QUERIES`, retriever parameters (`k1`, `b`, `rrf_k`) | the 13 inherited queries are development; authorship of the indexed documents is not recorded |
+| Evaluation | `validation` / `test` splits only | empty today |
+
+### E.3 Case schema v1 (backward compatible)
+`rca_case/v1` and `retrieval_case/v1` add fields; v0 files are unchanged and still load (v1-only fields in a v0 record are rejected). In v1 the fields `split`, `origin` and `cluster_id` are required (`cluster_id: null` means dependence unknown); retrieval v1 also requires `content_origin` and `relevance_source`.
+- `origin`: `{kind: authored_team | authored_independent | derived_from_dev | observed_dataset | synthetic_generated | contract_fixture | unknown, author_id, authored_date, reviewed_by, derived_from}`. `authored_independent` requires an `author_id`. Authors are never inferred.
+- Retrieval: `language` (`en`/`ar`; Arabic needs Arabic script in the query), `content_origin` (`native` | `translated` | `synthetic` | `unspecified`; `translated` requires `translation_of`), `source_chunk_ids` (explicit relevance, unioned with prefix relevance), `source_chunk_sha256` (a changed chunk makes the case `stale_label`, never a score), `relevance_source` (`inherited_prefix_v0` | `author_asserted` | `annotator_labelled` | `pooled_adjudicated`; the last two require `annotator_ids`), `paraphrase_group_id`.
+- Results move to `eval_result/v1` (adds `split`, `cluster_id`; statuses `stale_label` and `unsupported_language`); `summary.json` becomes `summary/v1`.
+- `python -m factorymind.evaluation upgrade <v0> <v1>` is deterministic and conservative; the committed v1 starter files were produced by it and then extended or annotated by other contributors, so they are not byte-for-byte upgrade output.
+
+### E.4 Frozen manifest, final mode, ledger
+`splits.v1.json` lists case files (SHA-256, `frozen`, splits present), the split of every v1 case, a version and changelog, and the dataset or corpus hashes a final run must match (`metropt3_telemetry_sha256`, `retrieval_corpus_sha256`). Create or refresh it with `splits write`; verify with `splits check`.
+
+- **Ordinary runs refuse any test case** (exit 4) and check the manifest against the case files.
+- **`--final`** (on `rca-run` and `retrieval`) evaluates the test cases only and first verifies: a **clean Git tree** (unknown state also refuses); the manifest exists and every file containing test cases is frozen and unchanged; every test case is registered; the dataset or corpus hash equals the manifest's; and `--candidate-fingerprint` equals the current code fingerprint. It then appends a record to `test_runs.jsonl`. With no test cases it refuses.
+- **Ledger** (`test_runs.jsonl`): append-only **by convention**; reports show how many final runs were recorded.
+
+**Known bypasses and limits (this does not make test leakage impossible):**
+- The manifest, ledger and case files are ordinary repository files. Anyone who can edit them can change or delete entries; a clean tree only means the edits were committed. Review Git history and use branch protection for stronger assurance.
+- A final run can be repeated; only the ledger count shows it.
+- Nothing detects test information that leaked outside the code: human knowledge of test items, copied queries or documents, paraphrases, or earlier unrecorded evaluations.
+- Ordinary non-final tooling can still read test case files as plain text; the protection is that it never produces test results.
+- `--candidate-fingerprint` is declared by the caller; it proves which code ran, not that the code was never tuned on test data.
+
+### E.5 Statistics
+Intervals measure **benchmark sampling variability only**: how far the metric would move with a different sample of similar cases. They are not statements about factory generalisation, other assets, other documents or other languages, and they ignore labelling and selection bias. They are not significance tests; no multiplicity correction is applied.
+
+Policy (`intervals.py`, over `stats.py`):
+- All scored cases have a `cluster_id`, and every cluster is a single case: observations are treated as independent. Binary data uses the Wilson interval (exploratory band) and larger samples the percentile bootstrap.
+- Some cluster holds several cases: **cluster bootstrap** on the declared clusters.
+- Any scored case lacks a `cluster_id`: the interval is **unavailable** ("dependence structure unknown"). Independence is never assumed, and there is no silent item-level fallback.
+- 2,000 resamples, 95 %, per-metric seed derived from a fixed base, so output is deterministic. Minimum samples are enforced in `stats.py` (n >= 30 for bootstrap and clusters >= 10 for cluster bootstrap; 10 <= n < 30 only the exploratory Wilson interval for independent binary data; otherwise `unavailable` with the counts). A zero-variance sample is reported `degenerate`, not as a certain interval.
+- Percentile bootstrap undercovers at small n.
+- Fixtures get no intervals.
+- **Conservative variant:** for the explicitly binary metrics only (`category_match`, `unacceptable_hypothesis`, `abstention_correct`, `critical_contradiction_disclosure`, `safe_diagnostic_disposition`, `critical_contradiction_handling`, `hit_rate_at_5`, `out_of_scope_abstention`) the summary also reports a rate with `undecided` counted as failure. Other states stay excluded, the measured metric is unchanged, and non-binary metrics (recall, reciprocal rank, precision) have no conservative variant.
+
+`summary/v1` layout: `overall`, `by_provenance`, and `by_split.<split>.metrics.<metric>` with `mean`, `n_scored`, `states`, optional `conservative`, and `interval` (`point_estimate`, `lower`, `upper`, `method`, `state`, `n_samples`, `n_clusters`, `reason`).
+
+### E.6 Leakage audit and reporting
+`audit` (module `leakage.py`) reports heuristic findings: exact and near-duplicate queries, query-to-document copying, author overlap, RCA window overlap, and overlap with the detector training period. **Findings are not proof of leakage and an empty audit is not proof of its absence.** `--strict` exits 1 on critical findings. Query-to-document copying needs `--raw-dir`; without it that check is reported as not run.
+
+`report <run_dir>` (module `report.py`) renders a deterministic Markdown report from the deterministic artifacts; `--with-env` writes environment metadata (git SHA, dirty state, platform, time) to a separate `report.env.md`. Reports show run provenance, splits, counts, metric states, intervals where justified, breakdowns, and limitations.
+
+### E.7 Retrieval benchmark quality and Arabic
+- The 13 inherited retrieval queries are development material written by the team that wrote the indexed documents, so they carry a circularity risk. Other contributors have since added development cases; all remain `authored_team` with no recorded author.
+- Authoring protocol, adjudication and the 30-independent-query target are in `backend/benchmarks/qorvexa/AUTHORING.md`. Until at least 30 independently authored, independently labelled queries exist, no claim of meaningful benchmark coverage is made. No independent author or annotator has been recorded.
+- **Arabic technical retrieval capability is not claimed.** No native, reviewed Arabic content exists. Diagnostic: the retrieval tokenizer currently returns no tokens for Arabic text (`tests/test_evaluation_retrieval_v1.py` pins this). Arabic queries are therefore `unsupported_language` with unavailable metrics, never 0 recall and never an out-of-scope "success". A `native` label on a team-written Arabic case does not mean it was reviewed by a native speaker.
+- No external industrial manuals are included (D-1 licensing pending).
+
+### E.8 Not implemented
+- Paired bootstrap comparison between systems is available in `stats.py` but is not wired into any command.
+- No validation or test data of either kind; no independent authors or annotators; no inter-annotator agreement tooling; no pooled-candidate generation for adjudication.
+- `--final` has been exercised through its gate logic with temporary repositories, not on real frozen test data, because none exists.
+- Twin evaluation inside the harness (blocked on prediction intervals and D-4/D-5/D-12) and bilingual retrieval beyond the schema.

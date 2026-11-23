@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.anomaly.features import (
+from qorvexa.anomaly.features import (
     FEATURE_NAMES,
     WindowSpec,
     block_features,

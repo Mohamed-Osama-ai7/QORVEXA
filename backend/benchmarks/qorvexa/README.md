@@ -1,7 +1,7 @@
 # QORVEXA starter benchmarks (v0)
 
 Small, partly synthetic starter sets for the offline evaluation harness
-(`factorymind.evaluation`). They exercise the harness and the Task 02A metrics. **They are
+(`qorvexa.evaluation`). They exercise the harness and the Task 02A metrics. **They are
 not a statistically powered benchmark and their numbers are not product claims.**
 
 | File | Records | What it is |
@@ -31,11 +31,11 @@ not a statistically powered benchmark and their numbers are not product claims.*
 ## Commands (from `backend/`)
 
 ```bash
-uv run python -m factorymind.evaluation validate benchmarks/qorvexa/rca_cases.v0.jsonl
-uv run python -m factorymind.evaluation rca --cases benchmarks/qorvexa/rca_cases.v0.jsonl --predictions benchmarks/qorvexa/rca_predictions.fixture.v0.jsonl --out D:/FactoryMind/artifacts/evaluations/rca/fixture
-uv run python -m factorymind.evaluation rca-run --cases benchmarks/qorvexa/rca_cases.v0.jsonl --out D:/FactoryMind/artifacts/evaluations/rca-real/<label>
-uv run python -m factorymind.evaluation verify D:/FactoryMind/artifacts/evaluations/rca-real/<label> --check-code
-uv run python -m factorymind.evaluation retrieval --cases benchmarks/qorvexa/retrieval_cases.v0.jsonl --out D:/FactoryMind/artifacts/evaluations/retrieval/v0 --raw-dir D:/FactoryMind/data/raw
+uv run python -m qorvexa.evaluation validate benchmarks/qorvexa/rca_cases.v0.jsonl
+uv run python -m qorvexa.evaluation rca --cases benchmarks/qorvexa/rca_cases.v0.jsonl --predictions benchmarks/qorvexa/rca_predictions.fixture.v0.jsonl --out D:/QORVEXA/artifacts/evaluations/rca/fixture
+uv run python -m qorvexa.evaluation rca-run --cases benchmarks/qorvexa/rca_cases.v0.jsonl --out D:/QORVEXA/artifacts/evaluations/rca-real/<label>
+uv run python -m qorvexa.evaluation verify D:/QORVEXA/artifacts/evaluations/rca-real/<label> --check-code
+uv run python -m qorvexa.evaluation retrieval --cases benchmarks/qorvexa/retrieval_cases.v0.jsonl --out D:/QORVEXA/artifacts/evaluations/retrieval/v0 --raw-dir D:/QORVEXA/data/raw
 ```
 
 ## Adding a case
@@ -46,3 +46,14 @@ uv run python -m factorymind.evaluation retrieval --cases benchmarks/qorvexa/ret
    "insufficient"` when no category or abstention label is justified.
 3. Do not derive labels from the RCA engine's own thresholds or outputs.
 4. Run `validate`; it must print `OK`. CI runs the same command.
+
+## v1 files and splits (Task 03B)
+
+`rca_cases.v1.jsonl` and `retrieval_cases.v1.jsonl` add `split`, `origin`, `cluster_id` (and, for retrieval, `content_origin`, `relevance_source`, explicit chunk ids). The v0 files stay valid and unchanged. `splits.v1.json` is the split manifest; check it with `splits check`. There are **no validation or test cases**; see `AUTHORING.md` for how independent cases must be created, and `docs/qorvexa/EVALUATION_STRATEGY.md` §E for the split rules, final mode, statistics and limits.
+
+```bash
+uv run python -m qorvexa.evaluation validate benchmarks/qorvexa/rca_cases.v1.jsonl
+uv run python -m qorvexa.evaluation splits check --manifest benchmarks/qorvexa/splits.v1.json
+uv run python -m qorvexa.evaluation audit --rca-cases benchmarks/qorvexa/rca_cases.v1.jsonl --retrieval-cases benchmarks/qorvexa/retrieval_cases.v1.jsonl --strict
+uv run python -m qorvexa.evaluation report D:/QORVEXA/artifacts/evaluations/rca-real/<label> --with-env
+```

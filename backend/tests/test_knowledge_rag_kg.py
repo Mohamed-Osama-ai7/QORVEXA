@@ -7,17 +7,17 @@ from pathlib import Path
 import pytest
 from pypdf import PdfWriter
 
-from factorymind.contracts.knowledge import KnowledgeDocumentChunk
-from factorymind.knowledge.corpus import (
+from qorvexa.contracts.knowledge import KnowledgeDocumentChunk
+from qorvexa.knowledge.corpus import (
     MAX_EXTRACTED_CHARS,
     MAX_PDF_BYTES,
     MAX_PDF_PAGES,
     build_verified_corpus,
     extract_pdf_chunks,
 )
-from factorymind.knowledge.eval import evaluate_abstention_rate, evaluate_retrieval_modes
-from factorymind.knowledge.kg import IndustrialKnowledgeGraph, infer_linked_kg_nodes
-from factorymind.knowledge.rag import HybridRagIndex
+from qorvexa.knowledge.eval import evaluate_abstention_rate, evaluate_retrieval_modes
+from qorvexa.knowledge.kg import IndustrialKnowledgeGraph, infer_linked_kg_nodes
+from qorvexa.knowledge.rag import HybridRagIndex
 from tests.auth_helpers import ASSET, AuthKit, make_client
 
 

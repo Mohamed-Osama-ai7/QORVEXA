@@ -10,25 +10,25 @@ import numpy as np
 import pandas as pd
 from fastapi import Request
 
-from factorymind.anomaly.service import AnomalyService
-from factorymind.api.anomaly import get_anomaly_service
-from factorymind.auth.principal import Principal, Role
-from factorymind.contracts.copilot import CopilotQueryRequest
-from factorymind.contracts.events import EventEvidencePackage
-from factorymind.contracts.knowledge import KnowledgeDocumentChunk
-from factorymind.contracts.rca import (
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.api.anomaly import get_anomaly_service
+from qorvexa.auth.principal import Principal, Role
+from qorvexa.contracts.copilot import CopilotQueryRequest
+from qorvexa.contracts.events import EventEvidencePackage
+from qorvexa.contracts.knowledge import KnowledgeDocumentChunk
+from qorvexa.contracts.rca import (
     RankedHypothesis,
     RcaAssessment,
     VerificationStep,
 )
-from factorymind.copilot.service import ControlledCopilot, _extract_measured_features
-from factorymind.data import metropt3
-from factorymind.db.models import EvidenceRow
-from factorymind.db.repository import IncidentRepo, NewEvidence
-from factorymind.db.session import Database
-from factorymind.knowledge.corpus import build_verified_corpus
-from factorymind.knowledge.rag import HybridRagIndex
-from factorymind.twin.physics import CompressorReservoirTwin
+from qorvexa.copilot.service import ControlledCopilot, _extract_measured_features
+from qorvexa.data import metropt3
+from qorvexa.db.models import EvidenceRow
+from qorvexa.db.repository import IncidentRepo, NewEvidence
+from qorvexa.db.session import Database
+from qorvexa.knowledge.corpus import build_verified_corpus
+from qorvexa.knowledge.rag import HybridRagIndex
+from qorvexa.twin.physics import CompressorReservoirTwin
 from tests.auth_helpers import ASSET, AuthKit, make_client
 from tests.test_evidence_foundation import _make_wp_a_service
 

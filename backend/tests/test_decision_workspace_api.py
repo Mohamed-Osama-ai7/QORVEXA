@@ -9,8 +9,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.exc import DatabaseError
 
-from factorymind.anomaly.service import AnomalyService
-from factorymind.db.session import Database, SchemaMismatchError
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.db.session import Database, SchemaMismatchError
 from tests.auth_helpers import ASSET, AuthKit, make_client
 
 

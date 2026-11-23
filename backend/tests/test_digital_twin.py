@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.contracts.digital_twin import TwinSimulationRequest
-from factorymind.data import metropt3
-from factorymind.twin import CompressorReservoirTwin, TwinCalibrationError
+from qorvexa.contracts.digital_twin import TwinSimulationRequest
+from qorvexa.data import metropt3
+from qorvexa.twin import CompressorReservoirTwin, TwinCalibrationError
 from tests.auth_helpers import ASSET, AuthKit, make_client
 
 

@@ -9,15 +9,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factorymind.contracts.optimization import (
+from qorvexa.contracts.optimization import (
     EconomicAssumptions,
     MaintenanceDecisionRequest,
     OptimizationConstraints,
     OptimizationWeights,
 )
-from factorymind.db.repository import IncidentRepo, NewEvidence
-from factorymind.decision.optimizer import compare_maintenance_options
-from factorymind.twin import CompressorReservoirTwin, TwinCalibrationError
+from qorvexa.db.repository import IncidentRepo, NewEvidence
+from qorvexa.decision.optimizer import compare_maintenance_options
+from qorvexa.twin import CompressorReservoirTwin, TwinCalibrationError
 from tests.auth_helpers import ASSET, AuthKit, make_client
 
 
@@ -216,7 +216,7 @@ def test_optimization_api_nan_safety_and_incident_provenance(kit: AuthKit) -> No
     # Incident with group-representative peak evidence (e.g. DV_eletric_mean instead of load_duty)
     # must NEVER fabricate measured_load_duty=0.72 under tier='measured'
     with client.app.state.db.session() as session:  # type: ignore[union-attr]
-        from factorymind.auth.principal import Principal, Role
+        from qorvexa.auth.principal import Principal, Role
 
         creator = Principal(
             actor_id="eng-seed",

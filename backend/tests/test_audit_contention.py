@@ -9,9 +9,9 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from factorymind.anomaly.service import AnomalyService
-from factorymind.db import audit as audit_module
-from factorymind.db.audit import PRE_AUTH_TENANT, AuditContentionError, verify_chain
+from qorvexa.anomaly.service import AnomalyService
+from qorvexa.db import audit as audit_module
+from qorvexa.db.audit import PRE_AUTH_TENANT, AuditContentionError, verify_chain
 from tests.auth_helpers import ASSET, AuthKit, make_client
 
 RS, RE = "2020-01-09T00:00:00", "2020-01-09T12:00:00"
@@ -128,7 +128,7 @@ def test_a_collision_is_retried_and_the_event_is_recorded_exactly_once(
 ) -> None:
     client = make_client(kit, anomaly_service)
     flaky = _fail_first(audit_module.append_audit, times=3)
-    monkeypatch.setattr("factorymind.auth.deps.append_audit", flaky)
+    monkeypatch.setattr("qorvexa.auth.deps.append_audit", flaky)
     assert denied(client, kit) == 403
     assert flaky.calls["n"] == 4  # three collisions, then success
     status = chain(client, "acme")
@@ -147,8 +147,8 @@ def test_an_unrecordable_denial_is_still_denied_but_loud(
 ) -> None:
     client = make_client(kit, anomaly_service)
     flaky = _fail_first(audit_module.append_audit, times=10_000)
-    monkeypatch.setattr("factorymind.auth.deps.append_audit", flaky)
-    with caplog.at_level(logging.CRITICAL, logger="factorymind.security"):
+    monkeypatch.setattr("qorvexa.auth.deps.append_audit", flaky)
+    with caplog.at_level(logging.CRITICAL, logger="qorvexa.security"):
         assert denied(client, kit) == 403  # a denial never depends on the audit log
     assert flaky.calls["n"] == 8  # bounded: exactly the retry budget
     assert client.app.state.db.audit_failures == 1  # type: ignore[attr-defined]
@@ -164,7 +164,7 @@ def test_a_state_change_whose_audit_cannot_be_recorded_is_rolled_back_with_503(
 ) -> None:
     client = make_client(kit, anomaly_service)
     flaky = _fail_first(audit_module.append_audit, times=10_000)
-    monkeypatch.setattr("factorymind.api.incidents.append_audit", flaky)
+    monkeypatch.setattr("qorvexa.api.incidents.append_audit", flaky)
     body = {"asset_id": ASSET, "range_start": RS, "range_end": RE}
     body["episode_start"] = episode(client, kit)
     with caplog.at_level(logging.CRITICAL):

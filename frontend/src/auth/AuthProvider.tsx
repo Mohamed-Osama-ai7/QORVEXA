@@ -17,7 +17,7 @@ import {
 import { setTokenProvider, setUnauthorizedHandler } from './token'
 
 export const CALLBACK_PATH = '/auth/callback'
-const RETURN_KEY = 'factorymind.returnTo'
+const RETURN_KEY = 'qorvexa.returnTo'
 
 export type AuthStatus = 'loading' | 'unconfigured' | 'signed-out' | 'signed-in' | 'error'
 

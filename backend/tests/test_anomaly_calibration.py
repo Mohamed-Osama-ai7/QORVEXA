@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from factorymind.anomaly.calibration import ExceedanceCalibrator
+from qorvexa.anomaly.calibration import ExceedanceCalibrator
 
 
 def test_p_value_is_smoothed_survival_function() -> None:

@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from factorymind.anomaly.features import WindowSpec, block_features, window_features
-from factorymind.anomaly.regimes import RegimeTracker, classify_sequence, classify_window
+from qorvexa.anomaly.features import WindowSpec, block_features, window_features
+from qorvexa.anomaly.regimes import RegimeTracker, classify_sequence, classify_window
 from tests.conftest import simulate_apu
 
 SPEC = WindowSpec()

@@ -7,7 +7,7 @@ through the API is a human review record in FactoryMind's own database; it trigg
 
 import re
 
-from factorymind.api.app import create_app
+from qorvexa.api.app import create_app
 from tests.route_helpers import all_operations
 
 ALLOWED_MUTATING_OPERATIONS: frozenset[tuple[str, str]] = frozenset(
@@ -22,6 +22,23 @@ ALLOWED_MUTATING_OPERATIONS: frozenset[tuple[str, str]] = frozenset(
         ("POST", "/api/v1/incidents/{incident_id}/decisions"),  # human review record
         ("POST", "/api/v1/incidents/{incident_id}/observations"),  # human field observation
         ("POST", "/api/v1/incidents/{incident_id}/outcomes"),  # human outcome verification
+        ("POST", "/api/v1/industrial/sessions"),  # creates governed planning session
+        ("POST", "/api/v1/industrial/sessions/{session_id}/ingest"),  # natural-language intake proposals
+        ("POST", "/api/v1/industrial/sessions/{session_id}/confirm"),  # human fact confirmation
+        ("POST", "/api/v1/industrial/sessions/{session_id}/assert"),  # human asserted fact
+        ("POST", "/api/v1/industrial/sessions/{session_id}/assume"),  # human default assumption
+        ("POST", "/api/v1/industrial/sessions/{session_id}/retract"),  # human claim retraction
+        ("POST", "/api/v1/industrial/sessions/{session_id}/resolve"),  # human conflict resolution
+        ("POST", "/api/v1/industrial/sessions/{session_id}/convert-units"),  # human unit conversion
+        ("POST", "/api/v1/industrial/sessions/{session_id}/build"),  # build mathematical formulation
+        ("POST", "/api/v1/industrial/sessions/{session_id}/decide"),  # run optimization & decision intelligence
+        ("POST", "/api/v1/industrial/sessions/{session_id}/decide-on"),  # human approval / verdict record
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/propose"),  # propose factory terminology
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/confirm"),  # human review confirm
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/reject"),  # human review reject
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/correct"),  # human review correct
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/deprecate"),  # human review deprecate
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/rollback"),  # human review rollback
     }
 )
 

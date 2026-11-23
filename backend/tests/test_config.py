@@ -3,14 +3,20 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from factorymind.config import Settings
+from qorvexa.config import Settings
 
 
 def test_data_dir_is_configurable(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("FACTORYMIND_DATA_DIR", str(tmp_path))
-    settings = Settings()
-    assert settings.raw_dir == tmp_path / "raw"
-    assert settings.processed_dir == tmp_path / "processed"
+    # 1. Fallback to FACTORYMIND_ prefix
+    monkeypatch.setenv("FACTORYMIND_DATA_DIR", str(tmp_path / "fm"))
+    settings_fm = Settings()
+    assert settings_fm.raw_dir == tmp_path / "fm" / "raw"
+
+    # 2. QORVEXA_ prefix overrides FACTORYMIND_
+    monkeypatch.setenv("QORVEXA_DATA_DIR", str(tmp_path / "qv"))
+    settings_qv = Settings()
+    assert settings_qv.raw_dir == tmp_path / "qv" / "raw"
+    assert settings_qv.processed_dir == tmp_path / "qv" / "processed"
 
 
 def test_invalid_environment_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -67,4 +73,4 @@ def test_auth_is_configured_only_when_issuer_audience_and_keys_are_all_set(tmp_p
 
 def test_database_defaults_to_a_file_under_the_data_directory(tmp_path: Path) -> None:
     url = Settings(data_dir=tmp_path, database_url=None).sqlalchemy_url
-    assert url.startswith("sqlite:///") and "factorymind.sqlite3" in url
+    assert url.startswith("sqlite:///") and "qorvexa.sqlite3" in url
