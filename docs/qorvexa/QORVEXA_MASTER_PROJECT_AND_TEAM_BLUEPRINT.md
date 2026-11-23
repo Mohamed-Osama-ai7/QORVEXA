@@ -1,12 +1,13 @@
 # QORVEXA — Master Project History, Technical Blueprint & Team Architecture
 
 **Document Identifier:** `QORVEXA-MASTER-BLUEPRINT-2026.1`  
-**Effective Baseline:** November 23, 2026  
+**Effective Baseline Snapshot:** November 23, 2026 (Dated Implementation Snapshot)  
 **Repository:** `https://github.com/Mohamed-Osama-ai7/QORVEXA`  
-**Current Branch:** `docs/qorvexa/master-project-blueprint`  
-**Starting Commit SHA:** `73872cc37f9a1f5a1a87a7ea8a5a0c1ef21a8d7b`  
-**Test Suite Baseline:** 1,924 Backend Hermetic Tests · 75 Frontend Tests · 0 Failures  
-**License Status by Branch:** Collaboration branch (`collaboration/qorvexa-current`) is Proprietary / All Rights Reserved; `main` branch retains legacy MIT license; public forks hold historical snapshot terms (See [LICENSING_TRANSITION.md](LICENSING_TRANSITION.md))
+**Audited Branch Baseline:** `origin/collaboration/qorvexa-current` (Baseline commit `21f6ebdbc1bc6a80004056fe6988e3dbdc4dbba8`)  
+**Governance & Documentation Branch:** `docs/qorvexa/master-project-blueprint` (Derived from governance commit `73872cc37f9a1f5a1a87a7ea8a5a0c1ef21a8d7b`)  
+**Verified Test Suite Snapshot:** 1,924 Backend Hermetic Tests across 114 test files · 75 Frontend Vitest Tests across 20 test files · 0 Failures  
+**License Status by Branch:** Collaboration branch (`collaboration/qorvexa-current`) is Proprietary / All Rights Reserved; `main` branch retains legacy MIT license; public forks hold historical snapshot terms (See [LICENSING_TRANSITION.md](LICENSING_TRANSITION.md))  
+**Unmerged Feature Work Isolation Notice:** The separate Multi-Worker Solver Pool commit `632d626` (`feat(solver): add bounded multi-worker execution pool`), developed on feature branch `feat/mohamed/multi-worker-solver-pool`, is **not** included in this blueprint's verified baseline. It is tracked independently and is neither integrated nor merged into `collaboration/qorvexa-current`.
 
 ---
 
@@ -133,6 +134,15 @@ flowchart TD
     I10 --> I11["11. Decision Package & Human Approval\n(Exact 50-Digit Decimal Pareto Frontier · Executive Brief · Audit Log)"]
 ```
 
+### 3.3 Stage Mapping & Grouping Analysis
+
+The 11-stage operational baseline reflects a focused realization of the 14-stage conceptual architecture, optimized for industrial production planning in the active Decision Studio:
+- **Language & Context Ingestion (Conceptual Stages 1–4 $\to$ Baseline Stages 1–3):** In the active production planning workflow, text intake directly triggers the 13-stage deterministic understanding pipeline (`understanding/`) and factory terminology dictionary (`ontology/`). External technical manual retrieval (RAG, Conceptual Stage 2) is implemented in `knowledge/rag.py` and evaluated on benchmark retrieval cases, but is invoked during documentation lookup rather than the standard production planning shift path.
+- **Diagnostic & Degradation Bypass (Conceptual Stages 5–6):** Causal root-cause analysis (Conceptual Stage 5) and degradation/RUL modeling (Conceptual Stage 6) are active in the asset maintenance vertical (evaluated on the MetroPT-3 APU benchmark in `causal/` and `anomaly/`). In the pure production planning studio path, where operational parameters are extracted from shift handoffs, this diagnostic branch is bypassed, routing directly from confirmed facts to formulation compilation.
+- **Proposal, Fact Ledger & Dimensional Validation (Conceptual Stages 7–8 $\to$ Baseline Stages 4–6):** Proposal generation, Fact Ledger admission, and dimensional units checking are each maintained as distinct, audited stages in both the conceptual architecture and active baseline.
+- **Formulation, Solver Dispatch & Verification (Conceptual Stages 9–11 $\to$ Baseline Stages 7–9):** Formulation compilation, HiGHS solver execution, and decoupled mathematical verification remain separate operational stages. Adaptive solver selection (AMPPS, Conceptual Stage 10) currently dispatches deterministically to the isolated HiGHS 1.16.0 continuous LP worker pending Member 3's MILP/CP-SAT adapters.
+- **Simulation, Decision Evaluation & Approval (Conceptual Stages 12–14 $\to$ Baseline Stages 10–11):** The OSCO simulation loop (Stage 10) stress-tests verified plans using discrete-event simulation. Multi-criteria Pareto frontier evaluation, executive trade-off briefing, human approval sign-off, and persistent cryptographic audit logging are integrated into the final Decision Package stage (Stage 11).
+
 ---
 
 ## 4. The Four Core Platform Engines
@@ -186,13 +196,16 @@ flowchart TD
 - **Key Interfaces:** `Ontology`, `ConceptSchema`, `RelationSchema`, `GraphState`, `FactoryOntology`, `OntologyStore`, `EntityRecord`.
 
 ### Engine 2: Workflow Orchestration Engine
-- **Package Path:** `backend/src/qorvexa/industrial/co_orchestration/`
-- **Active Tests:** 24 tests in `tests/test_optimization_simulation_orchestration.py`
+- **Conceptual Engine Scope:** Serves as the overarching platform orchestration plane governing end-to-end task progression, pipeline state machines, lifecycle stage transitions, execution budgets, and asynchronous coordination across all platform subsystems.
+- **Specialized OSCO Capability:** Within this broader workflow orchestration architecture, **Optimization–Simulation Co-Orchestration (OSCO)** operates as a specialized, high-leverage coordination capability. OSCO specifically closes the feedback loop between mathematical optimization (HiGHS) and discrete-event simulation (DES), detecting machine bottleneck violations and iteratively refining operational capacities.
+- **Package Path & Implementation Mapping:**
+  - *Platform Workflow Plane (Conceptual & Distributed):* Orchestration state machines and stage transitions are coordinated across API route handlers (`backend/src/qorvexa/api/industrial.py`), pipeline state abstractions, and studio interaction controllers.
+  - *Specialized OSCO Package (Implemented):* `backend/src/qorvexa/industrial/co_orchestration/` (24 tests in `tests/test_optimization_simulation_orchestration.py`).
 - **Core Responsibilities:**
-  - Coordinates multi-stage operational pipelines, enforcing the closed-loop Optimization–Simulation Co-Orchestration (OSCO) lifecycle.
-  - Dispatches canonical problem formulations to the mathematical solver fabric and routes verified plans to discrete-event simulation.
-  - Identifies operational bottlenecks from simulated machine micro-states and formulates evidence-justified capacity refinements.
-  - Manages candidate deduplication (SHA-256 problem/twin hashing), execution budgets, and cancellation signals.
+  - Manages stage transitions across the operational pipeline, enforcing preconditions, execution budgets, and cancellation signals.
+  - Coordinates the specialized OSCO loop: dispatches canonical formulations to the Solver Fabric, routes verified primal plans to discrete-event simulation, inspects machine micro-state telemetry (`STARVED`, `BLOCKED`, `DOWN`), and computes bottleneck capacity refinements.
+  - Enforces candidate lifecycle rules and cryptographic deduplication (SHA-256 problem/twin hashing).
+  - Routes evaluated scenario candidates to the Decision Intelligence Engine.
 - **Key Interfaces:** `CoOrchestrator`, `contracts.py`, `optimize.py`, `evaluate.py`, `refine.py`, `decision.py`, `store.py`.
 
 ### Engine 3: Decision Intelligence Engine
@@ -271,6 +284,7 @@ Solvers execute in decoupled worker processes enclosed in Win32 Job Objects (or 
 - **Max Memory Cap:** 4 GB default limit; processes exceeding memory are terminated immediately by the operating system watchdog.
 - **Execution Timeout:** Strict deadline enforcement; timeouts kill the worker cleanly without leaving orphaned subprocesses.
 - **Framed JSON-IPC:** Input problems and output solution vectors communicate over length-prefixed stdin/stdout streams.
+- **Multi-Worker Pool Feature Isolation:** The single isolated worker execution protocol is fully implemented and verified in the baseline. A separate multi-worker pool implementation (`632d626`: `feat(solver): add bounded multi-worker execution pool`), developed on the independent feature branch `feat/mohamed/multi-worker-solver-pool`, is under active development by Member 1 and is **not** included, integrated, or merged into the verified baseline snapshot.
 
 ### 6.2 Implementation Status Across Optimization Methods
 To uphold absolute mathematical honesty, the repository distinguishes implemented solvers from future roadmap targets:
@@ -486,11 +500,16 @@ Subsystem implementation scaling was executed by advanced AI coding agents (Clau
 
 ## 15. Comprehensive 22-Subsystem Implementation Status
 
+> [!IMPORTANT]
+> **Dated Implementation Snapshot (November 23, 2026):**  
+> The maturity classifications, source paths, and test counts in the matrix below reflect a verified snapshot of `origin/collaboration/qorvexa-current` at baseline commit `21f6ebdbc1bc6a80004056fe6988e3dbdc4dbba8` (and governance baseline `73872cc37f9a1f5a1a87a7ea8a5a0c1ef21a8d7b`).  
+> **Unmerged Work Notice:** Commit `632d626` (`feat(solver): add bounded multi-worker execution pool`), located on active feature branch `feat/mohamed/multi-worker-solver-pool`, is an isolated workstream under Member 1's forward roadmap. It is **not** included in these test totals or maturity claims, and is neither integrated nor merged into `collaboration/qorvexa-current`.
+
 Every subsystem is audited against live code and hermetic tests in `collaboration/qorvexa-current`:
 
 | # | Subsystem Name | Maturity Classification | Primary Source Paths | Active Tests | Capabilities & Evidence |
 |---|---|:---:|---|---|---|
-| **1** | **Solver Fabric Core** | **`IMPLEMENTED`** | `backend/src/qorvexa/solver_fabric/` | `test_sf_highs_adapter.py` (21) | Isolated subprocess worker, Win32 Job Object enclosure, JSON-IPC framing, 4GB memory watchdog, exact timeout recovery. |
+| **1** | **Solver Fabric Core** | **`IMPLEMENTED`** | `backend/src/qorvexa/solver_fabric/` | `test_sf_highs_adapter.py` (21) | Isolated subprocess worker, Win32 Job Object enclosure, JSON-IPC framing, 4GB memory watchdog, exact timeout recovery. Note: Multi-worker pool (`632d626`) is on an unmerged feature branch and excluded from this baseline. |
 | **2** | **Continuous LP Solvers** | **`IMPLEMENTED`** | `backend/src/qorvexa/solver_fabric/highs_*.py` | `test_sf_highs_adapter.py` | HiGHS 1.16.0 continuous LP solving, exact primal/dual solution parsing, dual ray / Farkas ray extraction. |
 | **3** | **Native MILP Solvers** | **`PLANNED / NOT IMPLEMENTED`** | `backend/src/qorvexa/solver_fabric/` | N/A | Heuristic rounding of LP solutions exists; native branch-and-cut MILP adapter is assigned to Member 3 (Mohamed Adel). |
 | **4** | **Constraint Programming (CP-SAT)**| **`PLANNED`** | `backend/src/qorvexa/solver_fabric/` | N/A | Discrete machine scheduling and combinatorial optimization via OR-Tools CP-SAT planned for Workstream 3. |
@@ -502,7 +521,7 @@ Every subsystem is audited against live code and hermetic tests in `collaboratio
 | **10** | **Causal Intelligence** | **`PROTOTYPE / EXPERIMENTAL`** | `backend/src/qorvexa/causal/` & `anomaly/` | `test_causal_*.py`, `test_anomaly_*.py` | Simple DAGs, observational conditioning, failure propagation analysis; Pearl do-calculus planned for Workstream 4. |
 | **11** | **Multi-Agent Orchestration** | **`PARTIALLY IMPLEMENTED`** | `backend/src/qorvexa/copilot/` & `agents/` | `test_agent_*.py`, `test_copilot_*.py` | Supervisor/worker execution, timeout limits, red-team guardrails; distributed queue planned for Workstream 5. |
 | **12** | **Discrete-Event Digital Twin** | **`IMPLEMENTED`** | `backend/src/qorvexa/industrial/digital_twin/` | `test_industrial_digital_twin.py` (55) | 1-second integer tick clock, machine micro-states (`PROCESSING`, `STARVED`, `BLOCKED`, `DOWN`), scrap accounting. |
-| **13** | **OSCO Co-Orchestration** | **`IMPLEMENTED`** | `backend/src/qorvexa/industrial/co_orchestration/`| `test_optimization_simulation_orchestration.py` (24) | Iterative solve $\leftrightarrow$ simulate refinement, operational violation detection, calendar-bounded adjustments. |
+| **13** | **Workflow Orchestration & OSCO** | **`IMPLEMENTED`** | `backend/src/qorvexa/industrial/co_orchestration/`| `test_optimization_simulation_orchestration.py` (24) | Overarching pipeline state machine; specialized OSCO solve $\leftrightarrow$ simulate loop, bottleneck detection, capacity refinements. |
 | **14** | **Stochastic Optimization** | **`PARTIALLY IMPLEMENTED`** | `backend/src/qorvexa/industrial/digital_twin/stochastic.py` | `test_industrial_digital_twin.py` | Deterministic SHA-256 pseudo-random streams per replication, Triangular/Exponential distributions. |
 | **15** | **Industrial Scenario Library** | **`IMPLEMENTED`** | `backend/benchmarks/qorvexa/` | `test_evaluation_splits.py` | Real MetroPT-3 compressor physical data (2020) + synthetic operational planning benchmarks (Cairo, Alexandria). |
 | **16** | **Read-Only OT Integration** | **`PARTIALLY IMPLEMENTED`** | `backend/src/qorvexa/connectors/` | `test_edge_connectors.py` (37) | Source descriptors, URL syntax checks, batch preflight for OPC UA / MQTT / Historian; live socket I/O deferred. |
