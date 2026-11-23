@@ -1,0 +1,353 @@
+{
+  "environment": {
+    "os": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.10",
+    "cpu": "Intel64 Family 6 Model 165 Stepping 2, GenuineIntel",
+    "logical_cpus": 12,
+    "highs_threads_per_job": 1
+  },
+  "workload": {
+    "name": "small",
+    "variables": 200,
+    "rows": 100,
+    "nnz_per_row": 8,
+    "jobs": 16,
+    "seeds": "1000..1015"
+  },
+  "method": "each configuration repeated --reps times; medians with min/max; warm pool (startup reported separately and as cold_wall_s); objectives checked against an in-process reference solve",
+  "configs": {
+    "inprocess": {
+      "reps": 5,
+      "wall_s": {
+        "median": 0.06637159999991127,
+        "min": 0.06383440000081464,
+        "max": 0.07212379999964469
+      },
+      "throughput_jobs_s": {
+        "median": 241.06696237579612,
+        "min": 221.84077932775065,
+        "max": 250.64855312802834
+      },
+      "latency_p50_s": {
+        "median": 0.004227699999319157,
+        "min": 0.004111300000658957,
+        "max": 0.00467320000007021
+      },
+      "latency_p95_s": {
+        "median": 0.004634199999600241,
+        "min": 0.004346099999565922,
+        "max": 0.005050100000516977
+      },
+      "queue_wait_max_s": {
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "parent_peak_ws_mb": {
+        "median": 109.0,
+        "min": 109.0,
+        "max": 109.0
+      },
+      "incorrect_total": 0,
+      "orphans_total": 0
+    },
+    "spawn": {
+      "reps": 5,
+      "wall_s": {
+        "median": 38.93348680000054,
+        "min": 36.09689400000025,
+        "max": 40.64323719999993
+      },
+      "throughput_jobs_s": {
+        "median": 0.4109572842060419,
+        "min": 0.39366942946168737,
+        "max": 0.44325143321195143
+      },
+      "latency_p50_s": {
+        "median": 2.4174282000003586,
+        "min": 2.2426219999997556,
+        "max": 2.493951200000083
+      },
+      "latency_p95_s": {
+        "median": 2.669919800000571,
+        "min": 2.3751036000003296,
+        "max": 2.8168212000000494
+      },
+      "queue_wait_max_s": {
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "parent_peak_ws_mb": {
+        "median": 109.0,
+        "min": 109.0,
+        "max": 109.0
+      },
+      "incorrect_total": 0,
+      "orphans_total": 0
+    },
+    "pool-w1": {
+      "reps": 5,
+      "wall_s": {
+        "median": 0.08816189999924973,
+        "min": 0.08551979999992909,
+        "max": 0.08914179999919725
+      },
+      "throughput_jobs_s": {
+        "median": 181.48429196893628,
+        "min": 179.48930804789768,
+        "max": 187.09117654640522
+      },
+      "latency_p50_s": {
+        "median": 0.048842899999726797,
+        "min": 0.047962900000129594,
+        "max": 0.05154489999949874
+      },
+      "latency_p95_s": {
+        "median": 0.08102639999924577,
+        "min": 0.07887020000089251,
+        "max": 0.08262180000019725
+      },
+      "queue_wait_max_s": {
+        "median": 0.0809384999993199,
+        "min": 0.07877670000016224,
+        "max": 0.08252470000024914
+      },
+      "cold_wall_s": {
+        "median": 2.4246670999991693,
+        "min": 2.315839399999277,
+        "max": 2.4573660000005475
+      },
+      "worker_cpu_s": {
+        "median": 0.078125,
+        "min": 0.078125,
+        "max": 0.09375
+      },
+      "worker_peak_ws_mb": {
+        "median": 105.9,
+        "min": 105.6,
+        "max": 106.0
+      },
+      "parent_peak_ws_mb": {
+        "median": 109.0,
+        "min": 109.0,
+        "max": 109.1
+      },
+      "incorrect_total": 0,
+      "orphans_total": 0,
+      "worker_startup_s": {
+        "median": 2.3337444999997388,
+        "min": 2.2289857000005213,
+        "max": 2.3677238000000216
+      },
+      "jobs_per_worker_last_rep": {
+        "w-0001": 16
+      }
+    },
+    "pool-w2": {
+      "reps": 5,
+      "wall_s": {
+        "median": 0.0476939999998649,
+        "min": 0.04430439999941882,
+        "max": 0.050146000000495405
+      },
+      "throughput_jobs_s": {
+        "median": 335.47196712469747,
+        "min": 319.0683205009758,
+        "max": 361.13794567153343
+      },
+      "latency_p50_s": {
+        "median": 0.028014599999551137,
+        "min": 0.025880500000312168,
+        "max": 0.0311346999997113
+      },
+      "latency_p95_s": {
+        "median": 0.04518059999918478,
+        "min": 0.04219749999992928,
+        "max": 0.04754190000039671
+      },
+      "queue_wait_max_s": {
+        "median": 0.04092140000011568,
+        "min": 0.03740250000009837,
+        "max": 0.04295540000020992
+      },
+      "cold_wall_s": {
+        "median": 2.4565641000008327,
+        "min": 2.389263299999584,
+        "max": 2.5460526999995636
+      },
+      "worker_cpu_s": {
+        "median": 0.078125,
+        "min": 0.0625,
+        "max": 0.09375
+      },
+      "worker_peak_ws_mb": {
+        "median": 105.8,
+        "min": 105.6,
+        "max": 105.8
+      },
+      "parent_peak_ws_mb": {
+        "median": 109.2,
+        "min": 109.2,
+        "max": 109.2
+      },
+      "incorrect_total": 0,
+      "orphans_total": 0,
+      "worker_startup_s": {
+        "median": 2.3962932999997975,
+        "min": 2.3303562999999485,
+        "max": 2.497617099999843
+      },
+      "jobs_per_worker_last_rep": {
+        "w-0001": 8,
+        "w-0002": 8
+      }
+    },
+    "pool-w4": {
+      "reps": 5,
+      "wall_s": {
+        "median": 0.028748799999448238,
+        "min": 0.028340900000330294,
+        "max": 0.037486100000023725
+      },
+      "throughput_jobs_s": {
+        "median": 556.5449688441632,
+        "min": 426.8248764205899,
+        "max": 564.5551129220854
+      },
+      "latency_p50_s": {
+        "median": 0.01977809999971214,
+        "min": 0.019478799999887997,
+        "max": 0.0209101999998893
+      },
+      "latency_p95_s": {
+        "median": 0.026010800000221934,
+        "min": 0.02560799999992014,
+        "max": 0.03444500000023254
+      },
+      "queue_wait_max_s": {
+        "median": 0.021206700000220735,
+        "min": 0.020183900000120047,
+        "max": 0.025648300000284507
+      },
+      "cold_wall_s": {
+        "median": 2.9339145000003555,
+        "min": 2.760052999999971,
+        "max": 3.094402899999295
+      },
+      "worker_cpu_s": {
+        "median": 0.109375,
+        "min": 0.09375,
+        "max": 0.125
+      },
+      "worker_peak_ws_mb": {
+        "median": 105.8,
+        "min": 105.7,
+        "max": 106.0
+      },
+      "parent_peak_ws_mb": {
+        "median": 109.5,
+        "min": 109.4,
+        "max": 109.5
+      },
+      "incorrect_total": 0,
+      "orphans_total": 0,
+      "worker_startup_s": {
+        "median": 2.881008549999933,
+        "min": 2.7050177000000986,
+        "max": 3.057776399999966
+      },
+      "jobs_per_worker_last_rep": {
+        "w-0001": 4,
+        "w-0002": 4,
+        "w-0003": 4,
+        "w-0004": 4
+      }
+    },
+    "pool-w8": {
+      "reps": 5,
+      "wall_s": {
+        "median": 0.024266300000817864,
+        "min": 0.02314990000013495,
+        "max": 0.026335999999901105
+      },
+      "throughput_jobs_s": {
+        "median": 659.35062203388,
+        "min": 607.53341434007,
+        "max": 691.1476939384935
+      },
+      "latency_p50_s": {
+        "median": 0.01763759999994363,
+        "min": 0.016967100000329083,
+        "max": 0.021175700000640063
+      },
+      "latency_p95_s": {
+        "median": 0.021900599999753467,
+        "min": 0.020317900000009104,
+        "max": 0.023986200000763347
+      },
+      "queue_wait_max_s": {
+        "median": 0.012395500000820903,
+        "min": 0.01147320000018226,
+        "max": 0.013571599999522732
+      },
+      "cold_wall_s": {
+        "median": 4.256911999999829,
+        "min": 4.046886100000847,
+        "max": 4.322895999999673
+      },
+      "worker_cpu_s": {
+        "median": 0.140625,
+        "min": 0.125,
+        "max": 0.25
+      },
+      "worker_peak_ws_mb": {
+        "median": 105.8,
+        "min": 105.5,
+        "max": 105.9
+      },
+      "parent_peak_ws_mb": {
+        "median": 110.2,
+        "min": 109.7,
+        "max": 110.2
+      },
+      "incorrect_total": 0,
+      "orphans_total": 0,
+      "worker_startup_s": {
+        "median": 4.176905549999901,
+        "min": 3.93023919999996,
+        "max": 4.289063400000487
+      },
+      "jobs_per_worker_last_rep": {
+        "w-0001": 2,
+        "w-0002": 2,
+        "w-0003": 2,
+        "w-0004": 2,
+        "w-0005": 2,
+        "w-0006": 2,
+        "w-0007": 2,
+        "w-0008": 2
+      }
+    }
+  },
+  "recovery": [
+    {
+      "detect_s": 0.11079239999980928,
+      "replacement_ready_s": 2.3108009999996284,
+      "next_job_s": 0.006195700000716897,
+      "next_job_ok": true
+    },
+    {
+      "detect_s": 0.1101345000006404,
+      "replacement_ready_s": 2.2844622000002346,
+      "next_job_s": 0.007484699999622535,
+      "next_job_ok": true
+    },
+    {
+      "detect_s": 0.10969199999999546,
+      "replacement_ready_s": 2.271535599999879,
+      "next_job_s": 0.007092499999998836,
+      "next_job_ok": true
+    }
+  ]
+}
