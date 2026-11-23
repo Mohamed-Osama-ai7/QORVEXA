@@ -106,7 +106,7 @@ QORVEXA's initial application focuses on **Air Production Units (APUs) and compr
 ## 10. Live Demo & Resources
 
 - **Interactive Showcase:** [qorvexa-delta.vercel.app](https://qorvexa-delta.vercel.app) — Explore the Decision Studio and scenario planning interface.
-- **Repository Documentation:** Browse the [`docs/`](docs/) directory for architectural background and research notes.
+- **Repository Documentation:** Browse the [Documentation Guide](docs/README.md) for public developer onboarding, getting-started steps, and project overview.
 
 ## 11. Repository Structure
 
