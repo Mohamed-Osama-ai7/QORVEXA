@@ -7,9 +7,9 @@
  */
 import type { ComparisonResult } from './comparisonResult';
 import type { DecisionBriefTradeOffs } from './decisionBriefTradeOffs';
-import type { EvidenceRef } from './evidenceRef';
 import type { ObservedBehavior } from './observedBehavior';
 import type { ParetoResult } from './paretoResult';
+import type { QorvexaIndustrialDecisionIntelligenceExplanationEvidenceRef } from './qorvexaIndustrialDecisionIntelligenceExplanationEvidenceRef';
 import type { RankingResult } from './rankingResult';
 import type { Recommendation } from './recommendation';
 import type { Rejection } from './rejection';
@@ -21,7 +21,7 @@ export interface DecisionBrief {
   brief_sha256: string;
   comparison: ComparisonResult | null;
   currency: string | null;
-  evidence: EvidenceRef[];
+  evidence: QorvexaIndustrialDecisionIntelligenceExplanationEvidenceRef[];
   executive_summary: string[];
   limitations: string[];
   objective_first_ranking: RankingResult | null;

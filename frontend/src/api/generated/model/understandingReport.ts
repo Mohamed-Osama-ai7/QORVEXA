@@ -5,20 +5,20 @@
  * Evidence-grounded, uncertainty-aware decision support. Advisory only.
  * OpenAPI spec version: 0.1.0
  */
-import type { Candidate } from './candidate';
 import type { Claim } from './claim';
 import type { Contradiction } from './contradiction';
 import type { EntityMention } from './entityMention';
 import type { Gap } from './gap';
 import type { GroundingResult } from './groundingResult';
 import type { LanguageInfo } from './languageInfo';
+import type { QorvexaIndustrialUnderstandingModelsCandidate } from './qorvexaIndustrialUnderstandingModelsCandidate';
 import type { Question } from './question';
 import type { Readiness } from './readiness';
 import type { StageResult } from './stageResult';
 import type { UnsupportedFeature } from './unsupportedFeature';
 
 export interface UnderstandingReport {
-  candidates: Candidate[];
+  candidates: QorvexaIndustrialUnderstandingModelsCandidate[];
   claims: Claim[];
   contradictions: Contradiction[];
   disclaimer?: string;

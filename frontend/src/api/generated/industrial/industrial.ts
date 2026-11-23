@@ -29,6 +29,7 @@ import type {
   AssumeDefaultsRequest,
   ClarificationsResponse,
   ConfirmRequest,
+  ContextSnapshot,
   ConvertUnitsRequest,
   CorrectTermRequest,
   CreateSession201,
@@ -39,11 +40,15 @@ import type {
   DecisionRecord,
   FormulationResult,
   FormulationState,
+  GetOntologyContextParams,
+  GetOntologyPlanningCandidatesParams,
   GetSessionClarificationsParams,
   HTTPValidationError,
   IndustrialHealth200,
   IngestRequest,
   IngestResponse,
+  IntegrityReport,
+  PlanningContext,
   ProposeTermRequest,
   ResolveRequest,
   RetractRequest,
@@ -52,6 +57,7 @@ import type {
   SessionSummary,
   TermEntry,
   TermNoteRequest,
+  UnderstandingLinks,
   UnderstandingReport
 } from '../model';
 
@@ -178,6 +184,393 @@ export function useIndustrialHealth<TData = Awaited<ReturnType<typeof industrial
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getIndustrialHealthQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getOntologyContextResponse200 = {
+  data: ContextSnapshot
+  status: 200
+}
+
+export type getOntologyContextResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getOntologyContextResponseSuccess = (getOntologyContextResponse200) & {
+  headers: Headers;
+};
+export type getOntologyContextResponseError = (getOntologyContextResponse422) & {
+  headers: Headers;
+};
+
+export type getOntologyContextResponse = (getOntologyContextResponseSuccess | getOntologyContextResponseError)
+
+export const getGetOntologyContextUrl = (factoryId: string,
+    params?: GetOntologyContextParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/industrial/ontology/${factoryId}/context?${stringifiedParams}` : `/api/v1/industrial/ontology/${factoryId}/context`
+}
+
+/**
+ * @summary Get Ontology Context
+ */
+export const getOntologyContext = async (factoryId: string,
+    params?: GetOntologyContextParams, options?: Parameters<typeof apiFetch>[1]): Promise<getOntologyContextResponse> => {
+
+  return apiFetch<getOntologyContextResponse>(getGetOntologyContextUrl(factoryId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOntologyContextQueryKey = (factoryId: string,
+    params?: GetOntologyContextParams,) => {
+    return [
+    `/api/v1/industrial/ontology/${factoryId}/context`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetOntologyContextQueryOptions = <TData = Awaited<ReturnType<typeof getOntologyContext>>, TError = HTTPValidationError>(factoryId: string,
+    params?: GetOntologyContextParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyContext>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOntologyContextQueryKey(factoryId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOntologyContext>>> = ({ signal }) => getOntologyContext(factoryId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: factoryId !== null && factoryId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOntologyContext>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOntologyContextQueryResult = NonNullable<Awaited<ReturnType<typeof getOntologyContext>>>
+export type GetOntologyContextQueryError = HTTPValidationError
+
+
+/** @summary Get Ontology Context */
+export function useGetOntologyContext<TData = Awaited<ReturnType<typeof getOntologyContext>>, TError = HTTPValidationError>(
+ factoryId: string,
+    params: undefined |  GetOntologyContextParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyContext>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOntologyContext>>,
+          TError,
+          Awaited<ReturnType<typeof getOntologyContext>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Ontology Context */
+export function useGetOntologyContext<TData = Awaited<ReturnType<typeof getOntologyContext>>, TError = HTTPValidationError>(
+ factoryId: string,
+    params?: GetOntologyContextParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyContext>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOntologyContext>>,
+          TError,
+          Awaited<ReturnType<typeof getOntologyContext>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Ontology Context */
+export function useGetOntologyContext<TData = Awaited<ReturnType<typeof getOntologyContext>>, TError = HTTPValidationError>(
+ factoryId: string,
+    params?: GetOntologyContextParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyContext>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Ontology Context */
+export function useGetOntologyContext<TData = Awaited<ReturnType<typeof getOntologyContext>>, TError = HTTPValidationError>(
+ factoryId: string,
+    params?: GetOntologyContextParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyContext>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOntologyContextQueryOptions(factoryId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getOntologyPlanningCandidatesResponse200 = {
+  data: PlanningContext
+  status: 200
+}
+
+export type getOntologyPlanningCandidatesResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getOntologyPlanningCandidatesResponseSuccess = (getOntologyPlanningCandidatesResponse200) & {
+  headers: Headers;
+};
+export type getOntologyPlanningCandidatesResponseError = (getOntologyPlanningCandidatesResponse422) & {
+  headers: Headers;
+};
+
+export type getOntologyPlanningCandidatesResponse = (getOntologyPlanningCandidatesResponseSuccess | getOntologyPlanningCandidatesResponseError)
+
+export const getGetOntologyPlanningCandidatesUrl = (factoryId: string,
+    params?: GetOntologyPlanningCandidatesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/industrial/ontology/${factoryId}/planning-candidates?${stringifiedParams}` : `/api/v1/industrial/ontology/${factoryId}/planning-candidates`
+}
+
+/**
+ * @summary Get Ontology Planning Candidates
+ */
+export const getOntologyPlanningCandidates = async (factoryId: string,
+    params?: GetOntologyPlanningCandidatesParams, options?: Parameters<typeof apiFetch>[1]): Promise<getOntologyPlanningCandidatesResponse> => {
+
+  return apiFetch<getOntologyPlanningCandidatesResponse>(getGetOntologyPlanningCandidatesUrl(factoryId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOntologyPlanningCandidatesQueryKey = (factoryId: string,
+    params?: GetOntologyPlanningCandidatesParams,) => {
+    return [
+    `/api/v1/industrial/ontology/${factoryId}/planning-candidates`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetOntologyPlanningCandidatesQueryOptions = <TData = Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError = HTTPValidationError>(factoryId: string,
+    params?: GetOntologyPlanningCandidatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOntologyPlanningCandidatesQueryKey(factoryId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOntologyPlanningCandidates>>> = ({ signal }) => getOntologyPlanningCandidates(factoryId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: factoryId !== null && factoryId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOntologyPlanningCandidatesQueryResult = NonNullable<Awaited<ReturnType<typeof getOntologyPlanningCandidates>>>
+export type GetOntologyPlanningCandidatesQueryError = HTTPValidationError
+
+
+/** @summary Get Ontology Planning Candidates */
+export function useGetOntologyPlanningCandidates<TData = Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError = HTTPValidationError>(
+ factoryId: string,
+    params: undefined |  GetOntologyPlanningCandidatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOntologyPlanningCandidates>>,
+          TError,
+          Awaited<ReturnType<typeof getOntologyPlanningCandidates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Ontology Planning Candidates */
+export function useGetOntologyPlanningCandidates<TData = Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError = HTTPValidationError>(
+ factoryId: string,
+    params?: GetOntologyPlanningCandidatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOntologyPlanningCandidates>>,
+          TError,
+          Awaited<ReturnType<typeof getOntologyPlanningCandidates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Ontology Planning Candidates */
+export function useGetOntologyPlanningCandidates<TData = Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError = HTTPValidationError>(
+ factoryId: string,
+    params?: GetOntologyPlanningCandidatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Ontology Planning Candidates */
+export function useGetOntologyPlanningCandidates<TData = Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError = HTTPValidationError>(
+ factoryId: string,
+    params?: GetOntologyPlanningCandidatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOntologyPlanningCandidates>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOntologyPlanningCandidatesQueryOptions(factoryId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type verifyFactoryOntologyResponse200 = {
+  data: IntegrityReport
+  status: 200
+}
+
+export type verifyFactoryOntologyResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type verifyFactoryOntologyResponseSuccess = (verifyFactoryOntologyResponse200) & {
+  headers: Headers;
+};
+export type verifyFactoryOntologyResponseError = (verifyFactoryOntologyResponse422) & {
+  headers: Headers;
+};
+
+export type verifyFactoryOntologyResponse = (verifyFactoryOntologyResponseSuccess | verifyFactoryOntologyResponseError)
+
+export const getVerifyFactoryOntologyUrl = (factoryId: string,) => {
+
+
+
+
+  return `/api/v1/industrial/ontology/${factoryId}/verify`
+}
+
+/**
+ * @summary Verify Factory Ontology
+ */
+export const verifyFactoryOntology = async (factoryId: string, options?: Parameters<typeof apiFetch>[1]): Promise<verifyFactoryOntologyResponse> => {
+
+  return apiFetch<verifyFactoryOntologyResponse>(getVerifyFactoryOntologyUrl(factoryId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getVerifyFactoryOntologyQueryKey = (factoryId: string,) => {
+    return [
+    `/api/v1/industrial/ontology/${factoryId}/verify`
+    ] as const;
+    }
+
+
+export const getVerifyFactoryOntologyQueryOptions = <TData = Awaited<ReturnType<typeof verifyFactoryOntology>>, TError = HTTPValidationError>(factoryId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof verifyFactoryOntology>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getVerifyFactoryOntologyQueryKey(factoryId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof verifyFactoryOntology>>> = ({ signal }) => verifyFactoryOntology(factoryId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: factoryId !== null && factoryId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof verifyFactoryOntology>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type VerifyFactoryOntologyQueryResult = NonNullable<Awaited<ReturnType<typeof verifyFactoryOntology>>>
+export type VerifyFactoryOntologyQueryError = HTTPValidationError
+
+
+/** @summary Verify Factory Ontology */
+export function useVerifyFactoryOntology<TData = Awaited<ReturnType<typeof verifyFactoryOntology>>, TError = HTTPValidationError>(
+ factoryId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof verifyFactoryOntology>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof verifyFactoryOntology>>,
+          TError,
+          Awaited<ReturnType<typeof verifyFactoryOntology>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Verify Factory Ontology */
+export function useVerifyFactoryOntology<TData = Awaited<ReturnType<typeof verifyFactoryOntology>>, TError = HTTPValidationError>(
+ factoryId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof verifyFactoryOntology>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof verifyFactoryOntology>>,
+          TError,
+          Awaited<ReturnType<typeof verifyFactoryOntology>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Verify Factory Ontology */
+export function useVerifyFactoryOntology<TData = Awaited<ReturnType<typeof verifyFactoryOntology>>, TError = HTTPValidationError>(
+ factoryId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof verifyFactoryOntology>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Verify Factory Ontology */
+export function useVerifyFactoryOntology<TData = Awaited<ReturnType<typeof verifyFactoryOntology>>, TError = HTTPValidationError>(
+ factoryId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof verifyFactoryOntology>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getVerifyFactoryOntologyQueryOptions(factoryId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1483,7 +1876,126 @@ export const useIngestTextClaims = <TError = HTTPValidationError,
       > => {
       return useMutation(getIngestTextClaimsMutationOptions(options), queryClient);
     }
-    export type resolveContradictionResponse200 = {
+    export type getSessionOntologyLinksResponse200 = {
+  data: UnderstandingLinks
+  status: 200
+}
+
+export type getSessionOntologyLinksResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getSessionOntologyLinksResponseSuccess = (getSessionOntologyLinksResponse200) & {
+  headers: Headers;
+};
+export type getSessionOntologyLinksResponseError = (getSessionOntologyLinksResponse422) & {
+  headers: Headers;
+};
+
+export type getSessionOntologyLinksResponse = (getSessionOntologyLinksResponseSuccess | getSessionOntologyLinksResponseError)
+
+export const getGetSessionOntologyLinksUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/industrial/sessions/${sessionId}/ontology-links`
+}
+
+/**
+ * @summary Get Session Ontology Links
+ */
+export const getSessionOntologyLinks = async (sessionId: string, options?: Parameters<typeof apiFetch>[1]): Promise<getSessionOntologyLinksResponse> => {
+
+  return apiFetch<getSessionOntologyLinksResponse>(getGetSessionOntologyLinksUrl(sessionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSessionOntologyLinksQueryKey = (sessionId: string,) => {
+    return [
+    `/api/v1/industrial/sessions/${sessionId}/ontology-links`
+    ] as const;
+    }
+
+
+export const getGetSessionOntologyLinksQueryOptions = <TData = Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError = HTTPValidationError>(sessionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSessionOntologyLinksQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionOntologyLinks>>> = ({ signal }) => getSessionOntologyLinks(sessionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sessionId !== null && sessionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSessionOntologyLinksQueryResult = NonNullable<Awaited<ReturnType<typeof getSessionOntologyLinks>>>
+export type GetSessionOntologyLinksQueryError = HTTPValidationError
+
+
+/** @summary Get Session Ontology Links */
+export function useGetSessionOntologyLinks<TData = Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError = HTTPValidationError>(
+ sessionId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionOntologyLinks>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionOntologyLinks>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Session Ontology Links */
+export function useGetSessionOntologyLinks<TData = Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError = HTTPValidationError>(
+ sessionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionOntologyLinks>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionOntologyLinks>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Session Ontology Links */
+export function useGetSessionOntologyLinks<TData = Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError = HTTPValidationError>(
+ sessionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Session Ontology Links */
+export function useGetSessionOntologyLinks<TData = Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError = HTTPValidationError>(
+ sessionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionOntologyLinks>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSessionOntologyLinksQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type resolveContradictionResponse200 = {
   data: FormulationState
   status: 200
 }

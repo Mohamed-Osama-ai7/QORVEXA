@@ -23,22 +23,22 @@ ALLOWED_MUTATING_OPERATIONS: frozenset[tuple[str, str]] = frozenset(
         ("POST", "/api/v1/incidents/{incident_id}/observations"),  # human field observation
         ("POST", "/api/v1/incidents/{incident_id}/outcomes"),  # human outcome verification
         ("POST", "/api/v1/industrial/sessions"),  # creates governed planning session
-        ("POST", "/api/v1/industrial/sessions/{session_id}/ingest"),  # natural-language intake proposals
-        ("POST", "/api/v1/industrial/sessions/{session_id}/confirm"),  # human fact confirmation
-        ("POST", "/api/v1/industrial/sessions/{session_id}/assert"),  # human asserted fact
-        ("POST", "/api/v1/industrial/sessions/{session_id}/assume"),  # human default assumption
-        ("POST", "/api/v1/industrial/sessions/{session_id}/retract"),  # human claim retraction
-        ("POST", "/api/v1/industrial/sessions/{session_id}/resolve"),  # human conflict resolution
-        ("POST", "/api/v1/industrial/sessions/{session_id}/convert-units"),  # human unit conversion
-        ("POST", "/api/v1/industrial/sessions/{session_id}/build"),  # build mathematical formulation
-        ("POST", "/api/v1/industrial/sessions/{session_id}/decide"),  # run optimization & decision intelligence
-        ("POST", "/api/v1/industrial/sessions/{session_id}/decide-on"),  # human approval / verdict record
-        ("POST", "/api/v1/industrial/terminology/{factory_id}/propose"),  # propose factory terminology
-        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/confirm"),  # human review confirm
-        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/reject"),  # human review reject
-        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/correct"),  # human review correct
-        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/deprecate"),  # human review deprecate
-        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/rollback"),  # human review rollback
+        ("POST", "/api/v1/industrial/sessions/{session_id}/ingest"),  # intake proposals
+        ("POST", "/api/v1/industrial/sessions/{session_id}/confirm"),  # fact confirmation
+        ("POST", "/api/v1/industrial/sessions/{session_id}/assert"),  # asserted fact
+        ("POST", "/api/v1/industrial/sessions/{session_id}/assume"),  # default assumption
+        ("POST", "/api/v1/industrial/sessions/{session_id}/retract"),  # claim retraction
+        ("POST", "/api/v1/industrial/sessions/{session_id}/resolve"),  # conflict resolution
+        ("POST", "/api/v1/industrial/sessions/{session_id}/convert-units"),  # unit conversion
+        ("POST", "/api/v1/industrial/sessions/{session_id}/build"),  # build formulation
+        ("POST", "/api/v1/industrial/sessions/{session_id}/decide"),  # run optimization
+        ("POST", "/api/v1/industrial/sessions/{session_id}/decide-on"),  # human approval record
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/propose"),  # propose term
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/confirm"),  # confirm
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/reject"),  # reject
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/correct"),  # correct
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/deprecate"),  # deprecate
+        ("POST", "/api/v1/industrial/terminology/{factory_id}/{term_id}/rollback"),  # rollback
     }
 )
 

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ExtractedClaim, IngestOptions } from '../../api/planningApi'
 
 interface Props {
   sessionId: string
+  factoryId: string
   onIngest: (text: string, claims?: ExtractedClaim[], options?: IngestOptions) => Promise<void>
   isPending: boolean
 }
@@ -65,10 +66,16 @@ const SAMPLE_CLAIMS: ExtractedClaim[] = [
   { key: 'consumption:P_B:LABOR:rate', value: 2, quote: '2 hours on LABOR' },
 ]
 
-export function ProblemIntakeView({ onIngest, isPending }: Props) {
+export function ProblemIntakeView({ factoryId: initialFactoryId, onIngest, isPending }: Props) {
   const [text, setText] = useState(SAMPLE_TEXT)
   const [useSampleClaims, setUseSampleClaims] = useState(true)
-  const [factoryId, setFactoryId] = useState('factory-1')
+  const [factoryId, setFactoryId] = useState(initialFactoryId)
+
+  useEffect(() => {
+    if (initialFactoryId) {
+      setFactoryId(initialFactoryId)
+    }
+  }, [initialFactoryId])
 
   return (
     <div className="space-y-6">

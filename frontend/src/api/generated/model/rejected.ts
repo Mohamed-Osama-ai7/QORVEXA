@@ -6,14 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-/**
- * A mapped Production Planning candidate. Always an untrusted proposal.
- */
-export interface Candidate {
+export interface Rejected {
   key: string;
-  note?: string;
-  quote: string;
-  status: string;
-  support: string[];
-  value: string;
+  objects?: string[];
+  reason: string;
 }

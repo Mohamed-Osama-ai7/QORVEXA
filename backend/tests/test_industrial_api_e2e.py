@@ -30,10 +30,7 @@ from tests.test_formulation import FACTS
 
 # Standard product mix test claims
 TEXT = "\n".join(f"{k} is {v}" for k, v in FACTS.items())
-TEST_CLAIMS = [
-    {"key": k, "value": v, "quote": f"{k} is {v}"}
-    for k, v in FACTS.items()
-]
+TEST_CLAIMS = [{"key": k, "value": v, "quote": f"{k} is {v}"} for k, v in FACTS.items()]
 
 
 @pytest.fixture

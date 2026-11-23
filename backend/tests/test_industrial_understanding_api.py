@@ -17,7 +17,6 @@ Covers all 21 acceptance criteria from the Industrial Intelligence specification
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,6 +27,9 @@ from qorvexa.industrial.governance import (
     SqliteStore,
     Verdict,
 )
+from qorvexa.industrial.ontology import (
+    SqliteOntologyStore,
+)
 from qorvexa.industrial.production_planning.admission import AdmissionPolicy
 from qorvexa.industrial.understanding import (
     Readiness,
@@ -35,6 +37,8 @@ from qorvexa.industrial.understanding import (
     TerminologyBook,
     TermStatus,
 )
+from qorvexa.industrial.understanding.adapters import ProviderUnavailable
+from qorvexa.industrial.understanding.gemini_provider import GeminiLLMProvider
 from qorvexa.solver_fabric import LPOrchestrator
 from qorvexa.solver_fabric.highs_adapter import HighsAdapter
 from tests.auth_helpers import AuthKit
@@ -57,8 +61,13 @@ def test_term_db_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def test_onto_db_path(tmp_path: Path) -> Path:
+    return tmp_path / "industrial_onto_test.db"
+
+
+@pytest.fixture
 def app_client(
-    auth_kit: AuthKit, test_db_path: Path, test_term_db_path: Path
+    auth_kit: AuthKit, test_db_path: Path, test_term_db_path: Path, test_onto_db_path: Path
 ) -> TestClient:
     settings = auth_kit.settings()
     app = create_app(settings)
@@ -74,6 +83,8 @@ def app_client(
     )
     # Configure terminology store backed by test sqlite database
     app.state.terminology_store = SqliteTerminologyStore(test_term_db_path)
+    app.state.ontology_store = SqliteOntologyStore(test_onto_db_path)
+    app.state.factory_ontologies = {}
     app.state.understanding_sessions = {}
     app.state.understanding_reports = {}
     return TestClient(app)
@@ -138,9 +149,7 @@ def test_terminology_propose_and_confirm_workflow(
     assert len(confirmed_term["history"]) == 2
 
 
-def test_cross_factory_isolation_rejection(
-    auth_kit: AuthKit, app_client: TestClient
-) -> None:
+def test_cross_factory_isolation_rejection(auth_kit: AuthKit, app_client: TestClient) -> None:
     # User authorized ONLY for factory-1
     f1_headers = auth_kit.headers(
         sub="rev-f1",
@@ -150,9 +159,7 @@ def test_cross_factory_isolation_rejection(
     )
 
     # Attempting to read factory-2 terms -> 403
-    r1 = app_client.get(
-        "/api/v1/industrial/terminology/factory-2", headers=f1_headers
-    )
+    r1 = app_client.get("/api/v1/industrial/terminology/factory-2", headers=f1_headers)
     assert r1.status_code == 403
 
     # Attempting to propose in factory-2 -> 403
@@ -263,9 +270,7 @@ def test_terminology_correction_deprecation_and_rollback_lifecycle(
 # ---------------------------------------------------------------------------
 
 
-def test_egyptian_arabic_intake_and_proposals(
-    auth_kit: AuthKit, app_client: TestClient
-) -> None:
+def test_egyptian_arabic_intake_and_proposals(auth_kit: AuthKit, app_client: TestClient) -> None:
     rev_headers = auth_kit.headers(
         sub="rev-lang",
         roles=["terminology_reviewer"],
@@ -325,9 +330,7 @@ def test_egyptian_arabic_intake_and_proposals(
     assert state["status"] != "READY"
 
 
-def test_english_and_arabizi_handling(
-    auth_kit: AuthKit, app_client: TestClient
-) -> None:
+def test_english_and_arabizi_handling(auth_kit: AuthKit, app_client: TestClient) -> None:
     rev_headers = auth_kit.headers(
         sub="rev-eng",
         roles=["terminology_reviewer"],
@@ -383,9 +386,7 @@ def test_english_and_arabizi_handling(
     assert resp_ara.status_code == 200
 
 
-def test_unconfirmed_term_creates_gap(
-    auth_kit: AuthKit, app_client: TestClient
-) -> None:
+def test_unconfirmed_term_creates_gap(auth_kit: AuthKit, app_client: TestClient) -> None:
     rev_headers = auth_kit.headers(
         sub="rev-unconf",
         roles=["terminology_reviewer"],
@@ -484,9 +485,7 @@ def test_contradiction_detection_blocks_readiness(
     assert und["readiness"] == Readiness.BLOCKED.value
 
 
-def test_prompt_injection_safety_resilience(
-    auth_kit: AuthKit, app_client: TestClient
-) -> None:
+def test_prompt_injection_safety_resilience(auth_kit: AuthKit, app_client: TestClient) -> None:
     planner_headers = auth_kit.headers(
         sub="planner-sec",
         roles=["engineer"],
@@ -560,9 +559,7 @@ def test_understanding_and_clarification_endpoints(
 # ---------------------------------------------------------------------------
 
 
-def test_full_governed_journey_with_real_highs(
-    auth_kit: AuthKit, app_client: TestClient
-) -> None:
+def test_full_governed_journey_with_real_highs(auth_kit: AuthKit, app_client: TestClient) -> None:
     rev_headers = auth_kit.headers(
         sub="rev-full",
         roles=["terminology_reviewer"],
@@ -614,10 +611,7 @@ def test_full_governed_journey_with_real_highs(
     )
 
     # 2. Ingest structured problem claims via echo mode for full 2-variable LP
-    claims = [
-        {"key": k, "value": v, "quote": f"{k} is {v}"}
-        for k, v in FACTS.items()
-    ]
+    claims = [{"key": k, "value": v, "quote": f"{k} is {v}"} for k, v in FACTS.items()]
     text_source = "\n".join(c["quote"] for c in claims)
     ing = app_client.post(
         "/api/v1/industrial/sessions/s-highs-full/ingest",
@@ -694,7 +688,8 @@ def test_full_governed_journey_with_real_highs(
             "brief_sha256": brief["brief_sha256"],
             "verdict": Verdict.APPROVED.value,
             "scenario_id": "MACH120",
-            "acknowledged": caveat_codes or [
+            "acknowledged": caveat_codes
+            or [
                 "CAPACITY_CHANGE_COST_NOT_MODELED",
                 "UNIT_VALIDATION_NOT_PERFORMED",
             ],
@@ -732,7 +727,12 @@ def test_sqlite_restart_persistence(tmp_path: Path) -> None:
     from qorvexa.industrial.formulation import ActorKind
     from qorvexa.industrial.governance.authz import Principal, Role
 
-    p_rev = Principal("rev-p", ActorKind.HUMAN, frozenset({Role.TERMINOLOGY_REVIEWER}), frozenset({"factory-1"}))
+    p_rev = Principal(
+        "rev-p",
+        ActorKind.HUMAN,
+        frozenset({Role.TERMINOLOGY_REVIEWER}),
+        frozenset({"factory-1"}),
+    )
     t = rev.propose(p_rev, "المكبس", "MACH_PRESS", canonical_id="PRESS", entity_type="MACHINE")
     rev.confirm(p_rev, t.term_id, note="confirmed press")
     rev.correct(p_rev, t.term_id, note="v3 update", meaning="Hydraulic press 500T")
@@ -751,3 +751,228 @@ def test_sqlite_restart_persistence(tmp_path: Path) -> None:
     assert len(history) == 3
     assert [h.action for h in history[0].history] == ["PROPOSE"]
     assert [h.action for h in history[-1].history] == ["PROPOSE", "CONFIRM", "CORRECT"]
+
+
+# ---------------------------------------------------------------------------
+# 5. Adversarial Multi-Factory Authorization Tests
+# ---------------------------------------------------------------------------
+
+
+def test_adversarial_cross_factory_ontology_access_rejected(
+    auth_kit: AuthKit, app_client: TestClient
+) -> None:
+    """A user assigned to factory-1 cannot read ontology or planning candidates on factory-2."""
+    headers_f1 = auth_kit.headers(
+        sub="worker-1", roles=["engineer"], tenant="factory-1", assets=["factory-1"]
+    )
+
+    # 1. Context snapshot on factory-2 must be forbidden (403)
+    resp1 = app_client.get("/api/v1/industrial/ontology/factory-2/context", headers=headers_f1)
+    assert resp1.status_code == 403
+    assert "factory-2" in resp1.json()["detail"]
+
+    # 2. Planning candidates on factory-2 must be forbidden (403)
+    resp2 = app_client.get(
+        "/api/v1/industrial/ontology/factory-2/planning-candidates", headers=headers_f1
+    )
+    assert resp2.status_code == 403
+
+    # 3. Integrity verification on factory-2 must be forbidden (403)
+    resp3 = app_client.get("/api/v1/industrial/ontology/factory-2/verify", headers=headers_f1)
+    assert resp3.status_code == 403
+
+
+def test_adversarial_unassigned_principal_rejected(
+    auth_kit: AuthKit, app_client: TestClient
+) -> None:
+    """A token without factory scope (no tenant/assets) is denied on all factory routes."""
+    headers_unassigned = auth_kit.headers(sub="unassigned-actor", roles=["engineer"])
+
+    # 1. Terminology endpoints
+    resp1 = app_client.get("/api/v1/industrial/terminology/factory-1", headers=headers_unassigned)
+    assert resp1.status_code == 403
+
+    resp2 = app_client.post(
+        "/api/v1/industrial/terminology/factory-1/propose",
+        json={"expression": "test", "concept": "TEST", "meaning": "test"},
+        headers=headers_unassigned,
+    )
+    assert resp2.status_code == 403
+
+    # 2. Ontology endpoints
+    resp3 = app_client.get(
+        "/api/v1/industrial/ontology/factory-1/context", headers=headers_unassigned
+    )
+    assert resp3.status_code == 403
+
+    # 3. Session ingestion scoped to factory-1
+    resp4 = app_client.post(
+        "/api/v1/industrial/sessions/s-unassigned/ingest",
+        json={"text": "Standard factory text", "factory_id": "factory-1"},
+        headers=headers_unassigned,
+    )
+    assert resp4.status_code == 403
+
+
+def test_adversarial_extractor_cannot_modify_terminology(
+    auth_kit: AuthKit, app_client: TestClient
+) -> None:
+    """Extractor role without TERMINOLOGY_REVIEWER cannot confirm, reject, or correct terms."""
+    extractor_headers = auth_kit.headers(
+        sub="extractor-bot", roles=["operator"], tenant="factory-1", assets=["factory-1"]
+    )
+    planner_headers = auth_kit.headers(
+        sub="planner-1", roles=["engineer"], tenant="factory-1", assets=["factory-1"]
+    )
+
+    # 1. Propose a term as planner
+    prop_resp = app_client.post(
+        "/api/v1/industrial/terminology/factory-1/propose",
+        json={"expression": "موتور", "concept": "MOTOR", "meaning": "Electric motor"},
+        headers=planner_headers,
+    )
+    assert prop_resp.status_code == 201
+    term_id = prop_resp.json()["term_id"]
+
+    # 2. Extractor attempts to confirm -> 403
+    confirm_resp = app_client.post(
+        f"/api/v1/industrial/terminology/factory-1/{term_id}/confirm",
+        json={"note": "unauthorized confirmation"},
+        headers=extractor_headers,
+    )
+    assert confirm_resp.status_code == 403
+
+    # 3. Extractor attempts to reject -> 403
+    reject_resp = app_client.post(
+        f"/api/v1/industrial/terminology/factory-1/{term_id}/reject",
+        json={"note": "unauthorized rejection"},
+        headers=extractor_headers,
+    )
+    assert reject_resp.status_code == 403
+
+    # 4. Extractor attempts to correct -> 403
+    correct_resp = app_client.post(
+        f"/api/v1/industrial/terminology/factory-1/{term_id}/correct",
+        json={"note": "unauthorized correction", "meaning": "changed meaning"},
+        headers=extractor_headers,
+    )
+    assert correct_resp.status_code == 403
+
+
+def test_adversarial_cross_factory_terminology_review_rejected(
+    auth_kit: AuthKit, app_client: TestClient
+) -> None:
+    """A reviewer with TERMINOLOGY_REVIEWER for factory-1 cannot act on factory-2 terms."""
+    rev_f1_headers = auth_kit.headers(
+        sub="reviewer-f1", roles=["reviewer"], tenant="factory-1", assets=["factory-1"]
+    )
+
+    # Attempt to propose, list, or confirm in factory-2
+    resp1 = app_client.get("/api/v1/industrial/terminology/factory-2", headers=rev_f1_headers)
+    assert resp1.status_code == 403
+
+    resp2 = app_client.post(
+        "/api/v1/industrial/terminology/factory-2/propose",
+        json={"expression": "موتور", "concept": "MOTOR", "meaning": "Electric motor"},
+        headers=rev_f1_headers,
+    )
+    assert resp2.status_code == 403
+
+
+def test_adversarial_ontology_linking_isolated_per_factory(
+    auth_kit: AuthKit, app_client: TestClient
+) -> None:
+    """Ontology entity resolution links strictly per factory; cross-factory reads are denied."""
+    f1_headers = auth_kit.headers(
+        sub="lead-f1", roles=["engineer", "reviewer"], tenant="factory-1", assets=["factory-1"]
+    )
+    f2_headers = auth_kit.headers(
+        sub="lead-f2", roles=["engineer", "reviewer"], tenant="factory-2", assets=["factory-2"]
+    )
+
+    # 0. Create governed session
+    sess_resp = app_client.post(
+        "/api/v1/industrial/sessions",
+        json={"session_id": "sess-iso-1", "title": "Isolation Test Session"},
+        headers=f1_headers,
+    )
+    assert sess_resp.status_code == 201
+
+    # 1. Ingest session in factory-1
+    ingest_resp = app_client.post(
+        "/api/v1/industrial/sessions/sess-iso-1/ingest",
+        json={
+            "text": "خط التعبئة الفيلر شغال 100 ساعة وبنكسب 50 جنيه لكل قطعة",
+            "factory_id": "factory-1",
+        },
+        headers=f1_headers,
+    )
+    assert ingest_resp.status_code == 200
+
+    # 2. factory-1 user can read ontology links
+    links_f1 = app_client.get(
+        "/api/v1/industrial/sessions/sess-iso-1/ontology-links", headers=f1_headers
+    )
+    assert links_f1.status_code == 200
+    links_data = links_f1.json()
+    assert links_data["factory_id"] == "factory-1"
+
+    # 3. factory-2 user attempting to read factory-1's session ontology links is denied (403)
+    links_f2 = app_client.get(
+        "/api/v1/industrial/sessions/sess-iso-1/ontology-links", headers=f2_headers
+    )
+    assert links_f2.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# 6. Gemini Provider Offline Fallback & 503 Tests
+# ---------------------------------------------------------------------------
+
+
+def test_gemini_provider_offline_fallback() -> None:
+    """When GEMINI_API_KEY is empty/unset, provider raises ProviderUnavailable."""
+    from qorvexa.industrial.understanding.adapters import ProviderRequest
+
+    provider = GeminiLLMProvider(api_key="")
+    assert not provider.is_available()
+    assert not provider.is_configured
+
+    req = ProviderRequest(
+        task="extract_claims",
+        document_text="Sample factory report text with 100 hours",
+        instructions="Extract claims",
+    )
+    with pytest.raises(ProviderUnavailable, match="GEMINI_NOT_CONFIGURED"):
+        provider.complete_json(req)
+
+
+def test_gemini_provider_unavailable_returns_honest_503(
+    auth_kit: AuthKit, app_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When explicit extraction fails or raises ProviderUnavailable, endpoint returns 503."""
+    headers_f1 = auth_kit.headers(
+        sub="worker-1", roles=["engineer"], tenant="factory-1", assets=["factory-1"]
+    )
+
+    # 0. Create governed session
+    sess_resp = app_client.post(
+        "/api/v1/industrial/sessions",
+        json={"session_id": "sess-failing-prov", "title": "Failing Provider Session"},
+        headers=headers_f1,
+    )
+    assert sess_resp.status_code == 201
+
+    def _failing_submit(*args: object, **kwargs: object) -> None:
+        raise ProviderUnavailable("Gemini LLM API is unreachable or quota exhausted")
+
+    from qorvexa.industrial.understanding.pipeline import UnderstandingSession
+
+    monkeypatch.setattr(UnderstandingSession, "submit", _failing_submit)
+
+    resp = app_client.post(
+        "/api/v1/industrial/sessions/sess-failing-prov/ingest",
+        json={"text": "Plant shift report", "factory_id": "factory-1"},
+        headers=headers_f1,
+    )
+    assert resp.status_code == 503
+    assert "Gemini LLM API is unreachable" in resp.json()["detail"]

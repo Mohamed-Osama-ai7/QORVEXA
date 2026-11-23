@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import closing
+from pathlib import Path
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -45,6 +46,25 @@ from qorvexa.industrial.governance.gemini_extractor import (
     ExtractionUnavailableError,
     GeminiExtractor,
 )
+from qorvexa.industrial.ontology.adapters import (
+    ContextSnapshot,
+    PlanningContext,
+    UnderstandingLinks,
+    link_report,
+    planning_context,
+    understanding_snapshot,
+)
+from qorvexa.industrial.ontology.integrity import IntegrityReport, verify_factory
+from qorvexa.industrial.ontology.resolution import IdentityResolver
+from qorvexa.industrial.ontology.schema import OntologyError
+from qorvexa.industrial.ontology.service import FactoryOntology
+from qorvexa.industrial.ontology.store import (
+    OntologyStore,
+    SqliteOntologyStore,
+)
+from qorvexa.industrial.ontology.store import (
+    StoreError as OntologyStoreError,
+)
 from qorvexa.industrial.production_planning import ScenarioSpec
 from qorvexa.industrial.production_planning.admission import AdmissionError, AdmissionPolicy
 from qorvexa.industrial.understanding import (
@@ -60,6 +80,7 @@ from qorvexa.industrial.understanding import (
     UnderstandingSession,
     emit_proposals,
 )
+from qorvexa.industrial.understanding.adapters import ProviderUnavailable
 from qorvexa.industrial.understanding.clarification import ClarificationState
 from qorvexa.industrial.understanding.models import Gap, Question
 from qorvexa.industrial.understanding.terminology import TermEntry
@@ -69,6 +90,17 @@ from qorvexa.solver_fabric.highs_adapter import HighsAdapter
 log = logging.getLogger("qorvexa.api.industrial")
 
 router = APIRouter(prefix="/api/v1/industrial", tags=["industrial"])
+
+DEFAULT_ONTOLOGY_DB_PATH = Path("industrial_ontology.db")
+
+
+def _require_factory_access(ip: IndustrialPrincipal, factory_id: str) -> None:
+    """Ensure authenticated principal has explicit authorization for the requested factory."""
+    if ip.factories is None or factory_id not in ip.factories:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
+        )
 
 
 def to_industrial_principal(p: AuthPrincipal) -> IndustrialPrincipal:
@@ -128,6 +160,33 @@ def get_terminology_store(request: Request) -> SqliteTerminologyStore:
     return cast(SqliteTerminologyStore, app_state.terminology_store)
 
 
+def get_ontology_store(request: Request) -> OntologyStore:
+    """Retrieve or initialize the singleton OntologyStore instance."""
+    app_state = request.app.state
+    if not hasattr(app_state, "ontology_store") or app_state.ontology_store is None:
+        data_dir = getattr(app_state, "settings", None) and getattr(
+            app_state.settings, "data_dir", None
+        )
+        if data_dir:
+            data_dir.mkdir(parents=True, exist_ok=True)
+            db_path = data_dir / "industrial_ontology.db"
+        else:
+            db_path = DEFAULT_ONTOLOGY_DB_PATH
+        app_state.ontology_store = SqliteOntologyStore(db_path)
+    return cast(OntologyStore, app_state.ontology_store)
+
+
+def get_factory_ontology(request: Request, factory_id: str) -> FactoryOntology:
+    """Retrieve or initialize the FactoryOntology for a specific factory."""
+    app_state = request.app.state
+    if not hasattr(app_state, "factory_ontologies") or app_state.factory_ontologies is None:
+        app_state.factory_ontologies = {}
+    if factory_id not in app_state.factory_ontologies:
+        store = get_ontology_store(request)
+        app_state.factory_ontologies[factory_id] = FactoryOntology(store, factory_id)
+    return cast(FactoryOntology, app_state.factory_ontologies[factory_id])
+
+
 def get_understanding_session(
     request: Request, session_id: str, factory_id: str
 ) -> UnderstandingSession:
@@ -144,7 +203,7 @@ def get_understanding_session(
         if gemini.is_configured:
             provider = gemini
         app_state.understanding_sessions[key] = UnderstandingSession(book, provider=provider)
-    return app_state.understanding_sessions[key]
+    return cast(UnderstandingSession, app_state.understanding_sessions[key])
 
 
 def _handle_domain_error(exc: Exception) -> HTTPException:
@@ -162,13 +221,25 @@ def _handle_domain_error(exc: Exception) -> HTTPException:
         if exc.code in {"SESSION_EXISTS", "STALE_HEAD"}:
             return HTTPException(status.HTTP_409_CONFLICT, detail=str(exc))
         return HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    if isinstance(exc, OntologyError):
+        if exc.code in {"VERSION_CONFLICT", "REVISION_CONFLICT", "IDEMPOTENCY_CONFLICT"}:
+            return HTTPException(status.HTTP_409_CONFLICT, detail=str(exc))
+        if exc.code in {"FACTORY_FORBIDDEN", "HUMAN_APPROVAL_REQUIRED", "FORBIDDEN"}:
+            return HTTPException(status.HTTP_403_FORBIDDEN, detail=str(exc))
+        if exc.code in {"UNKNOWN_ENTITY", "UNKNOWN_RELATION", "UNKNOWN_LINE"}:
+            return HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc))
+        return HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    if isinstance(exc, OntologyStoreError):
+        if exc.code == "REVISION_CONFLICT":
+            return HTTPException(status.HTTP_409_CONFLICT, detail=str(exc))
+        return HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
     if isinstance(exc, AuthorizationError):
         return HTTPException(status.HTTP_403_FORBIDDEN, detail=str(exc))
     if isinstance(exc, (SessionError, FormulationError, DecisionError)):
         return HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
     if isinstance(exc, AdmissionError):
         return HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
-    if isinstance(exc, ExtractionUnavailableError):
+    if isinstance(exc, (ExtractionUnavailableError, ProviderUnavailable)):
         return HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
     log.exception("Unexpected error in industrial API: %s", exc)
     return HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
@@ -296,9 +367,7 @@ class ConvertUnitsRequest(BaseModel):
 class RunDecisionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     scenarios: list[ScenarioSpec] = Field(default_factory=list)
-    pareto_metrics: list[str] = Field(
-        default_factory=lambda: ["objective", "total_volume"]
-    )
+    pareto_metrics: list[str] = Field(default_factory=lambda: ["objective", "total_volume"])
 
 
 class DecideOnRequest(BaseModel):
@@ -409,11 +478,7 @@ def ingest_text_claims(
         )
 
     factory_id = body.factory_id or principal.tenant_id or "default-factory"
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
 
     try:
         understanding_session = get_understanding_session(request, session_id, factory_id)
@@ -428,20 +493,35 @@ def ingest_text_claims(
             department=body.department,
             default_currency=body.default_currency,
         )
-        report = understanding_session.submit(doc)
+        und_report: UnderstandingReport = understanding_session.submit(doc)
 
         if not hasattr(request.app.state, "understanding_reports"):
             request.app.state.understanding_reports = {}
-        request.app.state.understanding_reports[session_id] = report
+        request.app.state.understanding_reports[session_id] = und_report
+
+        # Link report with Ontology IdentityResolver
+        try:
+            font = get_factory_ontology(request, factory_id)
+            fstate = font.view(ip)
+            book = TerminologyBook(get_terminology_store(request), factory_id)
+            resolver = IdentityResolver(fstate, font.ontology, terms=book.entries())
+            links = link_report(
+                und_report, resolver, line_id=body.line_id, department=body.department
+            )
+            if not hasattr(request.app.state, "understanding_links"):
+                request.app.state.understanding_links = {}
+            request.app.state.understanding_links[session_id] = links
+        except Exception as ont_exc:
+            log.warning("Ontology linking skipped for session %s: %s", session_id, ont_exc)
 
         # Emit candidates as untrusted proposals to the session ledger
         store = sessions._store
         led = store.load_ledger(session_id)
         new_led, rejected_cands = emit_proposals(
-            list(report.candidates),
+            list(und_report.candidates),
             led,
             EXTRACTOR_SERVICE,
-            source_ref=f"understanding:{report.report_sha256[:16]}",
+            source_ref=f"understanding:{und_report.report_sha256[:16]}",
         )
         store.save_ledger(session_id, new_led, led.head, sessions._clock())
         updated_state = sessions.state(ip, session_id)
@@ -451,29 +531,29 @@ def ingest_text_claims(
     rejected_cand_keys = {c.key for (c, _) in rejected_cands}
     accepted_claims = [
         ExtractedClaim(key=c.key, value=c.value, quote=c.quote)
-        for c in report.candidates
+        for c in und_report.candidates
         if c.status in {"SUPPORTED", "BLOCKING_FEATURE"} and c.key not in rejected_cand_keys
     ]
     rejected_claims = [
         (ExtractedClaim(key=c.key, value=c.value, quote=c.quote), reason)
         for (c, reason) in rejected_cands
     ]
-    for c in report.candidates:
+    for c in und_report.candidates:
         if c.status not in {"SUPPORTED", "BLOCKING_FEATURE"}:
             rejected_claims.append(
                 (ExtractedClaim(key=c.key, value=c.value, quote=c.quote), c.note or c.status)
             )
 
     return IngestResponse(
-        source_sha256=report.source_sha256[0] if report.source_sha256 else "",
+        source_sha256=und_report.source_sha256[0] if und_report.source_sha256 else "",
         accepted_count=len(accepted_claims),
         rejected_count=len(rejected_claims),
         accepted=accepted_claims,
         rejected=rejected_claims,
         state=updated_state,
-        understanding=report,
-        readiness=report.readiness,
-        questions=list(report.questions),
+        understanding=und_report,
+        readiness=und_report.readiness,
+        questions=list(und_report.questions),
     )
 
 
@@ -591,8 +671,7 @@ def run_decision_intelligence(
     ip = to_industrial_principal(principal)
     sessions = get_governed_sessions(request)
     metrics = [
-        MetricObjective(metric=m, direction=MetricDirection.MAXIMIZE)
-        for m in body.pareto_metrics
+        MetricObjective(metric=m, direction=MetricDirection.MAXIMIZE) for m in body.pareto_metrics
     ]
     cfg = DecisionConfig(pareto_objectives=tuple(metrics)) if metrics else None
     try:
@@ -650,13 +729,17 @@ def get_session_understanding(
 ) -> UnderstandingReport:
     ip = to_industrial_principal(principal)
     ip.require(IndustrialRole.VIEWER)
-    reports = getattr(request.app.state, "understanding_reports", {})
+    reports: dict[str, UnderstandingReport] = getattr(
+        request.app.state, "understanding_reports", {}
+    )
     if session_id not in reports:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
-            detail=f"NO_UNDERSTANDING_REPORT: No understanding report found for session {session_id}",
+            detail=f"NO_UNDERSTANDING_REPORT: No report for session {session_id}",
         )
-    return reports[session_id]
+    rep = reports[session_id]
+    _require_factory_access(ip, rep.factory_id)
+    return rep
 
 
 @router.get("/sessions/{session_id}/clarifications", response_model=ClarificationsResponse)
@@ -668,12 +751,10 @@ def get_session_clarifications(
 ) -> ClarificationsResponse:
     ip = to_industrial_principal(principal)
     ip.require(IndustrialRole.VIEWER)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
-    reports = getattr(request.app.state, "understanding_reports", {})
+    _require_factory_access(ip, factory_id)
+    reports: dict[str, UnderstandingReport] = getattr(
+        request.app.state, "understanding_reports", {}
+    )
     if session_id in reports:
         report = reports[session_id]
         questions = list(report.questions)
@@ -682,7 +763,9 @@ def get_session_clarifications(
         questions = []
         gaps = []
 
-    sessions_map = getattr(request.app.state, "understanding_sessions", {})
+    sessions_map: dict[tuple[str, str], UnderstandingSession] = getattr(
+        request.app.state, "understanding_sessions", {}
+    )
     key = (session_id, factory_id)
     if key in sessions_map:
         clar_state = sessions_map[key].clarification_state
@@ -697,6 +780,84 @@ def get_session_clarifications(
     )
 
 
+@router.get("/sessions/{session_id}/ontology-links", response_model=UnderstandingLinks)
+def get_session_ontology_links(
+    request: Request,
+    session_id: str,
+    principal: Annotated[AuthPrincipal, Depends(get_principal)],
+) -> UnderstandingLinks:
+    ip = to_industrial_principal(principal)
+    ip.require(IndustrialRole.VIEWER)
+    links_map: dict[str, UnderstandingLinks] = getattr(request.app.state, "understanding_links", {})
+    if session_id not in links_map:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail=f"NO_ONTOLOGY_LINKS: No ontology links found for session {session_id}",
+        )
+    links = links_map[session_id]
+    _require_factory_access(ip, links.factory_id)
+    return links
+
+
+@router.get("/ontology/{factory_id}/context", response_model=ContextSnapshot)
+def get_ontology_context(
+    request: Request,
+    factory_id: str,
+    principal: Annotated[AuthPrincipal, Depends(get_principal)],
+    roots: str = "",
+    max_nodes: int = 80,
+) -> ContextSnapshot:
+    ip = to_industrial_principal(principal)
+    ip.require(IndustrialRole.VIEWER)
+    _require_factory_access(ip, factory_id)
+    try:
+        font = get_factory_ontology(request, factory_id)
+        fstate = font.view(ip)
+        root_list = [r.strip() for r in roots.split(",") if r.strip()]
+        if not root_list:
+            root_list = list(fstate.entities.keys())[:20]
+        return understanding_snapshot(fstate, font.ontology, root_list, max_nodes=max_nodes)
+    except Exception as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.get("/ontology/{factory_id}/planning-candidates", response_model=PlanningContext)
+def get_ontology_planning_candidates(
+    request: Request,
+    factory_id: str,
+    principal: Annotated[AuthPrincipal, Depends(get_principal)],
+    line_id: str | None = None,
+    at: str | None = None,
+) -> PlanningContext:
+    ip = to_industrial_principal(principal)
+    ip.require(IndustrialRole.PLANNER)
+    _require_factory_access(ip, factory_id)
+    try:
+        font = get_factory_ontology(request, factory_id)
+        fstate = font.view(ip)
+        return planning_context(fstate, font.ontology, line_id=line_id, at=at)
+    except Exception as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.get("/ontology/{factory_id}/verify", response_model=IntegrityReport)
+def verify_factory_ontology(
+    request: Request,
+    factory_id: str,
+    principal: Annotated[AuthPrincipal, Depends(get_principal)],
+) -> IntegrityReport:
+    ip = to_industrial_principal(principal)
+    ip.require(IndustrialRole.VIEWER)
+    _require_factory_access(ip, factory_id)
+    try:
+        store = get_ontology_store(request)
+        evs = store.events(factory_id)
+        font = get_factory_ontology(request, factory_id)
+        return verify_factory(factory_id, evs, font.ontology)
+    except Exception as exc:
+        raise _handle_domain_error(exc) from exc
+
+
 @router.get("/terminology/{factory_id}", response_model=list[TermEntry])
 def list_terms(
     request: Request,
@@ -705,11 +866,7 @@ def list_terms(
 ) -> list[TermEntry]:
     ip = to_industrial_principal(principal)
     ip.require(IndustrialRole.VIEWER)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
     store = get_terminology_store(request)
     book = TerminologyBook(store, factory_id)
     try:
@@ -727,11 +884,7 @@ def get_term_history(
 ) -> list[TermEntry]:
     ip = to_industrial_principal(principal)
     ip.require(IndustrialRole.VIEWER)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
     store = get_terminology_store(request)
     book = TerminologyBook(store, factory_id)
     try:
@@ -758,11 +911,7 @@ def propose_term(
     principal: Annotated[AuthPrincipal, Depends(get_principal)],
 ) -> TermEntry:
     ip = to_industrial_principal(principal)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
     store = get_terminology_store(request)
     book = TerminologyBook(store, factory_id)
     kw: dict[str, Any] = {}
@@ -799,11 +948,7 @@ def confirm_term(
     principal: Annotated[AuthPrincipal, Depends(get_principal)],
 ) -> TermEntry:
     ip = to_industrial_principal(principal)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
     store = get_terminology_store(request)
     book = TerminologyBook(store, factory_id)
     try:
@@ -821,11 +966,7 @@ def reject_term(
     principal: Annotated[AuthPrincipal, Depends(get_principal)],
 ) -> TermEntry:
     ip = to_industrial_principal(principal)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
     store = get_terminology_store(request)
     book = TerminologyBook(store, factory_id)
     try:
@@ -843,11 +984,7 @@ def correct_term(
     principal: Annotated[AuthPrincipal, Depends(get_principal)],
 ) -> TermEntry:
     ip = to_industrial_principal(principal)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
     store = get_terminology_store(request)
     book = TerminologyBook(store, factory_id)
     changes: dict[str, Any] = {}
@@ -882,11 +1019,7 @@ def deprecate_term(
     principal: Annotated[AuthPrincipal, Depends(get_principal)],
 ) -> TermEntry:
     ip = to_industrial_principal(principal)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
     store = get_terminology_store(request)
     book = TerminologyBook(store, factory_id)
     try:
@@ -904,11 +1037,7 @@ def rollback_term(
     principal: Annotated[AuthPrincipal, Depends(get_principal)],
 ) -> TermEntry:
     ip = to_industrial_principal(principal)
-    if ip.factories is not None and factory_id not in ip.factories:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail=f"FACTORY_FORBIDDEN: Principal not authorized for factory {factory_id}",
-        )
+    _require_factory_access(ip, factory_id)
     store = get_terminology_store(request)
     book = TerminologyBook(store, factory_id)
     try:

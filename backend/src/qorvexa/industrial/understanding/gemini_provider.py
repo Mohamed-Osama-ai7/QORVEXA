@@ -189,4 +189,3 @@ class GeminiLLMProvider(LLMProvider):
             raise ProviderUnavailable(f"Gemini returned invalid JSON: {exc}") from exc
         except Exception as exc:
             raise ProviderUnavailable(f"Failed to parse Gemini response: {exc}") from exc
-

@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface EvidenceRef {
+export interface QorvexaIndustrialDecisionIntelligenceExplanationEvidenceRef {
   admission_sha256?: string;
   admission_status?: string;
   input_sha256: string;

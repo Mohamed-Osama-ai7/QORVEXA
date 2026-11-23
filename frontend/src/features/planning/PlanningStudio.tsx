@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useMe } from '../../api/generated/incidents/incidents'
 import {
   type DecisionBrief,
   type DecisionHistory,
@@ -55,6 +56,9 @@ const INITIAL_SCENARIOS: ScenarioSpec[] = [
 ]
 
 export function PlanningStudio() {
+  const me = useMe()
+  const activeFactory = me.data?.data.tenant_id || me.data?.data.asset_ids?.[0] || 'factory-1'
+
   const [sessions, setSessions] = useState<SessionSummary[]>([])
   const [selectedSessionId, setSelectedSessionId] = useState<string>('PROD-PLAN-2026')
   const [newSessionTitle, setNewSessionTitle] = useState('')
@@ -67,7 +71,13 @@ export function PlanningStudio() {
   const [notice, setNotice] = useState<string | null>(null)
   const [rawSourceText, setRawSourceText] = useState<string>('')
   const [understandingReport, setUnderstandingReport] = useState<UnderstandingReport | null>(null)
-  const [factoryId, setFactoryId] = useState<string>('factory-1')
+  const [factoryId, setFactoryId] = useState<string>(activeFactory)
+
+  useEffect(() => {
+    if (activeFactory) {
+      setFactoryId(activeFactory)
+    }
+  }, [activeFactory])
 
   // Load sessions
   useEffect(() => {
@@ -333,8 +343,12 @@ export function PlanningStudio() {
           </p>
         </div>
 
-        {/* Session Selector */}
+        {/* Session Selector & Factory Scope */}
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded border border-border bg-panel px-2.5 py-1 text-xs">
+            <span className="text-muted">Factory:</span>
+            <span className="font-mono font-medium text-accent">{factoryId}</span>
+          </div>
           <select
             value={selectedSessionId}
             onChange={(e) => setSelectedSessionId(e.target.value)}
@@ -434,6 +448,7 @@ export function PlanningStudio() {
         {activeTab === 'intake' && (
           <ProblemIntakeView
             sessionId={selectedSessionId}
+            factoryId={factoryId}
             onIngest={handleIngest}
             isPending={isPending}
           />
