@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   type TermEntry,
   confirmTerm,
@@ -37,21 +37,22 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
   const [activeAction, setActiveAction] = useState<'CONFIRM' | 'REJECT' | 'CORRECT' | 'DEPRECATE' | 'ROLLBACK' | null>(null)
   const [rollbackVersion, setRollbackVersion] = useState<number>(1)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const data = await listTerms(factoryId)
       setTerms(data)
-    } catch (err: any) {
-      onNotice?.(`Failed to load terms: ${err?.message || err}`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      onNotice?.(`Failed to load terms: ${msg}`)
     } finally {
       setLoading(false)
     }
-  }
+  }, [factoryId, onNotice])
 
   useEffect(() => {
     loadData()
-  }, [factoryId])
+  }, [loadData])
 
   const loadHistory = async (term: TermEntry) => {
     setSelectedTerm(term)
@@ -81,8 +82,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
       setNewCanonicalId('')
       setNewMeaning('')
       await loadData()
-    } catch (err: any) {
-      onNotice?.(`Failed to propose term: ${err?.message || err}`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      onNotice?.(`Failed to propose term: ${msg}`)
     }
   }
 
@@ -113,8 +115,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
       const updated = await getTermHistory(factoryId, selectedTerm.term_id)
       setHistory(updated)
       if (updated.length > 0) setSelectedTerm(updated[updated.length - 1] ?? null)
-    } catch (err: any) {
-      onNotice?.(`Action failed: ${err?.message || err}`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      onNotice?.(`Action failed: ${msg}`)
     }
   }
 
@@ -345,8 +348,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
             </p>
             <form onSubmit={handlePropose} className="mt-4 space-y-3 text-xs">
               <div>
-                <label className="block text-muted">Factory Expression / Jargon</label>
+                <label htmlFor="new-expr" className="block text-muted">Factory Expression / Jargon</label>
                 <input
+                  id="new-expr"
                   type="text"
                   required
                   value={newExpr}
@@ -356,8 +360,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
                 />
               </div>
               <div>
-                <label className="block text-muted">Ontology Concept Reference</label>
+                <label htmlFor="new-concept" className="block text-muted">Ontology Concept Reference</label>
                 <input
+                  id="new-concept"
                   type="text"
                   required
                   value={newConcept}
@@ -368,8 +373,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-muted">Entity Type</label>
+                  <label htmlFor="new-entity-type" className="block text-muted">Entity Type</label>
                   <select
+                    id="new-entity-type"
                     value={newEntityType}
                     onChange={(e) => setNewEntityType(e.target.value)}
                     className="mt-1 w-full rounded border border-border bg-surface p-2 text-ink"
@@ -383,8 +389,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-muted">Canonical Model ID</label>
+                  <label htmlFor="new-canonical-id" className="block text-muted">Canonical Model ID</label>
                   <input
+                    id="new-canonical-id"
                     type="text"
                     value={newCanonicalId}
                     onChange={(e) => setNewCanonicalId(e.target.value)}
@@ -394,8 +401,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
                 </div>
               </div>
               <div>
-                <label className="block text-muted">Meaning / Notes</label>
+                <label htmlFor="new-meaning" className="block text-muted">Meaning / Notes</label>
                 <textarea
+                  id="new-meaning"
                   rows={2}
                   value={newMeaning}
                   onChange={(e) => setNewMeaning(e.target.value)}
@@ -433,8 +441,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
             <div className="mt-3 space-y-3 text-xs">
               {activeAction === 'CORRECT' && (
                 <div>
-                  <label className="block text-muted">Updated Meaning</label>
+                  <label htmlFor="correct-meaning" className="block text-muted">Updated Meaning</label>
                   <textarea
+                    id="correct-meaning"
                     rows={3}
                     value={correctMeaning}
                     onChange={(e) => setCorrectMeaning(e.target.value)}
@@ -444,8 +453,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
               )}
               {activeAction === 'ROLLBACK' && (
                 <div>
-                  <label className="block text-muted">Target Version to Restore</label>
+                  <label htmlFor="rollback-version" className="block text-muted">Target Version to Restore</label>
                   <select
+                    id="rollback-version"
                     value={rollbackVersion}
                     onChange={(e) => setRollbackVersion(Number(e.target.value))}
                     className="mt-1 w-full rounded border border-border bg-surface p-2 text-ink"
@@ -459,8 +469,9 @@ export function TerminologyManagerView({ factoryId, onNotice }: Props) {
                 </div>
               )}
               <div>
-                <label className="block text-muted">Audit Note / Rationale</label>
+                <label htmlFor="action-note" className="block text-muted">Audit Note / Rationale</label>
                 <input
+                  id="action-note"
                   type="text"
                   required
                   value={actionNote}

@@ -181,7 +181,7 @@ export function SolverSelectionStep({
               id="twin-scenario"
               value={config.twinScenario}
               onChange={(e) => {
-                const val = e.target.value as any
+                const val = e.target.value as 'leak' | 'maintenance_repair' | 'continued_operation' | 'baseline'
                 onChange((prev) => ({ ...prev, twinScenario: val }))
               }}
               className="mt-1 w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs text-ink"

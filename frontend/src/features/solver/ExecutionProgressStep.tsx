@@ -232,7 +232,7 @@ export function ExecutionProgressStep({
             {state.stageLogs.length} events logged
           </span>
         </div>
-        <div
+        <section
           aria-label="Execution telemetry log"
           className="mt-3 h-48 overflow-y-auto rounded border border-border bg-surface p-3 font-mono text-[11px] leading-relaxed text-ink space-y-1"
         >
@@ -260,7 +260,7 @@ export function ExecutionProgressStep({
               </div>
             ))
           )}
-        </div>
+        </section>
       </section>
 
       {/* Navigation actions */}

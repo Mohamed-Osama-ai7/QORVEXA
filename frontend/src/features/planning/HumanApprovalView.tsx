@@ -73,7 +73,7 @@ export function HumanApprovalView({
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             {/* Verdict Selection */}
             <div>
-              <label className="block text-xs font-medium text-muted">Decision Verdict</label>
+              <span className="block text-xs font-medium text-muted">Decision Verdict</span>
               <div className="mt-2 flex gap-4">
                 <label className="flex items-center gap-2 text-xs font-medium text-ink cursor-pointer">
                   <input
@@ -122,9 +122,9 @@ export function HumanApprovalView({
             {/* Mandatory Acknowledgements */}
             {requiredAcks.length > 0 && verdict === 'APPROVED' && (
               <div>
-                <label className="block text-xs font-medium text-muted">
+                <span className="block text-xs font-medium text-muted">
                   Mandatory Assumption Acknowledgements ({acknowledged.length}/{requiredAcks.length})
-                </label>
+                </span>
                 <div className="mt-2 space-y-2 rounded border border-border bg-surface p-3">
                   {requiredAcks.map((ack) => (
                     <label key={ack} className="flex items-center gap-2 text-xs text-ink cursor-pointer">

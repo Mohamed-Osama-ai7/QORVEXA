@@ -61,6 +61,8 @@ jobs:
         run: |
           npm run generate:api
           git diff --exit-code -- src/api/generated
+      - name: Lint
+        run: npm run lint
       - name: Type check
         run: npm run typecheck
       - name: Tests

@@ -14,7 +14,8 @@
 /.github/ @Mohamed-Osama-ai7
 
 # Knowledge & Retrieval Engine
-/backend/src/qorvexa/knowledge/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/knowledge/ @a7medessam196 @Mohamed-Osama-ai7
+/backend/benchmarks/qorvexa/retrieval_cases* @a7medessam196 @Mohamed-Osama-ai7
 
 # Digital Twin & Operational Simulation
 /backend/src/qorvexa/industrial/digital_twin/ @Mohamed-Osama-ai7

@@ -132,8 +132,9 @@ export function ProblemIntakeView({ factoryId: initialFactoryId, onIngest, isPen
         </div>
 
         <div className="mt-4 flex items-center gap-4 text-xs">
-          <label className="text-muted">Target Factory Scope:</label>
+          <label htmlFor="target-factory-scope" className="text-muted">Target Factory Scope:</label>
           <input
+            id="target-factory-scope"
             type="text"
             value={factoryId}
             onChange={(e) => setFactoryId(e.target.value)}

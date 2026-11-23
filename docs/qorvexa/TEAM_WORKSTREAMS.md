@@ -59,7 +59,10 @@ flowchart TD
 
 ---
 
-### Member 3 — Advanced Retrieval & Knowledge Engineering: Ahmed Essam (`ahmed essam`)
+### Member 3 — Advanced Retrieval & Knowledge Engineering: Ahmed Essam (`@a7medessam196`)
+- **Verified GitHub Handle:** `@a7medessam196`
+- **Contributor Email:** `a7med.essam196@gmail.com`
+- **Assigned Subsystems:** Knowledge & Retrieval Engine (`backend/src/qorvexa/knowledge/`), Document Ingestion, Hybrid Search Evaluation (`retrieval_cases.*`).
 
 **Primary Responsibilities:**
 - **Hybrid Retrieval Internals:** BM25 sparse keyword search, dense embedding integration, Reciprocal Rank Fusion (RRF), and cross-encoder reranking.

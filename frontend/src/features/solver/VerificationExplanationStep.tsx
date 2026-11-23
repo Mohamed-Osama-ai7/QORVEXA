@@ -101,7 +101,7 @@ export function VerificationExplanationStep({
         ...prev,
         isDecisionSubmitted: true,
         auditVerified: true,
-        auditHash: 'sha256-mock-verified-local-session-' + Date.now().toString(16),
+        auditHash: `sha256-mock-verified-local-session-${Date.now().toString(16)}`,
       }))
     }
   }
@@ -284,7 +284,7 @@ export function VerificationExplanationStep({
                 id="obs-cat"
                 value={state.humanObservationCategory}
                 onChange={(e) => {
-                  const val = e.target.value as any
+                  const val = e.target.value as 'visual_inspection' | 'auditory_hiss' | 'thermal_measurement' | 'gauge_cross_check'
                   onChange((prev) => ({ ...prev, humanObservationCategory: val }))
                 }}
                 className="mt-1 w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs text-ink"
@@ -368,8 +368,8 @@ export function VerificationExplanationStep({
                 id="decision-action-select"
                 value={state.decision ?? ''}
                 onChange={(e) => {
-                  const val = e.target.value as any
-                  onChange((prev) => ({ ...prev, decision: val || null }))
+                  const val = (e.target.value || null) as 'confirm' | 'defer' | 'dismiss' | null
+                  onChange((prev) => ({ ...prev, decision: val }))
                 }}
                 className="mt-1 w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs text-ink font-semibold"
               >
@@ -388,7 +388,7 @@ export function VerificationExplanationStep({
                 id="selected-opt-select"
                 value={state.selectedOption}
                 onChange={(e) => {
-                  const val = e.target.value as any
+                  const val = e.target.value as 'repair_now' | 'schedule' | 'monitor'
                   onChange((prev) => ({ ...prev, selectedOption: val }))
                 }}
                 className="mt-1 w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs text-ink font-mono"
