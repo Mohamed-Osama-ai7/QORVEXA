@@ -7,7 +7,7 @@ as success.
 
 What the checks establish:
 
-- ``LICENSE``: the file exists and contains the MIT licence phrases. Nothing more.
+- ``LICENSE``: the file exists and contains valid license terms. Nothing more.
 - CI workflow: every ``uses:`` line in ``ci.yml`` names a 40-hex commit. It does not prove the
   commit exists upstream, is authentic, or that other workflows or lockfiles are pinned.
 - Model manifest (``json_parameters_v1``): the manifest's parameters match the manifest's own
@@ -64,7 +64,7 @@ def _build_limitations(*, hmac_key_configured: bool) -> tuple[str, ...]:
         hmac_note,
         "The CI check only parses 'uses:' lines in ci.yml; it does not verify that pinned commits "
         "exist or are authentic, nor other workflows, lockfiles or dependency provenance.",
-        "The LICENSE check confirms MIT licence phrases are present in the file.",
+        "The LICENSE check confirms valid repository license terms are present in the file.",
     )
 
 
@@ -415,20 +415,28 @@ def build_supply_chain_report(
     if license_path.is_file():
         lic_bytes = license_path.read_bytes()
         lic_text = lic_bytes.decode("utf-8", errors="replace")
+        has_proprietary = (
+            "QORVEXA" in lic_text or "Proprietary" in lic_text or "PROPRIETARY" in lic_text
+        ) and "All rights reserved" in lic_text
         has_mit = "MIT License" in lic_text and "Permission is hereby granted" in lic_text
+        license_ok = has_proprietary or has_mit
         attestations.append(
             _entry(
                 "Root Repository License",
                 "LICENSE",
                 "text_license",
-                "present" if has_mit else "tamper_or_hash_mismatch",
+                "present" if license_ok else "tamper_or_hash_mismatch",
                 sha256_bytes(lic_bytes),
-                "File exists and contains the MIT licence phrases"
-                if has_mit
-                else "File exists but does not contain the expected MIT licence text",
+                "File exists and contains proprietary license terms"
+                if has_proprietary
+                else (
+                    "File exists and contains the MIT licence phrases"
+                    if has_mit
+                    else "File exists but does not contain valid license terms"
+                ),
             )
         )
-        license_ok = has_mit
+        license_ok = license_ok
     else:
         attestations.append(
             _entry(

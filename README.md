@@ -11,7 +11,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-Proprietary-red?style=flat-square)](#)
+[![License](https://img.shields.io/badge/License-Proprietary-red?style=flat-square)](LICENSE)
 
 ---
 
@@ -446,3 +446,13 @@ Before submitting changes, contributors must ensure:
 - **Technical Architecture & Direction**: Mohamed Osama
 - **Affiliation**: Industrial Decision Intelligence Research, Cairo, Egypt
 - **Repository**: [https://github.com/Mohamed-Osama-ai7/QORVEXA](https://github.com/Mohamed-Osama-ai7/QORVEXA)
+
+---
+
+## 18. Governance, Security & Licensing
+
+- **License**: Proprietary / Closed-Source / All Rights Reserved. See [LICENSE](LICENSE) and [LICENSING_TRANSITION.md](docs/qorvexa/LICENSING_TRANSITION.md) for historical licensing disclosures.
+- **Team Workstreams & Ownership**: Consult [docs/qorvexa/TEAM_WORKSTREAMS.md](docs/qorvexa/TEAM_WORKSTREAMS.md) for the 5-person engineering allocation and ownership boundaries.
+- **Contribution Policy**: Engineering workflows, branch naming, and review requirements are specified in [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/qorvexa/DEVELOPMENT_WORKFLOW.md](docs/qorvexa/DEVELOPMENT_WORKFLOW.md).
+- **Security Policy**: Vulnerability disclosure instructions and industrial OT safety boundaries are documented in [SECURITY.md](SECURITY.md).
+- **Architecture Maturity**: Comprehensive evidence-grounded subsystem status is maintained in [docs/qorvexa/ARCHITECTURE_STATUS.md](docs/qorvexa/ARCHITECTURE_STATUS.md).

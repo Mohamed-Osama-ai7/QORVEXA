@@ -1,0 +1,28 @@
+# QORVEXA Code Owners
+
+# Initial repository-level ownership
+# The project architect owns overall repository integrity until individual team member
+# GitHub accounts are formally assigned and permissions configured.
+* @Mohamed-Osama-ai7
+
+# Core Architecture & Solver Fabric
+/backend/src/qorvexa/solver_fabric/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/industrial/units/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/industrial/governance/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/industrial/co_orchestration/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/api/ @Mohamed-Osama-ai7
+/.github/ @Mohamed-Osama-ai7
+
+# Knowledge & Retrieval Engine
+/backend/src/qorvexa/knowledge/ @Mohamed-Osama-ai7
+
+# Digital Twin & Operational Simulation
+/backend/src/qorvexa/industrial/digital_twin/ @Mohamed-Osama-ai7
+
+# Frontend Production Planning & Studio
+/frontend/src/features/planning/ @Mohamed-Osama-ai7
+/frontend/src/features/solver/ @Mohamed-Osama-ai7
+
+# NOTE: CODEOWNERS defines code review responsibility within GitHub.
+# It does not transfer, assign, or modify intellectual property rights.
+# Additional team members will be added here once their GitHub accounts are verified.

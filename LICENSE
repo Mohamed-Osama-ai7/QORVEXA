@@ -1,22 +1,22 @@
-MIT License
+Copyright (c) 2026 Mohamed Osama / QORVEXA. All rights reserved.
 
-Copyright (c) 2026 FactoryMind CDT Contributors
+PROPRIETARY AND CONFIDENTIAL
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software, source code, documentation, and associated materials (the "Software")
+are the proprietary and confidential property of Mohamed Osama and QORVEXA.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Unauthorized copying, distribution, modification, public display, transmission,
+reverse engineering, decompilation, or commercial exploitation of this Software,
+in whole or in part, via any medium or platform, is strictly prohibited without
+prior explicit written authorization from the copyright holder.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+This Software is licensed, not sold. Possession of or access to this Software
+does not convey any rights to sub-license, redistribute, or use this Software
+outside of explicitly authorized commercial agreements.
 
+HISTORICAL LICENSING DISCLOSURE:
+Portions of earlier revisions of this repository (specifically commits 77cbeb0
+through 2335e58) were previously published under the MIT License. Transition to
+proprietary licensing is effective as of the current release. For historical
+licensing context, legal analysis, and transition disclosures, refer to
+docs/qorvexa/LICENSING_TRANSITION.md.

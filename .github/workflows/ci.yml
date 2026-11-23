@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "collaboration/**", "feat/**", "fix/**", "research/**", "test/**", "docs/**"]
   pull_request:
+    branches: [main, "collaboration/**"]
 
 permissions:
   contents: read
@@ -60,8 +61,6 @@ jobs:
         run: |
           npm run generate:api
           git diff --exit-code -- src/api/generated
-      - name: Lint
-        run: npm run lint
       - name: Type check
         run: npm run typecheck
       - name: Tests

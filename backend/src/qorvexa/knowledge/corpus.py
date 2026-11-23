@@ -128,7 +128,7 @@ def _passport_chunks() -> list[KnowledgeDocumentChunk]:
             section="Sensor Specifications & Envelopes",
             asset_id=passport.asset_id,
             source_path="factorymind/assets/passport.py",
-            license="MIT (Repository Contract)",
+            license="Proprietary (Repository Contract)",
             provenance_origin="derived",
             text=" ".join(sensor_lines),
         )
@@ -147,7 +147,7 @@ def _passport_chunks() -> list[KnowledgeDocumentChunk]:
             section="Operating Regimes & Unobserved Boundaries",
             asset_id=passport.asset_id,
             source_path="factorymind/assets/passport.py",
-            license="MIT (Repository Contract)",
+            license="Proprietary (Repository Contract)",
             provenance_origin="derived",
             text=regime_text,
         )
@@ -168,7 +168,7 @@ def _passport_chunks() -> list[KnowledgeDocumentChunk]:
                 section=fm.display_name,
                 asset_id=passport.asset_id,
                 source_path="factorymind/assets/passport.py",
-                license="MIT (Repository Contract)",
+                license="Proprietary (Repository Contract)",
                 provenance_origin="derived",
                 text=text,
             )
@@ -183,7 +183,7 @@ def _passport_chunks() -> list[KnowledgeDocumentChunk]:
                 section=f"Model {model.model_id} ({model.status})",
                 asset_id=passport.asset_id,
                 source_path="factorymind/assets/passport.py",
-                license="MIT (Repository Contract)",
+                license="Proprietary (Repository Contract)",
                 provenance_origin="derived",
                 text=f"{model.scope_note} Limitations: {'; '.join(model.limitations)}",
             )
@@ -261,7 +261,7 @@ def _markdown_chunks(
                     section=section if sub_idx == 0 else f"{section} (cont. {sub_idx})",
                     asset_id=asset_id,
                     source_path=rel_path,
-                    license="MIT (Repository Documentation)",
+                    license="Proprietary (Repository Documentation)",
                     provenance_origin="derived",
                     text=segment,
                 )
