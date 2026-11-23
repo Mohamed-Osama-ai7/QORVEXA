@@ -643,49 +643,6 @@
         "title": "AuditVerification",
         "type": "object"
       },
-      "Candidate": {
-        "additionalProperties": false,
-        "description": "A mapped Production Planning candidate. Always an untrusted proposal.",
-        "properties": {
-          "key": {
-            "title": "Key",
-            "type": "string"
-          },
-          "note": {
-            "default": "",
-            "title": "Note",
-            "type": "string"
-          },
-          "quote": {
-            "title": "Quote",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "support": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Support",
-            "type": "array"
-          },
-          "value": {
-            "title": "Value",
-            "type": "string"
-          }
-        },
-        "required": [
-          "key",
-          "value",
-          "support",
-          "quote",
-          "status"
-        ],
-        "title": "Candidate",
-        "type": "object"
-      },
       "CapacityChange": {
         "additionalProperties": false,
         "properties": {
@@ -976,6 +933,40 @@
         "title": "Claim",
         "type": "object"
       },
+      "ClaimOntologyRefs": {
+        "additionalProperties": false,
+        "properties": {
+          "claim_id": {
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "related": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MentionLink"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MentionLink"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "claim_id"
+        ],
+        "title": "ClaimOntologyRefs",
+        "type": "object"
+      },
       "ClarificationState": {
         "additionalProperties": false,
         "description": "Carried across turns: which gaps were asked how often, and which are resolved.",
@@ -1264,6 +1255,100 @@
           "product_unit"
         ],
         "title": "Consumption",
+        "type": "object"
+      },
+      "ContextSnapshot": {
+        "additionalProperties": false,
+        "description": "Bounded, reproducible context for the Understanding engine.",
+        "properties": {
+          "entities": {
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Entities",
+            "type": "array"
+          },
+          "factory_id": {
+            "title": "Factory Id",
+            "type": "string"
+          },
+          "head_sha": {
+            "title": "Head Sha",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "relations": {
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Relations",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "snapshot_sha256": {
+            "default": "",
+            "title": "Snapshot Sha256",
+            "type": "string"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "factory_id",
+          "revision",
+          "head_sha",
+          "entities",
+          "relations",
+          "truncated",
+          "limitations"
+        ],
+        "title": "ContextSnapshot",
         "type": "object"
       },
       "Contradiction": {
@@ -2099,7 +2184,7 @@
           },
           "evidence": {
             "items": {
-              "$ref": "#/components/schemas/EvidenceRef"
+              "$ref": "#/components/schemas/qorvexa__industrial__decision_intelligence__explanation__EvidenceRef"
             },
             "title": "Evidence",
             "type": "array"
@@ -3492,6 +3577,18 @@
         "title": "EvidenceItemContract",
         "type": "object"
       },
+      "EvidenceKind": {
+        "enum": [
+          "CLAIM",
+          "DOCUMENT",
+          "IMPORT",
+          "TERM",
+          "HUMAN_STATEMENT",
+          "MEASUREMENT"
+        ],
+        "title": "EvidenceKind",
+        "type": "string"
+      },
       "EvidenceOut": {
         "properties": {
           "feature": {
@@ -3673,81 +3770,6 @@
           "confidence_penalty_factor"
         ],
         "title": "EvidenceQualityAssessment",
-        "type": "object"
-      },
-      "EvidenceRef": {
-        "additionalProperties": false,
-        "properties": {
-          "admission_sha256": {
-            "default": "",
-            "title": "Admission Sha256",
-            "type": "string"
-          },
-          "admission_status": {
-            "default": "NOT_ADMITTED",
-            "title": "Admission Status",
-            "type": "string"
-          },
-          "input_sha256": {
-            "title": "Input Sha256",
-            "type": "string"
-          },
-          "lineage": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Lineage",
-            "type": "array"
-          },
-          "model_sha256": {
-            "title": "Model Sha256",
-            "type": "string"
-          },
-          "optimality_tier": {
-            "title": "Optimality Tier",
-            "type": "string"
-          },
-          "report_status": {
-            "title": "Report Status",
-            "type": "string"
-          },
-          "scenario_id": {
-            "title": "Scenario Id",
-            "type": "string"
-          },
-          "spec_sha256": {
-            "title": "Spec Sha256",
-            "type": "string"
-          },
-          "unit_report_sha256": {
-            "default": "",
-            "title": "Unit Report Sha256",
-            "type": "string"
-          },
-          "unit_status": {
-            "default": "LEGACY_UNITS_UNVERIFIED",
-            "title": "Unit Status",
-            "type": "string"
-          },
-          "verification_levels": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Verification Levels",
-            "type": "array"
-          }
-        },
-        "required": [
-          "scenario_id",
-          "input_sha256",
-          "spec_sha256",
-          "model_sha256",
-          "lineage",
-          "report_status",
-          "optimality_tier",
-          "verification_levels"
-        ],
-        "title": "EvidenceRef",
         "type": "object"
       },
       "EvidenceReference": {
@@ -5281,6 +5303,78 @@
         "title": "InputDiff",
         "type": "object"
       },
+      "IntegrityIssue": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "object_id": {
+            "title": "Object Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "object_id",
+          "detail"
+        ],
+        "title": "IntegrityIssue",
+        "type": "object"
+      },
+      "IntegrityReport": {
+        "properties": {
+          "chain_errors": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Chain Errors",
+            "type": "array"
+          },
+          "factory_id": {
+            "title": "Factory Id",
+            "type": "string"
+          },
+          "graph_issues": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/IntegrityIssue"
+            },
+            "title": "Graph Issues",
+            "type": "array"
+          },
+          "graph_sha256": {
+            "title": "Graph Sha256",
+            "type": "string"
+          },
+          "head_sha": {
+            "title": "Head Sha",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "factory_id",
+          "ok",
+          "revision",
+          "head_sha",
+          "graph_sha256"
+        ],
+        "title": "IntegrityReport",
+        "type": "object"
+      },
       "Issue": {
         "additionalProperties": false,
         "properties": {
@@ -5885,6 +5979,29 @@
           "asset_ids"
         ],
         "title": "MeResponse",
+        "type": "object"
+      },
+      "MentionLink": {
+        "additionalProperties": false,
+        "properties": {
+          "mention_id": {
+            "title": "Mention Id",
+            "type": "string"
+          },
+          "resolution": {
+            "$ref": "#/components/schemas/Resolution"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mention_id",
+          "text",
+          "resolution"
+        ],
+        "title": "MentionLink",
         "type": "object"
       },
       "MetricDirection": {
@@ -6986,6 +7103,16 @@
         "title": "OptimizationWeights",
         "type": "object"
       },
+      "Outcome": {
+        "enum": [
+          "RESOLVED",
+          "AMBIGUOUS",
+          "UNRESOLVED",
+          "CONFLICTED"
+        ],
+        "title": "Outcome",
+        "type": "string"
+      },
       "OutcomeVerificationCreate": {
         "additionalProperties": false,
         "description": "Post-review field outcome verification (strictly human-recorded, never control).",
@@ -7448,6 +7575,206 @@
           "capacity_unit"
         ],
         "title": "PlanResource",
+        "type": "object"
+      },
+      "PlanningCandidate": {
+        "additionalProperties": false,
+        "description": "A candidate formulation field with full lineage back to ontology objects.",
+        "properties": {
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/qorvexa__industrial__ontology__model__EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "objects": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Objects",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "objects",
+          "evidence",
+          "revision"
+        ],
+        "title": "PlanningCandidate",
+        "type": "object"
+      },
+      "PlanningContext": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/PlanningCandidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "capacities": {
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Capacities",
+            "type": "array"
+          },
+          "factory_id": {
+            "title": "Factory Id",
+            "type": "string"
+          },
+          "head_sha": {
+            "title": "Head Sha",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "line_structure": {
+            "items": {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Line Structure",
+            "type": "array"
+          },
+          "material_consumption": {
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Material Consumption",
+            "type": "array"
+          },
+          "process_compatibility": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Process Compatibility",
+            "type": "array"
+          },
+          "product_resources": {
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Product Resources",
+            "type": "array"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/Rejected"
+            },
+            "title": "Rejected",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "factory_id",
+          "revision",
+          "head_sha",
+          "line_structure",
+          "product_resources",
+          "capacities",
+          "material_consumption",
+          "process_compatibility",
+          "candidates",
+          "rejected",
+          "limitations"
+        ],
+        "title": "PlanningContext",
         "type": "object"
       },
       "PlanningMetadata": {
@@ -8811,6 +9138,33 @@
         "title": "RegimeSplitSummary",
         "type": "object"
       },
+      "Rejected": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "objects": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Objects",
+            "type": "array"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "reason"
+        ],
+        "title": "Rejected",
+        "type": "object"
+      },
       "Rejection": {
         "additionalProperties": false,
         "properties": {
@@ -8932,6 +9286,67 @@
           "operator_reports"
         ],
         "title": "ReplayResponse",
+        "type": "object"
+      },
+      "Resolution": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/qorvexa__industrial__ontology__resolution__Candidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "excluded": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/qorvexa__industrial__ontology__resolution__Candidate"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/Outcome"
+          },
+          "reasons": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "surface": {
+            "title": "Surface",
+            "type": "string"
+          },
+          "term_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Term Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "surface",
+          "outcome"
+        ],
+        "title": "Resolution",
         "type": "object"
       },
       "ResolveRequest": {
@@ -11379,12 +11794,55 @@
         "title": "UncertaintyEstimate",
         "type": "object"
       },
+      "UnderstandingLinks": {
+        "additionalProperties": false,
+        "properties": {
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimOntologyRefs"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "factory_id": {
+            "title": "Factory Id",
+            "type": "string"
+          },
+          "mentions": {
+            "items": {
+              "$ref": "#/components/schemas/MentionLink"
+            },
+            "title": "Mentions",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "unresolved_mentions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unresolved Mentions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "factory_id",
+          "revision",
+          "mentions",
+          "claims",
+          "unresolved_mentions"
+        ],
+        "title": "UnderstandingLinks",
+        "type": "object"
+      },
       "UnderstandingReport": {
         "additionalProperties": false,
         "properties": {
           "candidates": {
             "items": {
-              "$ref": "#/components/schemas/Candidate"
+              "$ref": "#/components/schemas/qorvexa__industrial__understanding__models__Candidate"
             },
             "title": "Candidates",
             "type": "array"
@@ -12505,6 +12963,208 @@
           "detectors"
         ],
         "title": "Wp2SimulatedFaultSeparation",
+        "type": "object"
+      },
+      "qorvexa__industrial__decision_intelligence__explanation__EvidenceRef": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_sha256": {
+            "default": "",
+            "title": "Admission Sha256",
+            "type": "string"
+          },
+          "admission_status": {
+            "default": "NOT_ADMITTED",
+            "title": "Admission Status",
+            "type": "string"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "lineage": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lineage",
+            "type": "array"
+          },
+          "model_sha256": {
+            "title": "Model Sha256",
+            "type": "string"
+          },
+          "optimality_tier": {
+            "title": "Optimality Tier",
+            "type": "string"
+          },
+          "report_status": {
+            "title": "Report Status",
+            "type": "string"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "spec_sha256": {
+            "title": "Spec Sha256",
+            "type": "string"
+          },
+          "unit_report_sha256": {
+            "default": "",
+            "title": "Unit Report Sha256",
+            "type": "string"
+          },
+          "unit_status": {
+            "default": "LEGACY_UNITS_UNVERIFIED",
+            "title": "Unit Status",
+            "type": "string"
+          },
+          "verification_levels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Verification Levels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "input_sha256",
+          "spec_sha256",
+          "model_sha256",
+          "lineage",
+          "report_status",
+          "optimality_tier",
+          "verification_levels"
+        ],
+        "title": "EvidenceRef",
+        "type": "object"
+      },
+      "qorvexa__industrial__ontology__model__EvidenceRef": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EvidenceKind"
+          },
+          "quote": {
+            "default": "",
+            "title": "Quote",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "sha256": {
+            "default": "",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "ref"
+        ],
+        "title": "EvidenceRef",
+        "type": "object"
+      },
+      "qorvexa__industrial__ontology__resolution__Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "evidence": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "excluded": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "score": {
+            "default": 0,
+            "title": "Score",
+            "type": "integer"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entity_id",
+          "concept",
+          "name",
+          "sources"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      },
+      "qorvexa__industrial__understanding__models__Candidate": {
+        "additionalProperties": false,
+        "description": "A mapped Production Planning candidate. Always an untrusted proposal.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "support": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Support",
+            "type": "array"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "support",
+          "quote",
+          "status"
+        ],
+        "title": "Candidate",
         "type": "object"
       }
     }
@@ -13843,6 +14503,184 @@
         ]
       }
     },
+    "/api/v1/industrial/ontology/{factory_id}/context": {
+      "get": {
+        "operationId": "get_ontology_context",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "roots",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Roots",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "max_nodes",
+            "required": false,
+            "schema": {
+              "default": 80,
+              "title": "Max Nodes",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContextSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Ontology Context",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/ontology/{factory_id}/planning-candidates": {
+      "get": {
+        "operationId": "get_ontology_planning_candidates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "line_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Line Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "At"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningContext"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Ontology Planning Candidates",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/ontology/{factory_id}/verify": {
+      "get": {
+        "operationId": "verify_factory_ontology",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrityReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Factory Ontology",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
     "/api/v1/industrial/sessions": {
       "get": {
         "operationId": "list_sessions",
@@ -14406,6 +15244,48 @@
           }
         },
         "summary": "Ingest Text Claims",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/ontology-links": {
+      "get": {
+        "operationId": "get_session_ontology_links",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnderstandingLinks"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Session Ontology Links",
         "tags": [
           "industrial"
         ]

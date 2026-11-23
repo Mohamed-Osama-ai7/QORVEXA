@@ -298,6 +298,55 @@ export interface DecisionHistory {
   records: DecisionRecord[]
 }
 
+export interface UnderstandingLinks {
+  session_id: string
+  factory_id: string
+  ontology_head: string
+  entity_links: Record<string, string>
+  resolved_entities: Array<{
+    mention_id: string
+    text: string
+    entity_id: string
+    entity_type: string
+    name: string
+  }>
+  unresolved_mentions: Array<{
+    mention_id: string
+    text: string
+    suggested_type?: string
+  }>
+}
+
+export interface OntologyContextSnapshot {
+  factory_id: string
+  head_sha: string
+  revision: number
+  entities: Record<string, unknown>
+  relations: Record<string, unknown>
+  roots: string[]
+}
+
+export interface OntologyPlanningCandidates {
+  factory_id: string
+  line_id?: string
+  machines: Array<{ id: string; name: string; capacity?: string }>
+  materials: Array<{ id: string; name: string; unit?: string }>
+  products: Array<{ id: string; name: string; routings: string[] }>
+  routings: Array<{ id: string; steps: unknown[] }>
+}
+
+export interface OntologyIntegrityReport {
+  factory_id: string
+  is_valid: boolean
+  issues: Array<{
+    code: string
+    severity: string
+    message: string
+    entity_id?: string
+    relation_id?: string
+  }>
+}
+
 export async function listSessions(): Promise<SessionSummary[]> {
   try {
     const res = await apiFetch<{ data: SessionSummary[] }>('/api/v1/industrial/sessions')
@@ -360,7 +409,7 @@ export async function getSessionUnderstanding(sessionId: string): Promise<Unders
 
 export async function getSessionClarifications(
   sessionId: string,
-  factoryId: string = 'factory-1'
+  factoryId: string
 ): Promise<{ clarification_state: unknown; questions: Question[]; gaps: Gap[] }> {
   const res = await apiFetch<{ data: { clarification_state: unknown; questions: Question[]; gaps: Gap[] } }>(
     `/api/v1/industrial/sessions/${sessionId}/clarifications?factory_id=${encodeURIComponent(factoryId)}`
@@ -368,7 +417,7 @@ export async function getSessionClarifications(
   return res.data
 }
 
-export async function listTerms(factoryId: string = 'factory-1'): Promise<TermEntry[]> {
+export async function listTerms(factoryId: string): Promise<TermEntry[]> {
   const res = await apiFetch<{ data: TermEntry[] }>(
     `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}`
   )
@@ -531,5 +580,43 @@ export async function decideOn(
 
 export async function getSessionHistory(sessionId: string): Promise<DecisionHistory> {
   const res = await apiFetch<{ data: DecisionHistory }>(`/api/v1/industrial/sessions/${sessionId}/history`)
+  return res.data
+}
+
+export async function getSessionOntologyLinks(sessionId: string): Promise<UnderstandingLinks> {
+  const res = await apiFetch<{ data: UnderstandingLinks }>(
+    `/api/v1/industrial/sessions/${sessionId}/ontology-links`
+  )
+  return res.data
+}
+
+export async function getOntologyContext(
+  factoryId: string,
+  roots?: string[]
+): Promise<OntologyContextSnapshot> {
+  const query = roots && roots.length > 0 ? `?roots=${encodeURIComponent(roots.join(','))}` : ''
+  const res = await apiFetch<{ data: OntologyContextSnapshot }>(
+    `/api/v1/industrial/ontology/${encodeURIComponent(factoryId)}/context${query}`
+  )
+  return res.data
+}
+
+export async function getOntologyPlanningCandidates(
+  factoryId: string,
+  lineId?: string
+): Promise<OntologyPlanningCandidates> {
+  const query = lineId ? `?line_id=${encodeURIComponent(lineId)}` : ''
+  const res = await apiFetch<{ data: OntologyPlanningCandidates }>(
+    `/api/v1/industrial/ontology/${encodeURIComponent(factoryId)}/planning-candidates${query}`
+  )
+  return res.data
+}
+
+export async function verifyFactoryOntology(
+  factoryId: string
+): Promise<OntologyIntegrityReport> {
+  const res = await apiFetch<{ data: OntologyIntegrityReport }>(
+    `/api/v1/industrial/ontology/${encodeURIComponent(factoryId)}/verify`
+  )
   return res.data
 }
