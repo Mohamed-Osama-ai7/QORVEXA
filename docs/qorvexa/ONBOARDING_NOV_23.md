@@ -149,3 +149,12 @@ npm run dev
    ```
 3. **Absolute Prohibition on Secrets**: Never commit `.env`, `.env.local`, API keys, private tokens, or credentials. Version control is monitored by automated scanning.
 4. **Advisory OT Boundary**: The system is designed strictly for read-only decision support. Do not attempt to configure writes to physical PLCs or industrial automation equipment.
+
+---
+
+## 6. Team Governance & Development Workflow
+
+Consult the following authoritative specifications before writing code:
+- **Workstream Ownership & Module Matrix:** [TEAM_WORKSTREAMS.md](TEAM_WORKSTREAMS.md)
+- **Nine-Step Engineering Lifecycle & PR Policy:** [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md)
+- **Contribution Standards & Branch Conventions:** [CONTRIBUTING.md](../../CONTRIBUTING.md)

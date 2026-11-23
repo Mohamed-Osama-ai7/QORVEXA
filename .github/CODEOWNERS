@@ -1,29 +1,89 @@
 # QORVEXA Code Owners
+# Official repository review assignments for the Six-Person Engineering Team.
+#
+# NOTE: GitHub CODEOWNERS syntax requires valid, verified GitHub usernames or team handles.
+# Verified GitHub Identities:
+# - Technical Lead: @Mohamed-Osama-ai7
+# - Advanced RAG & Retrieval: @a7medessam196
+#
+# For Workstreams 3, 4, 5, and 6, human team members' GitHub accounts are pending formal
+# invitation and acceptance. In the interim, review responsibilities for these modules
+# route to Technical Lead @Mohamed-Osama-ai7, as documented in pending mapping comments.
+# Do NOT infer or invent GitHub handles from forks or unverified accounts.
 
-# Initial repository-level ownership
-# The project architect owns overall repository integrity until individual team member
-# GitHub accounts are formally assigned and permissions configured.
+# Default Repository Ownership Fallback
 * @Mohamed-Osama-ai7
 
-# Core Architecture & Solver Fabric
+# ==============================================================================
+# Workstream 1: Technical Lead & Core Intelligence Architecture
+# Owner: Mohamed Osama (@Mohamed-Osama-ai7)
+# ==============================================================================
+/backend/src/qorvexa/contracts/ @Mohamed-Osama-ai7
 /backend/src/qorvexa/solver_fabric/ @Mohamed-Osama-ai7
 /backend/src/qorvexa/industrial/units/ @Mohamed-Osama-ai7
 /backend/src/qorvexa/industrial/governance/ @Mohamed-Osama-ai7
-/backend/src/qorvexa/industrial/co_orchestration/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/industrial/ontology/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/industrial/understanding/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/industrial/decision_intelligence/ @Mohamed-Osama-ai7
 /backend/src/qorvexa/api/ @Mohamed-Osama-ai7
-/.github/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/auth/ @Mohamed-Osama-ai7
+/frontend/src/features/solver/ @Mohamed-Osama-ai7
+/frontend/src/features/audit/ @Mohamed-Osama-ai7
+/.github/CODEOWNERS @Mohamed-Osama-ai7
 
-# Knowledge & Retrieval Engine
+# ==============================================================================
+# Workstream 2: Advanced RAG & Retrieval Engineering
+# Owner: Ahmed Essam (@a7medessam196)
+# Secondary / Architectural Review: @Mohamed-Osama-ai7
+# ==============================================================================
 /backend/src/qorvexa/knowledge/ @a7medessam196 @Mohamed-Osama-ai7
 /backend/benchmarks/qorvexa/retrieval_cases* @a7medessam196 @Mohamed-Osama-ai7
+/frontend/src/features/knowledge/ @a7medessam196 @Mohamed-Osama-ai7
 
-# Digital Twin & Operational Simulation
-/backend/src/qorvexa/industrial/digital_twin/ @Mohamed-Osama-ai7
-
-# Frontend Production Planning & Studio
+# ==============================================================================
+# Workstream 3: Advanced Optimization Engineering
+# Primary Owner: Mohamed Adel (GitHub Handle Pending Invitation)
+# Interim Reviewer: @Mohamed-Osama-ai7
+# Target Mapping upon verification: @<mohamed-adel-handle> @Mohamed-Osama-ai7
+# ==============================================================================
+/backend/src/qorvexa/industrial/formulation/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/industrial/production_planning/ @Mohamed-Osama-ai7
 /frontend/src/features/planning/ @Mohamed-Osama-ai7
-/frontend/src/features/solver/ @Mohamed-Osama-ai7
 
-# NOTE: CODEOWNERS defines code review responsibility within GitHub.
-# It does not transfer, assign, or modify intellectual property rights.
-# Additional team members will be added here once their GitHub accounts are verified.
+# ==============================================================================
+# Workstream 4: Causal Intelligence & Industrial Analytics
+# Primary Owner: Beshoy (GitHub Handle Pending Invitation)
+# Interim Reviewer: @Mohamed-Osama-ai7
+# Target Mapping upon verification: @<beshoy-handle> @Mohamed-Osama-ai7
+# NOTE: Do NOT map to unverified public fork accounts.
+# ==============================================================================
+/backend/src/qorvexa/anomaly/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/ml/ @Mohamed-Osama-ai7
+/backend/benchmarks/qorvexa/rca_cases* @Mohamed-Osama-ai7
+/frontend/src/features/incidents/ @Mohamed-Osama-ai7
+/frontend/src/features/anomaly/ @Mohamed-Osama-ai7
+/frontend/src/features/ml/ @Mohamed-Osama-ai7
+
+# ==============================================================================
+# Workstream 5: Advanced Multi-Agent Orchestration & Governance
+# Primary Owner: Ziad (GitHub Handle Pending Invitation)
+# Interim Reviewer: @Mohamed-Osama-ai7
+# Target Mapping upon verification: @<ziad-handle> @Mohamed-Osama-ai7
+# ==============================================================================
+/backend/src/qorvexa/copilot/ @Mohamed-Osama-ai7
+/frontend/src/features/copilot/ @Mohamed-Osama-ai7
+
+# ==============================================================================
+# Workstream 6: Digital Twin, Simulation, Industrial Integration & Observability
+# Primary Owner: Ali Motassem (GitHub Handle Pending Invitation)
+# Interim Reviewer: @Mohamed-Osama-ai7
+# Target Mapping upon verification: @<ali-motassem-handle> @Mohamed-Osama-ai7
+# NOTE: Do NOT map to unverified public fork accounts.
+# ==============================================================================
+/backend/src/qorvexa/industrial/digital_twin/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/industrial/co_orchestration/ @Mohamed-Osama-ai7
+/backend/src/qorvexa/connectors/ @Mohamed-Osama-ai7
+/.github/workflows/ @Mohamed-Osama-ai7
+/frontend/src/features/twin/ @Mohamed-Osama-ai7
+/frontend/src/features/edge/ @Mohamed-Osama-ai7
+/frontend/src/features/system/ @Mohamed-Osama-ai7

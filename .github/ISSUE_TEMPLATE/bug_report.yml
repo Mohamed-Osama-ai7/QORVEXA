@@ -1,0 +1,76 @@
+name: Bug Report
+description: Report a reproducible bug, calculation discrepancy, or runtime crash in QORVEXA
+title: "fix([subsystem]): [concise description]"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue in QORVEXA. Please fill in the details below to ensure rapid and reproducible debugging.
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Owning Workstream
+      description: Select the workstream responsible for the affected subsystem.
+      options:
+        - "Workstream 1 — Technical Lead & Core Intelligence (Solver Fabric, Units, Governance, API)"
+        - "Workstream 2 — Advanced RAG & Retrieval (Ingestion, Search, Embeddings, Reranking)"
+        - "Workstream 3 — Advanced Optimization (Mathematical Formulations, LP/MILP, Scheduling)"
+        - "Workstream 4 — Causal Intelligence & Analytics (RCA, SCMs, Fault Diagnosis, Anomaly)"
+        - "Workstream 5 — Multi-Agent Orchestration (Supervisor, Task Graph, Tool Execution)"
+        - "Workstream 6 — Digital Twin, Simulation, OT & Observability (DES, Telemetry, CI/CD)"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug or unexpected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Exact commands, payload, or code to reproduce the behavior.
+      placeholder: |
+        1. Run `uv run pytest tests/test_...`
+        2. Execute API payload: ...
+        3. Observe assertion failure at line ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened according to mathematical formulation or system specification.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs or Stack Trace
+      description: Copy and paste relevant terminal logs or pytest traceback.
+      render: shell
+    validations:
+      required: false
+  - type: input
+    id: environment
+    attributes:
+      label: Environment Details
+      description: OS version, Python version, Node version, and git commit SHA.
+      placeholder: "Windows 11 / Ubuntu 24.04, Python 3.12.10, Node 24, commit 21f6ebd"
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Impact of this issue on system stability or mathematical correctness.
+      options:
+        - "Critical (Solver crash, mathematical unsoundness, data corruption, safety boundary breach)"
+        - "High (Core pipeline failure, regression in active tests, API 500)"
+        - "Medium (Isolated component bug, UI rendering glitch, non-blocking edge case)"
+        - "Low (Cosmetic, log noise, documentation typo)"
+    validations:
+      required: true
