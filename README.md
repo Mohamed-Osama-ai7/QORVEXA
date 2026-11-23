@@ -1,91 +1,127 @@
-# FactoryMind CDT
+# QORVEXA — Industrial Decision Intelligence Platform
 
-**An Uncertainty-Aware Cognitive Digital Twin for Evidence-Grounded Manufacturing Diagnosis,
-Simulation, and Decision Support.**
+> **From Industrial Complexity to Verified Operational Decisions.**
 
-SENSE → VALIDATE → UNDERSTAND → RETRIEVE → DIAGNOSE → ASSESS UNCERTAINTY → SIMULATE →
-ESTIMATE IMPACT → HUMAN REVIEW → VERIFY → LEARN
+[![Live Platform Demo](https://img.shields.io/badge/Live%20Demo-qorvexa--delta.vercel.app-0ea5e9?style=flat-square)](https://qorvexa-delta.vercel.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+[![Status: Active R&D](https://img.shields.io/badge/Status-Active%20R%26D-blue?style=flat-square)](#6-current-project-status)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-> **Status: research prototype.** Implemented work packages (M0–M5) are tracked in
-> [docs/roadmap-execution-tracker.md](docs/roadmap-execution-tracker.md), including real-data
-> MetroPT-3 anomaly detection ([docs/m1-anomaly-detection.md](docs/m1-anomaly-detection.md),
-> [docs/m2-wp0-detection-hardening.md](docs/m2-wp0-detection-hardening.md),
-> [docs/m2-wp2-operating-regime-warning-separation.md](docs/m2-wp2-operating-regime-warning-separation.md)),
-> OIDC/RBAC/audit persistence ([docs/m2-wp1-auth-persistence.md](docs/m2-wp1-auth-persistence.md)),
-> evidence/RCA/simulation/copilot modules, and OT/edge preflight descriptors
-> ([docs/m5-wp0-ot-edge-hardening.md](docs/m5-wp0-ot-edge-hardening.md)).
->
-> **Important scope boundaries:** Nothing here has been deployed in a real factory, and
-> **OPC-UA, MQTT, and historian connector I/O is not implemented** (`connector_io_status = "not_implemented"`):
-> no industrial client libraries or live telemetry connections exist, endpoint checks inspect URL text
-> only without DNS resolution, and the runtime loader still loads `model.joblib` (pickle) with
-> adjacent `model_card.json` SHA-256 comparison rather than a verified non-pickle format.
-> Reported metrics come solely from the evaluation pipelines and automated tests in this repository.
+---
 
-## Safety boundary
+## 1. Project Introduction
 
-FactoryMind is **advisory and read-only** toward industrial systems. It never writes to PLCs,
-changes setpoints or actuates equipment. Every recommendation requires human review. The API's
-route set is checked by an automated test (`backend/tests/test_safety_boundary.py`).
+**QORVEXA** is an industrial decision intelligence platform designed to help engineering and operations teams understand complex plant challenges, evaluate operational evidence, explore mathematical optimization and simulation, and make confident, verified operational decisions through intelligent, human-governed software.
 
-## First use case
+Originally founded as the FactoryMind Cognitive Digital Twin research initiative, the project has evolved into QORVEXA—an integrated decision platform combining contextual intelligence, mathematical rigor, and strict operational governance.
 
-Early detection and diagnosis of **air leaks in a compressor Air Production Unit**, using the
-public [MetroPT-3 dataset](https://archive.ics.uci.edu/dataset/791/metropt+3+dataset)
-(real operational telemetry, CC BY 4.0). The synthetic
-[AI4I 2020 dataset](https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset)
-(CC BY 4.0) is used as a controlled benchmark for diagnosis and uncertainty, because its failure
-modes have known ground truth. Results on public, synthetic and simulated data are always reported
-separately.
+## 2. The Industrial Problem
 
-### Detection results at a glance
+Industrial facilities face high-stakes operational trade-offs across maintenance schedules, equipment health, production bottlenecks, and energy costs:
+- **Pure Generative AI** lacks mathematical grounding, cannot guarantee hard operational constraints, and risks hallucinating critical parameters.
+- **Traditional Operations Research & Simulation** are mathematically sound but rigid, requiring extensive manual modeling and remaining disconnected from unstructured maintenance manuals, shift reports, and contextual engineering knowledge.
 
-On real MetroPT-3 data (four operator air-leak reports), a physics rule on compressor load duty
-detects 4/4 reports at 0.034 false alarms/day (0.044 operating-day FA/day) under WP0 nested
-leave-one-event-out evaluation, and 4/4 at 0.026 FA/day (0.035 operating-day FA/day) with WP2
-telemetry-integrity gating; `pca_spe` and signal integrity checks run alongside as separated
-`sensor_consistency_warning` signals without inflating leak metrics. The plant's own low-pressure
-switch caught 1/4. Protocol, results and limitations:
-[docs/m2-wp0-detection-hardening.md](docs/m2-wp0-detection-hardening.md) and
-[docs/m2-wp2-operating-regime-warning-separation.md](docs/m2-wp2-operating-regime-warning-separation.md)
-(M1 record: [docs/m1-anomaly-detection.md](docs/m1-anomaly-detection.md)).
+## 3. What QORVEXA Aims to Provide
 
-## Repository layout
+QORVEXA unifies contextual understanding with verifiable mathematical methods:
+- **Contextual Understanding:** Translates shift logs, operator notes, and operational telemetry into structured problems.
+- **Mathematical Grounding:** Solves optimization and simulation models using dedicated computational engines.
+- **Independent Verification:** Validates candidate solutions against physical bounds and constraints before presentation.
+- **Human Governance:** Keeps all decisions under human review, approval, and auditability.
 
-```
-backend/    Python package `factorymind` (FastAPI service, data, models, evaluation)
-frontend/   React + TypeScript application
-docs/       Project documentation (reference material in docs/reference/)
-```
+## 4. High-Level Capabilities
 
-Large data, model caches and experiment runs are kept outside Git (see `.env.example`).
+- **Evidence-Grounded Diagnosis:** Synthesizes telemetry anomalies, maintenance history, and engineering context into clear diagnostic hypotheses.
+- **Advanced Industrial Optimization:** Evaluates operational trade-offs across production planning, capacity constraints, and maintenance timing.
+- **Digital Twin Simulation:** Simulates operational scenarios to assess asset behavior under prospective decisions without plant disruption.
+- **Decision Intelligence Studio:** Delivers structured, explainable decision briefs with explicit trade-off analyses and confidence assessments.
+- **Human Review & Auditability:** Maintains a transparent, audit-ready chain of evidence for every recommended decision.
 
-## Quick start
+## 5. High-Level Architecture
 
-Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/) 0.13+, Node.js 24.
+QORVEXA organizes platform intelligence across four core platform engines:
 
-```bash
-cd backend
-uv sync
-uv run pytest
-uv run python -m factorymind.anomaly.cli prepare   # download + validate MetroPT-3 (218 MB)
-uv run python -m factorymind.anomaly.cli train     # train/evaluate detectors, save models
-uv run uvicorn factorymind.api.app:app --reload
-```
+```mermaid
+flowchart TD
+    subgraph INTAKE["Operational Context & Data Ingress"]
+        T["Telemetry & Sensor Signals"]
+        D["Shift Logs & Maintenance Manuals"]
+    end
 
-```bash
-cd frontend
-npm ci
-npm run dev    # http://localhost:5173/anomaly
+    subgraph ENGINES["Core Platform Engines"]
+        E1["Ontology & Context Engine"]
+        E2["Workflow Orchestration Engine"]
+        E3["Decision Intelligence Engine"]
+        E4["Governed Agent Engine"]
+    end
+
+    subgraph COMPUTATION["Analytical & Solver Capabilities"]
+        C1["Industrial Optimization"]
+        C2["Digital Twin Simulation"]
+        C3["Causal & Diagnostic Analytics"]
+    end
+
+    subgraph ADVISORY["Human Governance & Advisory Layer"]
+        V["Independent Verification Gate"]
+        H["Decision Studio & Operator Review"]
+    end
+
+    INTAKE --> ENGINES
+    ENGINES --> COMPUTATION
+    COMPUTATION --> V
+    V --> H
 ```
 
-## Team
+- **Ontology & Context Engine:** Maps industrial telemetry, asset structures, and operating regimes into a unified domain model.
+- **Workflow Orchestration Engine:** Coordinates multi-stage analytical pipelines from signal intake to decision delivery.
+- **Decision Intelligence Engine:** Synthesizes solver outputs, trade-off curves, and simulation results into actionable advisory briefs.
+- **Governed Agent Engine:** Provides controlled, assistive AI workflows bounded by strict operating policies.
 
-FactoryMind CDT is a graduation project.
-Team : 
-1)- Mohamed Adel Ramadan.
-2)- Mohamed Osama.
-3)- Ahmed essam
-4)- Ali moatasem
-5)- Beshoy saad
-6)- Ziad ahmed
+## 6. Current Project Status
+
+- **Stage:** Active research and development (R&D).
+- **Implementation:** Core analytical, optimization, and contextual modules have been implemented and verified in automated testing environments.
+- **Field Status:** QORVEXA is a prototype and has **not** been deployed in a live industrial production facility.
+- **Connectivity:** Live industrial connectivity (e.g., OPC-UA, MQTT, or live SCADA links) is under development and is not currently active; metrics derive from public benchmark datasets and validation suites.
+- **Advisory Role:** The platform is purely decision-support software and does not actuate equipment.
+
+## 7. Industrial Safety Principles
+
+1. **Advisory & Read-Only:** QORVEXA never writes to Programmable Logic Controllers (PLCs), never adjusts machine setpoints, and never actuates equipment.
+2. **Human in the Loop:** Every insight, recommendation, or optimization result requires human engineer validation and sign-off.
+3. **Epistemic Honesty:** The platform strictly separates measured telemetry facts from mathematical proofs, simulation estimates, and subjective assumptions.
+
+## 8. First Use-Case Direction
+
+QORVEXA's initial application focuses on **Air Production Units (APUs) and compressor systems**, addressing early leak detection, duty-cycle anomalies, and operational maintenance planning. Validation uses established benchmark datasets, including the public [MetroPT-3 dataset](https://archive.ics.uci.edu/dataset/791/metropt+3+dataset) and [AI4I 2020 dataset](https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset).
+
+## 9. Technology Stack
+
+- **Core Backend:** Python 3.12, FastAPI, Pydantic, NumPy, SciPy.
+- **Mathematical Optimization:** Dedicated Operations Research and linear programming solvers.
+- **Frontend & Visualization:** React 19, TypeScript, Vite, Tailwind CSS.
+- **Package Management:** [uv](https://docs.astral.sh/uv/) for high-speed, deterministic Python environments.
+
+## 10. Live Demo & Resources
+
+- **Interactive Showcase:** [qorvexa-delta.vercel.app](https://qorvexa-delta.vercel.app) — Explore the Decision Studio and scenario planning interface.
+- **Repository Documentation:** Browse the [Documentation Guide](docs/README.md) for public developer onboarding, getting-started steps, and project overview.
+
+## 11. Repository Structure
+
+```
+├── backend/       # Python core services, optimization modules, and API endpoints
+├── frontend/      # React + TypeScript Decision Intelligence interface
+├── docs/          # Research documentation, use-case specifications, and references
+└── .github/       # CI/CD workflows and repository governance templates
+```
+
+## 12. Team
+
+- **Mohamed Osama** — Technical Lead & Core Intelligence Architect
+- **Ahmed Essam** — Advanced RAG & Retrieval Engineering
+- **Mohamed Adel Ramadan** — Advanced Optimization Engineering
+- **Beshoy Saad** — Causal Intelligence & Industrial Analytics
+- **Ziad Ahmed** — Multi-Agent Orchestration & Governance
+- **Ali Motassem** — Digital Twin, Simulation & Industrial Integration
