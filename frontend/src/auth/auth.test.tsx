@@ -10,7 +10,7 @@ import { getAccessToken } from './token'
 
 const CONFIG: OidcConfig = {
   authority: 'https://idp.example.test',
-  clientId: 'factorymind-spa',
+  clientId: 'qorvexa-spa',
   redirectUri: 'http://localhost:5173/auth/callback',
   scope: 'openid profile',
 }
@@ -153,7 +153,7 @@ describe('createUserManager', () => {
 
 describe('authorization-code callback under React StrictMode', () => {
   it('exchanges the code once, restores returnTo cleanly, and ends signed in', async () => {
-    sessionStorage.setItem('factorymind.returnTo', '/anomaly?hours=24')
+    sessionStorage.setItem('qorvexa.returnTo', '/anomaly?hours=24')
     const { manager, typed } = fakeManager(null)
     manager.signinRedirectCallback.mockResolvedValue({ access_token: 'cb-token', expired: false })
     window.history.pushState({}, '', '/auth/callback?code=abc&state=xyz')
@@ -174,7 +174,7 @@ describe('authorization-code callback under React StrictMode', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(getAccessToken()).toBe('cb-token')
     expect(window.location.pathname + window.location.search).toBe('/anomaly?hours=24')
-    expect(sessionStorage.getItem('factorymind.returnTo')).toBeNull()
+    expect(sessionStorage.getItem('qorvexa.returnTo')).toBeNull()
     window.history.pushState({}, '', '/')
   })
 

@@ -53,6 +53,177 @@ export interface IngestResponse {
   accepted: ExtractedClaim[]
   rejected: [ExtractedClaim, string][]
   state: FormulationState
+  understanding?: UnderstandingReport | null
+  readiness?: 'BLOCKED' | 'NEEDS_CLARIFICATION' | 'CANDIDATES_FOR_HUMAN_REVIEW' | null
+  questions?: Question[]
+}
+
+export interface LanguageInfo {
+  seg_id: string
+  primary: string
+  arabic_chars?: number
+  latin_chars?: number
+  code_switching: boolean
+  arabizi: boolean
+  register_hint: string
+  markers: string[]
+}
+
+export interface EntityMention {
+  mention_id: string
+  text: string
+  orig_start: number
+  orig_end: number
+  entity_type: string
+  status: string
+  canonical_id?: string | null
+  term_id?: string | null
+}
+
+export interface QuantityMention {
+  kind: string
+  low: string
+  high?: string | null
+  unit_text: string
+  unit?: string | null
+  currency?: string | null
+  per?: string | null
+  text: string
+  orig_start: number
+  orig_end: number
+  ambiguous?: boolean
+}
+
+export interface Claim {
+  claim_id: string
+  source_id: string
+  turn?: number
+  quote: string
+  subject_text?: string | null
+  subject_entity?: string | null
+  related_text?: string | null
+  related_entity?: string | null
+  predicate: string
+  value?: QuantityMention | null
+  semantic_type: string
+  negated: boolean
+  modality: string
+  bound?: string | null
+  condition?: string | null
+  orig_start: number
+  orig_end: number
+  normalized?: string
+  provenance?: string
+}
+
+export interface GroundingResult {
+  claim_id: string
+  outcome: 'GROUNDED' | 'PARTIALLY_GROUNDED' | 'UNSUPPORTED' | 'AMBIGUOUS' | 'CONFLICTED'
+  checks: [string, boolean][]
+  reasons: string[]
+}
+
+export interface Contradiction {
+  code: string
+  claim_ids: string[]
+  description: string
+}
+
+export interface Gap {
+  gap_id: string
+  code: string
+  message: string
+  affected: string[]
+  blocking: boolean
+  why: string
+  tier: number
+}
+
+export interface Question {
+  gap_id: string
+  language: string
+  text: string
+  why: string
+  affected: string[]
+  blocking: boolean
+  asked_count: number
+}
+
+export interface Candidate {
+  key: string
+  value: string
+  support: string[]
+  quote: string
+  status: string
+  note?: string
+}
+
+export interface StageResult {
+  stage: string
+  status: string
+  summary: string
+  errors: string[]
+}
+
+export interface UnderstandingReport {
+  schema_version: string
+  pipeline_version: string
+  idempotency_key: string
+  factory_id: string
+  source_ids: string[]
+  source_sha256: string[]
+  stages: StageResult[]
+  languages: LanguageInfo[]
+  entities: EntityMention[]
+  claims: Claim[]
+  grounding: GroundingResult[]
+  contradictions: Contradiction[]
+  gaps: Gap[]
+  candidates: Candidate[]
+  questions: Question[]
+  readiness: 'BLOCKED' | 'NEEDS_CLARIFICATION' | 'CANDIDATES_FOR_HUMAN_REVIEW'
+  disclaimer: string
+  llm_status: string
+  report_sha256?: string
+}
+
+export interface TermEvent {
+  version: number
+  action: string
+  actor: string
+  at: string
+  note?: string
+  from_status?: string
+}
+
+export interface TermEntry {
+  term_id: string
+  factory_id: string
+  expression: string
+  concept: string
+  meaning: string
+  entity_type?: string | null
+  canonical_id?: string | null
+  line_id?: string | null
+  department?: string | null
+  language?: string
+  dialect?: string
+  source?: string
+  status: 'PROPOSED' | 'CONFIRMED' | 'REJECTED' | 'DEPRECATED'
+  version: number
+  reviewer?: string | null
+  aliases?: string[]
+  spelling_variants?: string[]
+  history: TermEvent[]
+}
+
+export interface IngestOptions {
+  factory_id?: string
+  speaker_role?: string
+  turn?: number
+  line_id?: string
+  department?: string
+  default_currency?: string
 }
 
 export interface ChangeSpec {
@@ -160,13 +331,136 @@ export async function getSessionState(sessionId: string): Promise<FormulationSta
 export async function ingestText(
   sessionId: string,
   text: string,
-  claims?: ExtractedClaim[]
+  claims?: ExtractedClaim[],
+  options?: IngestOptions
 ): Promise<IngestResponse> {
+  const payload: Record<string, unknown> = { text }
+  if (claims) payload.claims = claims
+  if (options?.factory_id) payload.factory_id = options.factory_id
+  if (options?.speaker_role) payload.speaker_role = options.speaker_role
+  if (options?.turn !== undefined) payload.turn = options.turn
+  if (options?.line_id) payload.line_id = options.line_id
+  if (options?.department) payload.department = options.department
+  if (options?.default_currency) payload.default_currency = options.default_currency
+
   const res = await apiFetch<{ data: IngestResponse }>(`/api/v1/industrial/sessions/${sessionId}/ingest`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, claims }),
+    body: JSON.stringify(payload),
   })
+  return res.data
+}
+
+export async function getSessionUnderstanding(sessionId: string): Promise<UnderstandingReport> {
+  const res = await apiFetch<{ data: UnderstandingReport }>(
+    `/api/v1/industrial/sessions/${sessionId}/understanding`
+  )
+  return res.data
+}
+
+export async function getSessionClarifications(
+  sessionId: string,
+  factoryId: string = 'factory-1'
+): Promise<{ clarification_state: unknown; questions: Question[]; gaps: Gap[] }> {
+  const res = await apiFetch<{ data: { clarification_state: unknown; questions: Question[]; gaps: Gap[] } }>(
+    `/api/v1/industrial/sessions/${sessionId}/clarifications?factory_id=${encodeURIComponent(factoryId)}`
+  )
+  return res.data
+}
+
+export async function listTerms(factoryId: string = 'factory-1'): Promise<TermEntry[]> {
+  const res = await apiFetch<{ data: TermEntry[] }>(
+    `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}`
+  )
+  return res.data
+}
+
+export async function getTermHistory(factoryId: string, termId: string): Promise<TermEntry[]> {
+  const res = await apiFetch<{ data: TermEntry[] }>(
+    `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}/${encodeURIComponent(termId)}`
+  )
+  return res.data
+}
+
+export async function proposeTerm(factoryId: string, entry: Partial<TermEntry>): Promise<TermEntry> {
+  const res = await apiFetch<{ data: TermEntry }>(
+    `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}/propose`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    }
+  )
+  return res.data
+}
+
+export async function confirmTerm(factoryId: string, termId: string, note: string = ''): Promise<TermEntry> {
+  const res = await apiFetch<{ data: TermEntry }>(
+    `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}/${encodeURIComponent(termId)}/confirm`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    }
+  )
+  return res.data
+}
+
+export async function rejectTerm(factoryId: string, termId: string, note: string = ''): Promise<TermEntry> {
+  const res = await apiFetch<{ data: TermEntry }>(
+    `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}/${encodeURIComponent(termId)}/reject`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    }
+  )
+  return res.data
+}
+
+export async function correctTerm(
+  factoryId: string,
+  termId: string,
+  note: string,
+  changes: Partial<TermEntry> = {}
+): Promise<TermEntry> {
+  const res = await apiFetch<{ data: TermEntry }>(
+    `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}/${encodeURIComponent(termId)}/correct`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note, ...changes }),
+    }
+  )
+  return res.data
+}
+
+export async function deprecateTerm(factoryId: string, termId: string, note: string = ''): Promise<TermEntry> {
+  const res = await apiFetch<{ data: TermEntry }>(
+    `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}/${encodeURIComponent(termId)}/deprecate`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    }
+  )
+  return res.data
+}
+
+export async function rollbackTerm(
+  factoryId: string,
+  termId: string,
+  toVersion: number,
+  note: string
+): Promise<TermEntry> {
+  const res = await apiFetch<{ data: TermEntry }>(
+    `/api/v1/industrial/terminology/${encodeURIComponent(factoryId)}/${encodeURIComponent(termId)}/rollback`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to_version: toVersion, note }),
+    }
+  )
   return res.data
 }
 

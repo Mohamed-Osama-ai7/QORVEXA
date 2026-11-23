@@ -4,8 +4,10 @@ import {
   type DecisionHistory,
   type ExtractedClaim,
   type FormulationState,
+  type IngestOptions,
   type ScenarioSpec,
   type SessionSummary,
+  type UnderstandingReport,
   assertFact,
   assumeDefaults,
   buildFormulation,
@@ -14,6 +16,7 @@ import {
   decideOn,
   getSessionHistory,
   getSessionState,
+  getSessionUnderstanding,
   ingestText,
   listSessions,
   runDecision,
@@ -24,8 +27,18 @@ import { FormulationReviewView } from './FormulationReviewView'
 import { HumanApprovalView } from './HumanApprovalView'
 import { ProblemIntakeView } from './ProblemIntakeView'
 import { ScenarioWorkbenchView } from './ScenarioWorkbenchView'
+import { TerminologyManagerView } from './TerminologyManagerView'
+import { UnderstandingReportView } from './UnderstandingReportView'
 
-type Tab = 'intake' | 'facts' | 'formulation' | 'scenarios' | 'decision' | 'approval'
+type Tab =
+  | 'intake'
+  | 'understanding'
+  | 'terminology'
+  | 'facts'
+  | 'formulation'
+  | 'scenarios'
+  | 'decision'
+  | 'approval'
 
 const INITIAL_SCENARIOS: ScenarioSpec[] = [
   {
@@ -52,6 +65,9 @@ export function PlanningStudio() {
   const [history, setHistory] = useState<DecisionHistory | null>(null)
   const [isPending, setIsPending] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [rawSourceText, setRawSourceText] = useState<string>('')
+  const [understandingReport, setUnderstandingReport] = useState<UnderstandingReport | null>(null)
+  const [factoryId, setFactoryId] = useState<string>('factory-1')
 
   // Load sessions
   useEffect(() => {
@@ -75,7 +91,8 @@ export function PlanningStudio() {
     Promise.allSettled([
       getSessionState(selectedSessionId),
       getSessionHistory(selectedSessionId),
-    ]).then(([stateRes, histRes]) => {
+      getSessionUnderstanding(selectedSessionId),
+    ]).then(([stateRes, histRes, undRes]) => {
       if (!mounted) return
       setIsPending(false)
       if (stateRes.status === 'fulfilled') {
@@ -83,6 +100,9 @@ export function PlanningStudio() {
       }
       if (histRes.status === 'fulfilled') {
         setHistory(histRes.value)
+      }
+      if (undRes.status === 'fulfilled') {
+        setUnderstandingReport(undRes.value)
       }
     })
     return () => {
@@ -115,13 +135,27 @@ export function PlanningStudio() {
     }
   }
 
-  const handleIngest = async (text: string, claims?: ExtractedClaim[]) => {
+  const handleIngest = async (
+    text: string,
+    claims?: ExtractedClaim[],
+    options?: IngestOptions
+  ) => {
     setIsPending(true)
+    setRawSourceText(text)
+    if (options?.factory_id) setFactoryId(options.factory_id)
     try {
-      const res = await ingestText(selectedSessionId, text, claims)
+      const res = await ingestText(selectedSessionId, text, claims, options)
       setState(res.state)
-      showNotice(`Ingested ${res.accepted_count} claim proposals`)
-      setActiveTab('facts')
+      if (res.understanding) {
+        setUnderstandingReport(res.understanding)
+        showNotice(
+          `Ingested ${res.accepted_count} claim proposals (Readiness: ${res.readiness || 'OK'})`
+        )
+        setActiveTab('understanding')
+      } else {
+        showNotice(`Ingested ${res.accepted_count} claim proposals`)
+        setActiveTab('facts')
+      }
     } catch {
       showNotice('Text ingested into proposals')
       setActiveTab('facts')
@@ -339,28 +373,60 @@ export function PlanningStudio() {
       )}
 
       {/* Tabs Navigation */}
-      <nav aria-label="Studio Steps" className="flex flex-wrap gap-1 border-b border-border pb-2 text-xs font-medium">
-        {[
-          { id: 'intake', label: '1. Intake & Claims' },
-          { id: 'facts', label: '2. Fact Board' },
-          { id: 'formulation', label: '3. Formulation & Units' },
-          { id: 'scenarios', label: '4. Scenario Workbench' },
-          { id: 'decision', label: '5. Solver & Intelligence' },
-          { id: 'approval', label: '6. Human Approval & Audit' },
-        ].map((tab) => (
+      <nav aria-label="Studio Steps" className="flex flex-wrap items-center justify-between gap-1 border-b border-border pb-2 text-xs font-medium">
+        <div className="flex flex-wrap gap-1">
+          {[
+            { id: 'intake', label: '1. Intake & Claims' },
+            { id: 'facts', label: '2. Fact Board' },
+            { id: 'formulation', label: '3. Formulation & Units' },
+            { id: 'scenarios', label: '4. Scenario Workbench' },
+            { id: 'decision', label: '5. Solver & Intelligence' },
+            { id: 'approval', label: '6. Human Approval & Audit' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as Tab)}
+              className={`rounded px-3 py-1.5 transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-accent text-white font-semibold'
+                  : 'text-muted hover:bg-panel hover:text-ink'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-1">
           <button
-            key={tab.id}
             type="button"
-            onClick={() => setActiveTab(tab.id as Tab)}
-            className={`rounded px-3 py-1.5 transition-colors ${
-              activeTab === tab.id
-                ? 'bg-accent text-white font-semibold'
-                : 'text-muted hover:bg-panel hover:text-ink'
+            onClick={() => setActiveTab('understanding')}
+            className={`rounded px-2.5 py-1.5 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'understanding'
+                ? 'bg-accent/20 text-accent font-semibold border border-accent/40'
+                : 'text-muted hover:bg-panel hover:text-ink border border-border'
             }`}
           >
-            {tab.label}
+            <span>🔍 Understanding</span>
+            {understandingReport && (
+              <span className="rounded-full bg-accent/30 px-1.5 py-0.2 text-[10px] text-accent">
+                {understandingReport.claims.length}
+              </span>
+            )}
           </button>
-        ))}
+          <button
+            type="button"
+            onClick={() => setActiveTab('terminology')}
+            className={`rounded px-2.5 py-1.5 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'terminology'
+                ? 'bg-accent/20 text-accent font-semibold border border-accent/40'
+                : 'text-muted hover:bg-panel hover:text-ink border border-border'
+            }`}
+          >
+            <span>📚 Terminology</span>
+          </button>
+        </div>
       </nav>
 
       {/* Active Tab View */}
@@ -370,6 +436,20 @@ export function PlanningStudio() {
             sessionId={selectedSessionId}
             onIngest={handleIngest}
             isPending={isPending}
+          />
+        )}
+
+        {activeTab === 'understanding' && (
+          <UnderstandingReportView
+            report={understandingReport}
+            sourceText={rawSourceText}
+          />
+        )}
+
+        {activeTab === 'terminology' && (
+          <TerminologyManagerView
+            factoryId={factoryId}
+            onNotice={showNotice}
           />
         )}
 

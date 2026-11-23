@@ -155,6 +155,34 @@
         "title": "AlarmEpisode",
         "type": "object"
       },
+      "Alternative": {
+        "additionalProperties": false,
+        "description": "One possible meaning of an ambiguous expression and the context cues that select it.",
+        "properties": {
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "cues": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Cues",
+            "type": "array"
+          },
+          "meaning": {
+            "default": "",
+            "title": "Meaning",
+            "type": "string"
+          }
+        },
+        "required": [
+          "concept"
+        ],
+        "title": "Alternative",
+        "type": "object"
+      },
       "ArtifactAttestationEntry": {
         "additionalProperties": false,
         "description": "Verification status of one governance, workflow, config, or model artifact.",
@@ -216,6 +244,34 @@
           "detail"
         ],
         "title": "ArtifactAttestationEntry",
+        "type": "object"
+      },
+      "AssertFactRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "title": "AssertFactRequest",
         "type": "object"
       },
       "AssetDetailResponse": {
@@ -450,6 +506,22 @@
         "title": "AssetPassportSummary",
         "type": "object"
       },
+      "AssumeDefaultsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "rationale": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rationale"
+        ],
+        "title": "AssumeDefaultsRequest",
+        "type": "object"
+      },
       "AuditEventOut": {
         "properties": {
           "action": {
@@ -571,6 +643,656 @@
         "title": "AuditVerification",
         "type": "object"
       },
+      "Candidate": {
+        "additionalProperties": false,
+        "description": "A mapped Production Planning candidate. Always an untrusted proposal.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "support": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Support",
+            "type": "array"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "support",
+          "quote",
+          "status"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      },
+      "CapacityChange": {
+        "additionalProperties": false,
+        "properties": {
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "ge": 0,
+            "title": "Capacity"
+          },
+          "kind": {
+            "const": "capacity",
+            "default": "capacity",
+            "title": "Kind",
+            "type": "string"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id",
+          "capacity"
+        ],
+        "title": "CapacityChange",
+        "type": "object"
+      },
+      "Change": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "new": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "target_id",
+          "old",
+          "new"
+        ],
+        "title": "Change",
+        "type": "object"
+      },
+      "Claim": {
+        "additionalProperties": false,
+        "properties": {
+          "bound": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bound"
+          },
+          "claim_id": {
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "concept_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Concept Refs",
+            "type": "array"
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition"
+          },
+          "modality": {
+            "default": "ASSERTED",
+            "title": "Modality",
+            "type": "string"
+          },
+          "negated": {
+            "default": false,
+            "title": "Negated",
+            "type": "boolean"
+          },
+          "normalized": {
+            "title": "Normalized",
+            "type": "string"
+          },
+          "orig_end": {
+            "title": "Orig End",
+            "type": "integer"
+          },
+          "orig_start": {
+            "title": "Orig Start",
+            "type": "integer"
+          },
+          "predicate": {
+            "$ref": "#/components/schemas/Predicate"
+          },
+          "provenance": {
+            "title": "Provenance",
+            "type": "string"
+          },
+          "qualitative": {
+            "default": false,
+            "title": "Qualitative",
+            "type": "boolean"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "related_entity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Entity"
+          },
+          "related_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Text"
+          },
+          "scope_line": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Line"
+          },
+          "scope_shift": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Shift"
+          },
+          "semantic_type": {
+            "$ref": "#/components/schemas/SemanticType"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "speaker_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speaker Role"
+          },
+          "subject_entity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Entity"
+          },
+          "subject_from_context": {
+            "default": false,
+            "title": "Subject From Context",
+            "type": "boolean"
+          },
+          "subject_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Text"
+          },
+          "term_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Term Ids",
+            "type": "array"
+          },
+          "time_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Text"
+          },
+          "turn": {
+            "title": "Turn",
+            "type": "integer"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuantityMention"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "claim_id",
+          "source_id",
+          "turn",
+          "subject_text",
+          "predicate",
+          "semantic_type",
+          "normalized",
+          "quote",
+          "orig_start",
+          "orig_end",
+          "provenance"
+        ],
+        "title": "Claim",
+        "type": "object"
+      },
+      "ClarificationState": {
+        "additionalProperties": false,
+        "description": "Carried across turns: which gaps were asked how often, and which are resolved.",
+        "properties": {
+          "asked": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Asked",
+            "type": "array"
+          },
+          "resolved": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Resolved",
+            "type": "array"
+          }
+        },
+        "title": "ClarificationState",
+        "type": "object"
+      },
+      "ClarificationsResponse": {
+        "properties": {
+          "clarification_state": {
+            "$ref": "#/components/schemas/ClarificationState"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Gap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "clarification_state",
+          "questions",
+          "gaps"
+        ],
+        "title": "ClarificationsResponse",
+        "type": "object"
+      },
+      "ComparisonResult": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_id": {
+            "title": "Baseline Id",
+            "type": "string"
+          },
+          "compared": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioComparison"
+            },
+            "title": "Compared",
+            "type": "array"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/Rejection"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ObjectiveMode"
+          },
+          "period_label": {
+            "title": "Period Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "baseline_id",
+          "mode",
+          "currency",
+          "period_label",
+          "compared",
+          "excluded"
+        ],
+        "title": "ComparisonResult",
+        "type": "object"
+      },
+      "CompiledFormulation": {
+        "additionalProperties": false,
+        "description": "Compiler output. ``spec_json`` feeds the existing strict ingress unchanged.",
+        "properties": {
+          "manifest": {
+            "$ref": "#/components/schemas/FormulationManifest"
+          },
+          "spec_json": {
+            "title": "Spec Json",
+            "type": "string"
+          }
+        },
+        "required": [
+          "spec_json",
+          "manifest"
+        ],
+        "title": "CompiledFormulation",
+        "type": "object"
+      },
+      "ConfirmRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Keys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "keys"
+        ],
+        "title": "ConfirmRequest",
+        "type": "object"
+      },
+      "ConstraintCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "op": {
+            "title": "Op",
+            "type": "string"
+          },
+          "satisfied": {
+            "title": "Satisfied",
+            "type": "boolean"
+          },
+          "slack": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slack"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "metric",
+          "op",
+          "threshold",
+          "value",
+          "satisfied",
+          "slack"
+        ],
+        "title": "ConstraintCheck",
+        "type": "object"
+      },
+      "ConstraintTrace": {
+        "additionalProperties": false,
+        "properties": {
+          "capacity": {
+            "title": "Capacity",
+            "type": "string"
+          },
+          "constraint_id": {
+            "title": "Constraint Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_name": {
+            "title": "Resource Name",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "terms": {
+            "items": {
+              "$ref": "#/components/schemas/TermTrace"
+            },
+            "title": "Terms",
+            "type": "array"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "constraint_id",
+          "kind",
+          "resource_id",
+          "resource_name",
+          "unit",
+          "capacity",
+          "terms",
+          "source"
+        ],
+        "title": "ConstraintTrace",
+        "type": "object"
+      },
+      "Consumption": {
+        "additionalProperties": false,
+        "description": "Amount of one resource consumed per unit of one product (units restated, never converted).",
+        "properties": {
+          "amount_per_unit": {
+            "ge": 0,
+            "title": "Amount Per Unit",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "product_unit": {
+            "title": "Product Unit",
+            "type": "string"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_unit": {
+            "title": "Resource Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id",
+          "product_id",
+          "amount_per_unit",
+          "resource_unit",
+          "product_unit"
+        ],
+        "title": "Consumption",
+        "type": "object"
+      },
+      "Contradiction": {
+        "additionalProperties": false,
+        "properties": {
+          "claim_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Claim Ids",
+            "type": "array"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "claim_ids",
+          "description"
+        ],
+        "title": "Contradiction",
+        "type": "object"
+      },
       "ContradictionRecord": {
         "description": "Explicit signal inconsistency or integrity conflict observed around the event.",
         "properties": {
@@ -630,6 +1352,81 @@
           "description"
         ],
         "title": "ContradictionRecord",
+        "type": "object"
+      },
+      "Contribution": {
+        "additionalProperties": false,
+        "properties": {
+          "contribution": {
+            "title": "Contribution",
+            "type": "string"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/MetricDirection"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "normalized": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized"
+          },
+          "raw": {
+            "title": "Raw",
+            "type": "string"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "direction",
+          "raw",
+          "normalized",
+          "weight",
+          "contribution"
+        ],
+        "title": "Contribution",
+        "type": "object"
+      },
+      "ConvertUnitsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "rationale": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "slot": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Slot",
+            "type": "string"
+          },
+          "to_unit": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "To Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot",
+          "to_unit",
+          "rationale"
+        ],
+        "title": "ConvertUnitsRequest",
         "type": "object"
       },
       "CopilotCitation": {
@@ -944,6 +1741,140 @@
         "title": "CopilotToolsResponse",
         "type": "object"
       },
+      "CorrectTermRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "aliases": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliases"
+          },
+          "canonical_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canonical Id"
+          },
+          "concept": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concept"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type"
+          },
+          "line_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line Id"
+          },
+          "meaning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meaning"
+          },
+          "note": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          },
+          "spelling_variants": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spelling Variants"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "title": "CorrectTermRequest",
+        "type": "object"
+      },
+      "CreateSessionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "session_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "title"
+        ],
+        "title": "CreateSessionRequest",
+        "type": "object"
+      },
       "DataLineageStep": {
         "additionalProperties": false,
         "description": "One non-destructive transformation stage linking raw archive to normalized parquet.",
@@ -1078,6 +2009,212 @@
         "title": "DatasetQualitySummary",
         "type": "object"
       },
+      "DecideOnRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledged": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Acknowledged",
+            "type": "array"
+          },
+          "brief_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Brief Sha256",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          }
+        },
+        "required": [
+          "brief_sha256",
+          "verdict",
+          "reason"
+        ],
+        "title": "DecideOnRequest",
+        "type": "object"
+      },
+      "DecisionBrief": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "baseline_id": {
+            "title": "Baseline Id",
+            "type": "string"
+          },
+          "baseline_status": {
+            "title": "Baseline Status",
+            "type": "string"
+          },
+          "brief_sha256": {
+            "title": "Brief Sha256",
+            "type": "string"
+          },
+          "comparison": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComparisonResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "executive_summary": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Executive Summary",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "objective_first_ranking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RankingResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "objective_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objective Mode"
+          },
+          "observed_sensitivity": {
+            "items": {
+              "$ref": "#/components/schemas/ObservedBehavior"
+            },
+            "title": "Observed Sensitivity",
+            "type": "array"
+          },
+          "pareto": {
+            "$ref": "#/components/schemas/ParetoResult"
+          },
+          "ranking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RankingResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recommendation": {
+            "$ref": "#/components/schemas/Recommendation"
+          },
+          "rejected_scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/Rejection"
+            },
+            "title": "Rejected Scenarios",
+            "type": "array"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "trade_offs": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/TradeOff"
+              },
+              "type": "array"
+            },
+            "title": "Trade Offs",
+            "type": "object"
+          },
+          "unavailable_analyses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailable Analyses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "schema_version",
+          "brief_sha256",
+          "executive_summary",
+          "baseline_id",
+          "objective_mode",
+          "currency",
+          "baseline_status",
+          "comparison",
+          "rejected_scenarios",
+          "trade_offs",
+          "unavailable_analyses",
+          "pareto",
+          "ranking",
+          "objective_first_ranking",
+          "observed_sensitivity",
+          "recommendation",
+          "assumptions",
+          "limitations",
+          "evidence"
+        ],
+        "title": "DecisionBrief",
+        "type": "object"
+      },
       "DecisionCreate": {
         "additionalProperties": false,
         "properties": {
@@ -1109,6 +2246,20 @@
           "expected_version"
         ],
         "title": "DecisionCreate",
+        "type": "object"
+      },
+      "DecisionHistory": {
+        "properties": {
+          "records": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DecisionRecord"
+            },
+            "title": "Records",
+            "type": "array"
+          }
+        },
+        "title": "DecisionHistory",
         "type": "object"
       },
       "DecisionOut": {
@@ -1153,6 +2304,201 @@
           "created_at"
         ],
         "title": "DecisionOut",
+        "type": "object"
+      },
+      "DecisionRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledged_assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Acknowledged Assumptions",
+            "type": "array"
+          },
+          "approver_id": {
+            "title": "Approver Id",
+            "type": "string"
+          },
+          "brief_sha256": {
+            "title": "Brief Sha256",
+            "type": "string"
+          },
+          "formulation_record_sha256": {
+            "title": "Formulation Record Sha256",
+            "type": "string"
+          },
+          "prev_sha256": {
+            "title": "Prev Sha256",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "record_sha256": {
+            "default": "",
+            "title": "Record Sha256",
+            "type": "string"
+          },
+          "recorded_at": {
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "self_approved": {
+            "title": "Self Approved",
+            "type": "boolean"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          }
+        },
+        "required": [
+          "seq",
+          "prev_sha256",
+          "session_id",
+          "brief_sha256",
+          "formulation_record_sha256",
+          "scenario_id",
+          "verdict",
+          "approver_id",
+          "self_approved",
+          "acknowledged_assumptions",
+          "reason",
+          "recorded_at"
+        ],
+        "title": "DecisionRecord",
+        "type": "object"
+      },
+      "DemandBoundsChange": {
+        "additionalProperties": false,
+        "properties": {
+          "clear_max": {
+            "default": false,
+            "title": "Clear Max",
+            "type": "boolean"
+          },
+          "kind": {
+            "const": "demand_bounds",
+            "default": "demand_bounds",
+            "title": "Kind",
+            "type": "string"
+          },
+          "max_quantity": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "ge": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Quantity"
+          },
+          "min_quantity": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "ge": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Quantity"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id"
+        ],
+        "title": "DemandBoundsChange",
+        "type": "object"
+      },
+      "DemandChange": {
+        "additionalProperties": false,
+        "properties": {
+          "meets_minimum_scenario": {
+            "title": "Meets Minimum Scenario",
+            "type": "boolean"
+          },
+          "minimum_baseline": {
+            "title": "Minimum Baseline",
+            "type": "string"
+          },
+          "minimum_scenario": {
+            "title": "Minimum Scenario",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "quantity_baseline": {
+            "title": "Quantity Baseline",
+            "type": "string"
+          },
+          "quantity_scenario": {
+            "title": "Quantity Scenario",
+            "type": "string"
+          },
+          "shortfall_baseline": {
+            "title": "Shortfall Baseline",
+            "type": "string"
+          },
+          "shortfall_scenario": {
+            "title": "Shortfall Scenario",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "minimum_baseline",
+          "minimum_scenario",
+          "quantity_baseline",
+          "quantity_scenario",
+          "shortfall_baseline",
+          "shortfall_scenario",
+          "meets_minimum_scenario"
+        ],
+        "title": "DemandChange",
         "type": "object"
       },
       "DerivedFeatureSummary": {
@@ -1210,6 +2556,33 @@
           "provenance"
         ],
         "title": "DerivedFeatureSummary",
+        "type": "object"
+      },
+      "Dominated": {
+        "additionalProperties": false,
+        "properties": {
+          "dominated_by": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dominated By",
+            "type": "array"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "dominated_by",
+          "explanation"
+        ],
+        "title": "Dominated",
         "type": "object"
       },
       "EconomicAssumptions": {
@@ -1717,6 +3090,84 @@
         "title": "EdgeTelemetrySampleInput",
         "type": "object"
       },
+      "Effect": {
+        "enum": [
+          "IMPROVED",
+          "DETERIORATED",
+          "UNCHANGED"
+        ],
+        "title": "Effect",
+        "type": "string"
+      },
+      "EntityMention": {
+        "additionalProperties": false,
+        "properties": {
+          "alternatives": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "canonical_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canonical Id"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "mention_id": {
+            "title": "Mention Id",
+            "type": "string"
+          },
+          "orig_end": {
+            "title": "Orig End",
+            "type": "integer"
+          },
+          "orig_start": {
+            "title": "Orig Start",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "term_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Term Id"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mention_id",
+          "text",
+          "orig_start",
+          "orig_end",
+          "entity_type",
+          "status"
+        ],
+        "title": "EntityMention",
+        "type": "object"
+      },
       "EventEvidencePackage": {
         "description": "Complete multi-phase, provenance-tagged event evidence package and timeline.",
         "properties": {
@@ -1908,6 +3359,51 @@
           "meaning"
         ],
         "title": "Evidence",
+        "type": "object"
+      },
+      "EvidenceCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "admitted_not_solved": {
+            "title": "Admitted Not Solved",
+            "type": "integer"
+          },
+          "admitted_solved": {
+            "title": "Admitted Solved",
+            "type": "integer"
+          },
+          "exact_optimality_proof": {
+            "const": false,
+            "default": false,
+            "title": "Exact Optimality Proof",
+            "type": "boolean"
+          },
+          "excluded_incomparable": {
+            "title": "Excluded Incomparable",
+            "type": "integer"
+          },
+          "rejected_untrusted": {
+            "title": "Rejected Untrusted",
+            "type": "integer"
+          },
+          "scenarios_submitted": {
+            "title": "Scenarios Submitted",
+            "type": "integer"
+          },
+          "verification_class": {
+            "title": "Verification Class",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenarios_submitted",
+          "admitted_solved",
+          "admitted_not_solved",
+          "rejected_untrusted",
+          "excluded_incomparable",
+          "verification_class"
+        ],
+        "title": "EvidenceCoverage",
         "type": "object"
       },
       "EvidenceItemContract": {
@@ -2179,6 +3675,81 @@
         "title": "EvidenceQualityAssessment",
         "type": "object"
       },
+      "EvidenceRef": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_sha256": {
+            "default": "",
+            "title": "Admission Sha256",
+            "type": "string"
+          },
+          "admission_status": {
+            "default": "NOT_ADMITTED",
+            "title": "Admission Status",
+            "type": "string"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "lineage": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lineage",
+            "type": "array"
+          },
+          "model_sha256": {
+            "title": "Model Sha256",
+            "type": "string"
+          },
+          "optimality_tier": {
+            "title": "Optimality Tier",
+            "type": "string"
+          },
+          "report_status": {
+            "title": "Report Status",
+            "type": "string"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "spec_sha256": {
+            "title": "Spec Sha256",
+            "type": "string"
+          },
+          "unit_report_sha256": {
+            "default": "",
+            "title": "Unit Report Sha256",
+            "type": "string"
+          },
+          "unit_status": {
+            "default": "LEGACY_UNITS_UNVERIFIED",
+            "title": "Unit Status",
+            "type": "string"
+          },
+          "verification_levels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Verification Levels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "input_sha256",
+          "spec_sha256",
+          "model_sha256",
+          "lineage",
+          "report_status",
+          "optimality_tier",
+          "verification_levels"
+        ],
+        "title": "EvidenceRef",
+        "type": "object"
+      },
       "EvidenceReference": {
         "description": "Explicit origin-tagged citation linking RCA claims back to the evidence package.",
         "properties": {
@@ -2297,6 +3868,45 @@
         ],
         "title": "ExceedanceCheck",
         "type": "object"
+      },
+      "ExtractedClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "quote"
+        ],
+        "title": "ExtractedClaim",
+        "type": "object"
+      },
+      "FactState": {
+        "enum": [
+          "CONFIRMED",
+          "ASSUMED"
+        ],
+        "title": "FactState",
+        "type": "string"
       },
       "FailureModeSpec": {
         "additionalProperties": false,
@@ -2448,6 +4058,435 @@
           "simulated"
         ],
         "title": "FaultSummary",
+        "type": "object"
+      },
+      "FormulationManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "compiler_id": {
+            "title": "Compiler Id",
+            "type": "string"
+          },
+          "constraints": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintTrace"
+            },
+            "title": "Constraints",
+            "type": "array"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "lineage": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Lineage",
+            "type": "array"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ObjectiveMode"
+          },
+          "objective": {
+            "$ref": "#/components/schemas/ObjectiveTrace"
+          },
+          "problem_id": {
+            "title": "Problem Id",
+            "type": "string"
+          },
+          "spec_sha256": {
+            "title": "Spec Sha256",
+            "type": "string"
+          },
+          "variables": {
+            "items": {
+              "$ref": "#/components/schemas/VariableTrace"
+            },
+            "title": "Variables",
+            "type": "array"
+          }
+        },
+        "required": [
+          "compiler_id",
+          "problem_id",
+          "input_sha256",
+          "spec_sha256",
+          "mode",
+          "variables",
+          "constraints",
+          "objective"
+        ],
+        "title": "FormulationManifest",
+        "type": "object"
+      },
+      "FormulationRecord": {
+        "additionalProperties": false,
+        "description": "Traceability from the final model back to the ledger (all input \u2192 model \u2192 decision).",
+        "properties": {
+          "assumptions": {
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "conversions": {
+            "default": [],
+            "items": {
+              "maxItems": 7,
+              "minItems": 7,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Conversions",
+            "type": "array"
+          },
+          "custom_units": {
+            "default": [],
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Custom Units",
+            "type": "array"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/ResolvedFact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "ledger_head": {
+            "title": "Ledger Head",
+            "type": "string"
+          },
+          "record_sha256": {
+            "title": "Record Sha256",
+            "type": "string"
+          },
+          "unit_claims": {
+            "default": [],
+            "items": {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Unit Claims",
+            "type": "array"
+          },
+          "unit_report_sha256": {
+            "default": "",
+            "title": "Unit Report Sha256",
+            "type": "string"
+          },
+          "units_status": {
+            "default": "LEGACY_UNITS_UNVERIFIED",
+            "title": "Units Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ledger_head",
+          "input_sha256",
+          "facts",
+          "assumptions",
+          "record_sha256"
+        ],
+        "title": "FormulationRecord",
+        "type": "object"
+      },
+      "FormulationResult": {
+        "additionalProperties": false,
+        "properties": {
+          "compiled": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompiledFormulation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanningProblem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FormulationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/FormulationState"
+          },
+          "unit_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnitEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "FormulationResult",
+        "type": "object"
+      },
+      "FormulationState": {
+        "additionalProperties": false,
+        "properties": {
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/ResolvedFact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/Issue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "ledger_head": {
+            "title": "Ledger Head",
+            "type": "string"
+          },
+          "state_sha256": {
+            "title": "State Sha256",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FormulationStatus"
+          },
+          "unit_report_sha256": {
+            "default": "",
+            "title": "Unit Report Sha256",
+            "type": "string"
+          },
+          "units_status": {
+            "default": "LEGACY_UNITS_UNVERIFIED",
+            "title": "Units Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "facts",
+          "issues",
+          "ledger_head",
+          "state_sha256"
+        ],
+        "title": "FormulationState",
+        "type": "object"
+      },
+      "FormulationStatus": {
+        "enum": [
+          "READY",
+          "NEEDS_CLARIFICATION",
+          "CONTRADICTED",
+          "UNSUPPORTED",
+          "INVALID_MODEL"
+        ],
+        "title": "FormulationStatus",
+        "type": "string"
+      },
+      "Gap": {
+        "additionalProperties": false,
+        "properties": {
+          "affected": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Affected",
+            "type": "array"
+          },
+          "blocking": {
+            "default": true,
+            "title": "Blocking",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "depends_on": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "gap_id": {
+            "title": "Gap Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "tier": {
+            "default": 5,
+            "title": "Tier",
+            "type": "integer"
+          },
+          "why": {
+            "default": "",
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gap_id",
+          "code",
+          "message"
+        ],
+        "title": "Gap",
+        "type": "object"
+      },
+      "Grounding": {
+        "enum": [
+          "GROUNDED",
+          "PARTIALLY_GROUNDED",
+          "UNSUPPORTED",
+          "AMBIGUOUS",
+          "CONFLICTED"
+        ],
+        "title": "Grounding",
+        "type": "string"
+      },
+      "GroundingResult": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "claim_id": {
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/Grounding"
+          },
+          "reasons": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "claim_id",
+          "outcome",
+          "checks"
+        ],
+        "title": "GroundingResult",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -3049,6 +5088,249 @@
         "title": "IncidentOut",
         "type": "object"
       },
+      "IngestRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "claims": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ExtractedClaim"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claims"
+          },
+          "default_currency": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Currency"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "factory_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Factory Id"
+          },
+          "line_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line Id"
+          },
+          "speaker_role": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speaker Role"
+          },
+          "text": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "turn": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Turn",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "IngestRequest",
+        "type": "object"
+      },
+      "IngestResponse": {
+        "properties": {
+          "accepted": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractedClaim"
+            },
+            "title": "Accepted",
+            "type": "array"
+          },
+          "accepted_count": {
+            "title": "Accepted Count",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "readiness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Readiness"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rejected": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "$ref": "#/components/schemas/ExtractedClaim"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Rejected",
+            "type": "array"
+          },
+          "rejected_count": {
+            "title": "Rejected Count",
+            "type": "integer"
+          },
+          "source_sha256": {
+            "title": "Source Sha256",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/FormulationState"
+          },
+          "understanding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnderstandingReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "source_sha256",
+          "accepted_count",
+          "rejected_count",
+          "accepted",
+          "rejected",
+          "state"
+        ],
+        "title": "IngestResponse",
+        "type": "object"
+      },
+      "InputDiff": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "title": "Changes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "title": "InputDiff",
+        "type": "object"
+      },
+      "Issue": {
+        "additionalProperties": false,
+        "properties": {
+          "can_assume": {
+            "default": false,
+            "title": "Can Assume",
+            "type": "boolean"
+          },
+          "candidates": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "claim_seqs": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Claim Seqs",
+            "type": "array"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "question": {
+            "default": "",
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "key",
+          "message"
+        ],
+        "title": "Issue",
+        "type": "object"
+      },
       "KgEdge": {
         "additionalProperties": false,
         "description": "Typed directed edge preserving causal vs correlational distinction.",
@@ -3191,6 +5473,58 @@
           "epistemic_legend"
         ],
         "title": "KgSubgraphResponse",
+        "type": "object"
+      },
+      "LanguageInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "arabic_chars": {
+            "title": "Arabic Chars",
+            "type": "integer"
+          },
+          "arabizi": {
+            "title": "Arabizi",
+            "type": "boolean"
+          },
+          "code_switching": {
+            "title": "Code Switching",
+            "type": "boolean"
+          },
+          "latin_chars": {
+            "title": "Latin Chars",
+            "type": "integer"
+          },
+          "markers": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Markers",
+            "type": "array"
+          },
+          "primary": {
+            "title": "Primary",
+            "type": "string"
+          },
+          "register_hint": {
+            "title": "Register Hint",
+            "type": "string"
+          },
+          "seg_id": {
+            "title": "Seg Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seg_id",
+          "arabic_chars",
+          "latin_chars",
+          "primary",
+          "code_switching",
+          "arabizi",
+          "register_hint"
+        ],
+        "title": "LanguageInfo",
         "type": "object"
       },
       "LoeoFold": {
@@ -3551,6 +5885,32 @@
           "asset_ids"
         ],
         "title": "MeResponse",
+        "type": "object"
+      },
+      "MetricDirection": {
+        "enum": [
+          "MAXIMIZE",
+          "MINIMIZE"
+        ],
+        "title": "MetricDirection",
+        "type": "string"
+      },
+      "MetricObjective": {
+        "additionalProperties": false,
+        "properties": {
+          "direction": {
+            "$ref": "#/components/schemas/MetricDirection"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "direction"
+        ],
+        "title": "MetricObjective",
         "type": "object"
       },
       "ModelApplicabilityEntry": {
@@ -4272,6 +6632,158 @@
         "title": "NeighboringEventSummary",
         "type": "object"
       },
+      "ObjectiveChange": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_change": {
+            "title": "Absolute Change",
+            "type": "string"
+          },
+          "baseline": {
+            "title": "Baseline",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "effect": {
+            "$ref": "#/components/schemas/Effect"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ObjectiveMode"
+          },
+          "relative_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Change"
+          },
+          "relative_note": {
+            "title": "Relative Note",
+            "type": "string"
+          },
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "currency",
+          "baseline",
+          "scenario",
+          "absolute_change",
+          "relative_change",
+          "relative_note",
+          "effect"
+        ],
+        "title": "ObjectiveChange",
+        "type": "object"
+      },
+      "ObjectiveMode": {
+        "enum": [
+          "MAXIMIZE_MARGIN",
+          "MINIMIZE_COST"
+        ],
+        "title": "ObjectiveMode",
+        "type": "string"
+      },
+      "ObjectiveTrace": {
+        "additionalProperties": false,
+        "properties": {
+          "constant": {
+            "title": "Constant",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ObjectiveMode"
+          },
+          "objective_id": {
+            "title": "Objective Id",
+            "type": "string"
+          },
+          "terms": {
+            "items": {
+              "$ref": "#/components/schemas/TermTrace"
+            },
+            "title": "Terms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "objective_id",
+          "mode",
+          "direction",
+          "currency",
+          "constant",
+          "terms"
+        ],
+        "title": "ObjectiveTrace",
+        "type": "object"
+      },
+      "ObservedBehavior": {
+        "additionalProperties": false,
+        "properties": {
+          "changed_inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed Inputs",
+            "type": "array"
+          },
+          "classification": {
+            "title": "Classification",
+            "type": "string"
+          },
+          "feasibility": {
+            "title": "Feasibility",
+            "type": "string"
+          },
+          "mathematical_sensitivity": {
+            "default": "UNAVAILABLE: runtime results carry no verified dual information",
+            "title": "Mathematical Sensitivity",
+            "type": "string"
+          },
+          "objective_absolute_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objective Absolute Change"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "changed_inputs",
+          "classification",
+          "feasibility",
+          "objective_absolute_change"
+        ],
+        "title": "ObservedBehavior",
+        "type": "object"
+      },
       "ObservedSignalSummary": {
         "description": "Aggregate of directly observed telemetry values for one channel within a phase.",
         "properties": {
@@ -4596,6 +7108,92 @@
         "title": "OutcomeVerificationOut",
         "type": "object"
       },
+      "ParetoResult": {
+        "additionalProperties": false,
+        "properties": {
+          "dominated": {
+            "items": {
+              "$ref": "#/components/schemas/Dominated"
+            },
+            "title": "Dominated",
+            "type": "array"
+          },
+          "equal_groups": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Equal Groups",
+            "type": "array"
+          },
+          "excluded": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "non_dominated": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Non Dominated",
+            "type": "array"
+          },
+          "note": {
+            "default": "Pareto-optimal means not dominated on the chosen metrics; it is not universally best.",
+            "title": "Note",
+            "type": "string"
+          },
+          "objectives": {
+            "items": {
+              "$ref": "#/components/schemas/MetricObjective"
+            },
+            "title": "Objectives",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ParetoStatus"
+          },
+          "status_detail": {
+            "title": "Status Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "status_detail",
+          "objectives",
+          "non_dominated",
+          "dominated",
+          "equal_groups",
+          "excluded"
+        ],
+        "title": "ParetoResult",
+        "type": "object"
+      },
+      "ParetoStatus": {
+        "enum": [
+          "OK",
+          "NOT_CONFIGURED",
+          "INVALID_CONFIGURATION",
+          "NO_ELIGIBLE_SCENARIOS"
+        ],
+        "title": "ParetoStatus",
+        "type": "string"
+      },
       "PhaseEvidenceSummary": {
         "description": "Evidence summary for one chronological event phase.",
         "properties": {
@@ -4777,6 +7375,424 @@
         "title": "PhaseEvidenceSummary",
         "type": "object"
       },
+      "PlanConsumption": {
+        "properties": {
+          "coefficient_unit": {
+            "title": "Coefficient Unit",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id",
+          "product_id",
+          "coefficient_unit"
+        ],
+        "title": "PlanConsumption",
+        "type": "object"
+      },
+      "PlanProduct": {
+        "properties": {
+          "bound_unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bound Unit"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value_unit": {
+            "title": "Value Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unit",
+          "value_unit"
+        ],
+        "title": "PlanProduct",
+        "type": "object"
+      },
+      "PlanResource": {
+        "properties": {
+          "capacity_unit": {
+            "title": "Capacity Unit",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "capacity_unit"
+        ],
+        "title": "PlanResource",
+        "type": "object"
+      },
+      "PlanningMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Description",
+            "type": "string"
+          },
+          "period_label": {
+            "default": "",
+            "maxLength": 100,
+            "title": "Period Label",
+            "type": "string"
+          },
+          "problem_id": {
+            "title": "Problem Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "problem_id",
+          "title"
+        ],
+        "title": "PlanningMetadata",
+        "type": "object"
+      },
+      "PlanningProblem": {
+        "additionalProperties": false,
+        "properties": {
+          "consumptions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Consumption"
+            },
+            "title": "Consumptions",
+            "type": "array"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/PlanningMetadata"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ObjectiveMode"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/Resource"
+            },
+            "title": "Resources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "metadata",
+          "mode",
+          "currency",
+          "products",
+          "resources"
+        ],
+        "title": "PlanningProblem",
+        "type": "object"
+      },
+      "PlanningUnitsInput": {
+        "properties": {
+          "consumptions": {
+            "items": {
+              "$ref": "#/components/schemas/PlanConsumption"
+            },
+            "title": "Consumptions",
+            "type": "array"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/PlanProduct"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/PlanResource"
+            },
+            "title": "Resources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "currency",
+          "products",
+          "resources",
+          "consumptions"
+        ],
+        "title": "PlanningUnitsInput",
+        "type": "object"
+      },
+      "Predicate": {
+        "enum": [
+          "PRODUCES_RATE",
+          "CAPACITY",
+          "DEMAND",
+          "CONSUMPTION_RATE",
+          "MARGIN_PER_UNIT",
+          "COST_PER_UNIT",
+          "PRICE",
+          "SCRAP_LEVEL",
+          "DEFECT_LEVEL",
+          "INTERMITTENT_STOPS",
+          "DOWNTIME",
+          "SLOW_OPERATION",
+          "MATERIAL_SHORTAGE",
+          "EXCESS_CONSUMPTION",
+          "BOTTLENECK",
+          "JAMMING",
+          "CANNOT_KEEP_UP",
+          "UNKNOWN"
+        ],
+        "title": "Predicate",
+        "type": "string"
+      },
+      "Product": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "max_quantity": {
+            "anyOf": [
+              {
+                "ge": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Quantity"
+          },
+          "min_quantity": {
+            "default": "0",
+            "ge": 0,
+            "title": "Min Quantity",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value_currency": {
+            "title": "Value Currency",
+            "type": "string"
+          },
+          "value_per_unit": {
+            "title": "Value Per Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "unit",
+          "value_per_unit",
+          "value_currency"
+        ],
+        "title": "Product",
+        "type": "object"
+      },
+      "ProductChange": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_change": {
+            "title": "Absolute Change",
+            "type": "string"
+          },
+          "baseline": {
+            "title": "Baseline",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "relative_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Change"
+          },
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "unit",
+          "baseline",
+          "scenario",
+          "absolute_change",
+          "relative_change"
+        ],
+        "title": "ProductChange",
+        "type": "object"
+      },
+      "ProposeTermRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "canonical_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canonical Id"
+          },
+          "concept": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Concept",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "dialect": {
+            "default": "",
+            "maxLength": 32,
+            "title": "Dialect",
+            "type": "string"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type"
+          },
+          "expression": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Expression",
+            "type": "string"
+          },
+          "language": {
+            "default": "",
+            "maxLength": 32,
+            "title": "Language",
+            "type": "string"
+          },
+          "line_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line Id"
+          },
+          "meaning": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Meaning",
+            "type": "string"
+          },
+          "spelling_variants": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Spelling Variants",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expression",
+          "concept"
+        ],
+        "title": "ProposeTermRequest",
+        "type": "object"
+      },
       "ProvenanceRecord": {
         "description": "Dataset, preprocessing, and detector version lineage for one evidence package.",
         "properties": {
@@ -4889,6 +7905,217 @@
         "title": "QualityCheckItem",
         "type": "object"
       },
+      "QuantityMention": {
+        "additionalProperties": false,
+        "properties": {
+          "alternatives": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "ambiguous": {
+            "default": false,
+            "title": "Ambiguous",
+            "type": "boolean"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "explicit_zero": {
+            "default": false,
+            "title": "Explicit Zero",
+            "type": "boolean"
+          },
+          "high": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "low": {
+            "title": "Low",
+            "type": "string"
+          },
+          "notes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "orig_end": {
+            "title": "Orig End",
+            "type": "integer"
+          },
+          "orig_start": {
+            "title": "Orig Start",
+            "type": "integer"
+          },
+          "per": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "unit_text": {
+            "default": "",
+            "title": "Unit Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "low",
+          "text",
+          "orig_start",
+          "orig_end"
+        ],
+        "title": "QuantityMention",
+        "type": "object"
+      },
+      "Question": {
+        "additionalProperties": false,
+        "properties": {
+          "affected": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Affected",
+            "type": "array"
+          },
+          "asked_count": {
+            "default": 1,
+            "title": "Asked Count",
+            "type": "integer"
+          },
+          "blocking": {
+            "title": "Blocking",
+            "type": "boolean"
+          },
+          "gap_id": {
+            "title": "Gap Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "why": {
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gap_id",
+          "language",
+          "text",
+          "why",
+          "affected",
+          "blocking"
+        ],
+        "title": "Question",
+        "type": "object"
+      },
+      "RankedEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "constraint_checks": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintCheck"
+            },
+            "title": "Constraint Checks",
+            "type": "array"
+          },
+          "contributions": {
+            "items": {
+              "$ref": "#/components/schemas/Contribution"
+            },
+            "title": "Contributions",
+            "type": "array"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "required": [
+          "rank",
+          "scenario_id",
+          "metrics",
+          "score",
+          "contributions",
+          "constraint_checks"
+        ],
+        "title": "RankedEntry",
+        "type": "object"
+      },
       "RankedHypothesis": {
         "description": "Candidate physical or data-integrity explanation ranked by structured evidence.",
         "properties": {
@@ -4993,6 +8220,117 @@
         ],
         "title": "RankedHypothesis",
         "type": "object"
+      },
+      "RankingMode": {
+        "enum": [
+          "OBJECTIVE_FIRST",
+          "CONSTRAINT_FIRST",
+          "WEIGHTED_PREFERENCE"
+        ],
+        "title": "RankingMode",
+        "type": "string"
+      },
+      "RankingRejection": {
+        "additionalProperties": false,
+        "properties": {
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "reasons"
+        ],
+        "title": "RankingRejection",
+        "type": "object"
+      },
+      "RankingResult": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/RankedEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "method": {
+            "$ref": "#/components/schemas/RankingMode"
+          },
+          "normalization": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalization"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/RankingRejection"
+            },
+            "title": "Rejected",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RankingStatus"
+          },
+          "status_detail": {
+            "title": "Status Detail",
+            "type": "string"
+          },
+          "weights": {
+            "default": [],
+            "items": {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/components/schemas/MetricDirection"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Weights",
+            "type": "array"
+          }
+        },
+        "required": [
+          "method",
+          "status",
+          "status_detail",
+          "entries",
+          "rejected"
+        ],
+        "title": "RankingResult",
+        "type": "object"
+      },
+      "RankingStatus": {
+        "enum": [
+          "OK",
+          "MISSING_CONFIGURATION",
+          "INVALID_CONFIGURATION",
+          "NO_ELIGIBLE_SCENARIOS"
+        ],
+        "title": "RankingStatus",
+        "type": "string"
       },
       "RcaAssessment": {
         "description": "Complete explainable multi-hypothesis RCA report grounded in one evidence package.",
@@ -5131,6 +8469,138 @@
         ],
         "title": "RcaAssessment",
         "type": "object"
+      },
+      "Readiness": {
+        "enum": [
+          "BLOCKED",
+          "NEEDS_CLARIFICATION",
+          "CANDIDATES_FOR_HUMAN_REVIEW"
+        ],
+        "title": "Readiness",
+        "type": "string"
+      },
+      "Recommendation": {
+        "additionalProperties": false,
+        "properties": {
+          "binding_resources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Binding Resources",
+            "type": "array"
+          },
+          "conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conditions",
+            "type": "array"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/EvidenceCoverage"
+          },
+          "decision_objective": {
+            "title": "Decision Objective",
+            "type": "string"
+          },
+          "evidence_limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Limitations",
+            "type": "array"
+          },
+          "human_approval_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Human Approval Reasons",
+            "type": "array"
+          },
+          "human_approval_required": {
+            "const": true,
+            "default": true,
+            "title": "Human Approval Required",
+            "type": "boolean"
+          },
+          "key_improvements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Key Improvements",
+            "type": "array"
+          },
+          "negative_trade_offs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Negative Trade Offs",
+            "type": "array"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "recommended_scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Scenario Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecommendationStatus"
+          },
+          "supporting_metrics": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Supporting Metrics",
+            "type": "object"
+          },
+          "unresolved_assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unresolved Assumptions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "recommended_scenario_id",
+          "decision_objective",
+          "supporting_metrics",
+          "key_improvements",
+          "negative_trade_offs",
+          "binding_resources",
+          "unresolved_assumptions",
+          "conditions",
+          "evidence_limitations",
+          "reasons",
+          "human_approval_reasons",
+          "coverage"
+        ],
+        "title": "Recommendation",
+        "type": "object"
+      },
+      "RecommendationStatus": {
+        "enum": [
+          "RECOMMENDED",
+          "CONDITIONALLY_RECOMMENDED",
+          "NO_CLEAR_WINNER",
+          "NO_VERIFIED_RECOMMENDATION",
+          "REQUIRES_HUMAN_REVIEW"
+        ],
+        "title": "RecommendationStatus",
+        "type": "string"
       },
       "ReferenceHoldoutCheck": {
         "properties": {
@@ -5341,6 +8811,30 @@
         "title": "RegimeSplitSummary",
         "type": "object"
       },
+      "Rejection": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "code",
+          "reason"
+        ],
+        "title": "Rejection",
+        "type": "object"
+      },
       "ReplayResponse": {
         "properties": {
           "end": {
@@ -5440,6 +8934,216 @@
         "title": "ReplayResponse",
         "type": "object"
       },
+      "ResolveRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "winner_seq": {
+            "minimum": 0.0,
+            "title": "Winner Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "winner_seq"
+        ],
+        "title": "ResolveRequest",
+        "type": "object"
+      },
+      "ResolvedFact": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "title": "Basis",
+            "type": "string"
+          },
+          "claim_seq": {
+            "title": "Claim Seq",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/FactState"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "state",
+          "claim_seq",
+          "basis"
+        ],
+        "title": "ResolvedFact",
+        "type": "object"
+      },
+      "Resource": {
+        "additionalProperties": false,
+        "properties": {
+          "capacity": {
+            "ge": 0,
+            "title": "Capacity",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ResourceKind"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "unit",
+          "capacity"
+        ],
+        "title": "Resource",
+        "type": "object"
+      },
+      "ResourceChange": {
+        "additionalProperties": false,
+        "properties": {
+          "binding_baseline": {
+            "title": "Binding Baseline",
+            "type": "boolean"
+          },
+          "binding_change": {
+            "title": "Binding Change",
+            "type": "string"
+          },
+          "binding_scenario": {
+            "title": "Binding Scenario",
+            "type": "boolean"
+          },
+          "capacity_baseline": {
+            "title": "Capacity Baseline",
+            "type": "string"
+          },
+          "capacity_scenario": {
+            "title": "Capacity Scenario",
+            "type": "string"
+          },
+          "remaining_baseline": {
+            "title": "Remaining Baseline",
+            "type": "string"
+          },
+          "remaining_scenario": {
+            "title": "Remaining Scenario",
+            "type": "string"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "used_baseline": {
+            "title": "Used Baseline",
+            "type": "string"
+          },
+          "used_scenario": {
+            "title": "Used Scenario",
+            "type": "string"
+          },
+          "utilization_baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utilization Baseline"
+          },
+          "utilization_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utilization Change"
+          },
+          "utilization_scenario": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utilization Scenario"
+          }
+        },
+        "required": [
+          "resource_id",
+          "unit",
+          "capacity_baseline",
+          "capacity_scenario",
+          "used_baseline",
+          "used_scenario",
+          "remaining_baseline",
+          "remaining_scenario",
+          "utilization_baseline",
+          "utilization_scenario",
+          "utilization_change",
+          "binding_baseline",
+          "binding_scenario",
+          "binding_change"
+        ],
+        "title": "ResourceChange",
+        "type": "object"
+      },
+      "ResourceKind": {
+        "enum": [
+          "MACHINE",
+          "LABOR",
+          "MATERIAL",
+          "ENERGY",
+          "OTHER"
+        ],
+        "title": "ResourceKind",
+        "type": "string"
+      },
+      "RetractRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "seq": {
+            "minimum": 0.0,
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq"
+        ],
+        "title": "RetractRequest",
+        "type": "object"
+      },
       "RetrievalEvalResponse": {
         "additionalProperties": false,
         "description": "Controlled ablation comparing sparse BM25, dense TF-IDF/SVD, and Hybrid RRF.",
@@ -5514,6 +9218,49 @@
           "ndcg_at_5"
         ],
         "title": "RetrievalModeMetrics",
+        "type": "object"
+      },
+      "RollbackTermRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          },
+          "to_version": {
+            "minimum": 1.0,
+            "title": "To Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "to_version",
+          "note"
+        ],
+        "title": "RollbackTermRequest",
+        "type": "object"
+      },
+      "RunDecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "pareto_metrics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Pareto Metrics",
+            "type": "array"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioSpec"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "title": "RunDecisionRequest",
         "type": "object"
       },
       "Sample": {
@@ -5639,6 +9386,150 @@
         "title": "Sample",
         "type": "object"
       },
+      "ScenarioComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_status": {
+            "title": "Baseline Status",
+            "type": "string"
+          },
+          "demand": {
+            "items": {
+              "$ref": "#/components/schemas/DemandChange"
+            },
+            "title": "Demand",
+            "type": "array"
+          },
+          "input_diff": {
+            "$ref": "#/components/schemas/InputDiff"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "model_sha256": {
+            "title": "Model Sha256",
+            "type": "string"
+          },
+          "objective": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObjectiveChange"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/ProductChange"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceChange"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Change"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "status",
+          "baseline_status",
+          "status_change",
+          "objective",
+          "products",
+          "resources",
+          "demand",
+          "input_diff",
+          "model_sha256",
+          "input_sha256"
+        ],
+        "title": "ScenarioComparison",
+        "type": "object"
+      },
+      "ScenarioSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "capacity": "#/components/schemas/CapacityChange",
+                  "demand_bounds": "#/components/schemas/DemandBoundsChange",
+                  "value": "#/components/schemas/ValueChange"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/CapacityChange"
+                },
+                {
+                  "$ref": "#/components/schemas/DemandBoundsChange"
+                },
+                {
+                  "$ref": "#/components/schemas/ValueChange"
+                }
+              ]
+            },
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Changes",
+            "type": "array"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "parent_scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Scenario Id"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "changes"
+        ],
+        "title": "ScenarioSpec",
+        "type": "object"
+      },
       "ScoreRequest": {
         "additionalProperties": false,
         "properties": {
@@ -5713,6 +9604,22 @@
         "title": "ScoreResponse",
         "type": "object"
       },
+      "SemanticType": {
+        "enum": [
+          "FACT",
+          "ACTUAL_MEASUREMENT",
+          "TARGET",
+          "HISTORICAL",
+          "HYPOTHETICAL",
+          "CONDITIONAL",
+          "ASSUMPTION",
+          "PROPOSAL",
+          "RECOMMENDATION",
+          "QUESTION"
+        ],
+        "title": "SemanticType",
+        "type": "string"
+      },
       "SensorPassport": {
         "additionalProperties": false,
         "description": "Specification and observability contract for one physical or logical sensor.",
@@ -5781,6 +9688,34 @@
           "nominal_envelope"
         ],
         "title": "SensorPassport",
+        "type": "object"
+      },
+      "SessionSummary": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "created_by",
+          "created_at"
+        ],
+        "title": "SessionSummary",
         "type": "object"
       },
       "SourceDatasetRecord": {
@@ -5956,6 +9891,65 @@
         "title": "SpecialistModelEntry",
         "type": "object"
       },
+      "Stage": {
+        "enum": [
+          "INPUT",
+          "SOURCE_PROCESSING",
+          "LANGUAGE_UNDERSTANDING",
+          "FACTORY_TERMINOLOGY_RESOLUTION",
+          "ENTITY_RECOGNITION",
+          "CLAIM_EXTRACTION",
+          "EVIDENCE_VERIFICATION",
+          "SEMANTIC_ANALYSIS",
+          "CONTRADICTION_ANALYSIS",
+          "DOMAIN_MAPPING",
+          "GAP_ANALYSIS",
+          "CLARIFICATION_PLAN",
+          "STRUCTURED_UNDERSTANDING"
+        ],
+        "title": "Stage",
+        "type": "string"
+      },
+      "StageResult": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/Stage"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StageStatus"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "status"
+        ],
+        "title": "StageResult",
+        "type": "object"
+      },
+      "StageStatus": {
+        "enum": [
+          "OK",
+          "FAILED",
+          "UNAVAILABLE",
+          "SKIPPED"
+        ],
+        "title": "StageStatus",
+        "type": "string"
+      },
       "SupplyChainHardeningResponse": {
         "additionalProperties": false,
         "description": "Repository supply-chain, CI pinning, license, and artifact attestation audit.",
@@ -6039,6 +10033,242 @@
           "limitations"
         ],
         "title": "SupplyChainHardeningResponse",
+        "type": "object"
+      },
+      "TermEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "aliases": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "alternatives": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Alternative"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "canonical_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canonical Id"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "dialect": {
+            "default": "",
+            "title": "Dialect",
+            "type": "string"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type"
+          },
+          "expression": {
+            "title": "Expression",
+            "type": "string"
+          },
+          "factory_id": {
+            "title": "Factory Id",
+            "type": "string"
+          },
+          "history": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TermEvent"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "language": {
+            "default": "",
+            "title": "Language",
+            "type": "string"
+          },
+          "line_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line Id"
+          },
+          "meaning": {
+            "default": "",
+            "title": "Meaning",
+            "type": "string"
+          },
+          "reviewer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer"
+          },
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          },
+          "spelling_variants": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Spelling Variants",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TermStatus",
+            "default": "PROPOSED"
+          },
+          "term_id": {
+            "title": "Term Id",
+            "type": "string"
+          },
+          "version": {
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "term_id",
+          "factory_id",
+          "expression",
+          "concept"
+        ],
+        "title": "TermEntry",
+        "type": "object"
+      },
+      "TermEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "from_status": {
+            "default": "",
+            "title": "From Status",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "action",
+          "actor",
+          "at"
+        ],
+        "title": "TermEvent",
+        "type": "object"
+      },
+      "TermNoteRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "TermNoteRequest",
+        "type": "object"
+      },
+      "TermStatus": {
+        "enum": [
+          "PROPOSED",
+          "CONFIRMED",
+          "REJECTED",
+          "DEPRECATED"
+        ],
+        "title": "TermStatus",
+        "type": "string"
+      },
+      "TermTrace": {
+        "additionalProperties": false,
+        "properties": {
+          "coefficient": {
+            "title": "Coefficient",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "variable_id": {
+            "title": "Variable Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variable_id",
+          "product_id",
+          "coefficient",
+          "source"
+        ],
+        "title": "TermTrace",
         "type": "object"
       },
       "TimelineEntry": {
@@ -6188,6 +10418,101 @@
           "source_id"
         ],
         "title": "TimelineEntry",
+        "type": "object"
+      },
+      "TradeOff": {
+        "additionalProperties": false,
+        "properties": {
+          "adverse": {
+            "title": "Adverse",
+            "type": "boolean"
+          },
+          "affected_metric": {
+            "title": "Affected Metric",
+            "type": "string"
+          },
+          "assumptions": {
+            "default": [
+              "Scenario inputs are the user's declared values; they are not validated against a factory.",
+              "Only the modeled resources, bounds and objective are considered."
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "improved_metric": {
+            "title": "Improved Metric",
+            "type": "string"
+          },
+          "limitations": {
+            "default": [
+              "GAP_NUMERICAL verification is numerical, not an exact optimality proof.",
+              "Observed difference between two independently solved scenarios; not a sensitivity or shadow-price statement."
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "magnitude": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Magnitude"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "AVAILABLE",
+              "UNAVAILABLE"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "trade_off_id": {
+            "title": "Trade Off Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_off_id",
+          "scenario_id",
+          "state",
+          "improved_metric",
+          "affected_metric",
+          "magnitude",
+          "direction",
+          "adverse",
+          "summary",
+          "evidence"
+        ],
+        "title": "TradeOff",
         "type": "object"
       },
       "TwinHorizonEvaluation": {
@@ -7054,6 +11379,179 @@
         "title": "UncertaintyEstimate",
         "type": "object"
       },
+      "UnderstandingReport": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/Candidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/Claim"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "contradictions": {
+            "items": {
+              "$ref": "#/components/schemas/Contradiction"
+            },
+            "title": "Contradictions",
+            "type": "array"
+          },
+          "disclaimer": {
+            "default": "Untrusted understanding only: not mathematically validated, not solver-ready, not human-approved.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/EntityMention"
+            },
+            "title": "Entities",
+            "type": "array"
+          },
+          "factory_id": {
+            "title": "Factory Id",
+            "type": "string"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Gap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "grounding": {
+            "items": {
+              "$ref": "#/components/schemas/GroundingResult"
+            },
+            "title": "Grounding",
+            "type": "array"
+          },
+          "idempotency_key": {
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/LanguageInfo"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "llm_status": {
+            "default": "NOT_USED",
+            "title": "Llm Status",
+            "type": "string"
+          },
+          "pipeline_version": {
+            "default": "understanding-pipeline/1.0",
+            "title": "Pipeline Version",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/Readiness"
+          },
+          "rejected_claim_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rejected Claim Ids",
+            "type": "array"
+          },
+          "report_sha256": {
+            "default": "",
+            "title": "Report Sha256",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "qorvexa-understanding/1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Ids",
+            "type": "array"
+          },
+          "source_sha256": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Sha256",
+            "type": "array"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageResult"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "term_resolutions": {
+            "items": {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Term Resolutions",
+            "type": "array"
+          },
+          "unsupported_features": {
+            "items": {
+              "$ref": "#/components/schemas/UnsupportedFeature"
+            },
+            "title": "Unsupported Features",
+            "type": "array"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "factory_id",
+          "source_ids",
+          "source_sha256",
+          "stages",
+          "languages",
+          "entities",
+          "claims",
+          "grounding",
+          "rejected_claim_ids",
+          "term_resolutions",
+          "contradictions",
+          "gaps",
+          "unsupported_features",
+          "candidates",
+          "questions",
+          "readiness"
+        ],
+        "title": "UnderstandingReport",
+        "type": "object"
+      },
       "UnidentifiableParameter": {
         "additionalProperties": false,
         "description": "Explicit physical quantity that cannot be uniquely identified from MetroPT-3 telemetry.",
@@ -7077,6 +11575,79 @@
           "assumption_or_proxy"
         ],
         "title": "UnidentifiableParameter",
+        "type": "object"
+      },
+      "UnitEvidence": {
+        "description": "Everything needed to recompute the unit report: nothing here is trusted, all re-derived.",
+        "properties": {
+          "custom_units": {
+            "default": [],
+            "items": {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Custom Units",
+            "type": "array"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/PlanningUnitsInput"
+          },
+          "report_sha256": {
+            "title": "Report Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inputs",
+          "report_sha256"
+        ],
+        "title": "UnitEvidence",
+        "type": "object"
+      },
+      "UnsupportedFeature": {
+        "additionalProperties": false,
+        "properties": {
+          "feature": {
+            "title": "Feature",
+            "type": "string"
+          },
+          "orig_end": {
+            "title": "Orig End",
+            "type": "integer"
+          },
+          "orig_start": {
+            "title": "Orig Start",
+            "type": "integer"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "feature",
+          "quote",
+          "orig_start",
+          "orig_end",
+          "source_id"
+        ],
+        "title": "UnsupportedFeature",
         "type": "object"
       },
       "ValidationError": {
@@ -7118,6 +11689,109 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "ValueChange": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "value",
+            "default": "value",
+            "title": "Kind",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "value_per_unit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value Per Unit"
+          }
+        },
+        "required": [
+          "product_id",
+          "value_per_unit"
+        ],
+        "title": "ValueChange",
+        "type": "object"
+      },
+      "VariableTrace": {
+        "additionalProperties": false,
+        "properties": {
+          "lower": {
+            "title": "Lower",
+            "type": "string"
+          },
+          "lower_source": {
+            "title": "Lower Source",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "product_name": {
+            "title": "Product Name",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "upper": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper"
+          },
+          "upper_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper Source"
+          },
+          "variable_id": {
+            "title": "Variable Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variable_id",
+          "product_id",
+          "product_name",
+          "unit",
+          "lower",
+          "upper",
+          "lower_source",
+          "upper_source"
+        ],
+        "title": "VariableTrace",
+        "type": "object"
+      },
+      "Verdict": {
+        "enum": [
+          "APPROVED",
+          "REJECTED"
+        ],
+        "title": "Verdict",
+        "type": "string"
       },
       "VerificationStep": {
         "description": "Non-actuating advisory field/diagnostic inspection to confirm or refute a hypothesis.",
@@ -9143,6 +13817,1243 @@
         "summary": "Get Incident Rca",
         "tags": [
           "incidents"
+        ]
+      }
+    },
+    "/api/v1/industrial/health": {
+      "get": {
+        "operationId": "industrial_health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Industrial Health",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Industrial Health",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions": {
+      "get": {
+        "operationId": "list_sessions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionSummary"
+                  },
+                  "title": "Response List Sessions",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Sessions",
+        "tags": [
+          "industrial"
+        ]
+      },
+      "post": {
+        "operationId": "create_session",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Create Session",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Session",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/assert": {
+      "post": {
+        "operationId": "assert_fact",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssertFactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulationState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assert Fact",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/assume": {
+      "post": {
+        "operationId": "assume_default_values",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssumeDefaultsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulationState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assume Default Values",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/build": {
+      "post": {
+        "operationId": "build_formulation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulationResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Build Formulation",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/clarifications": {
+      "get": {
+        "operationId": "get_session_clarifications",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "factory_id",
+            "required": false,
+            "schema": {
+              "default": "default-factory",
+              "title": "Factory Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClarificationsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Session Clarifications",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/confirm": {
+      "post": {
+        "operationId": "confirm_proposed_claims",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulationState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Proposed Claims",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/convert-units": {
+      "post": {
+        "operationId": "convert_planning_units",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertUnitsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulationState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Convert Planning Units",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/decide": {
+      "post": {
+        "operationId": "run_decision_intelligence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionBrief"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Decision Intelligence",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/decide-on": {
+      "post": {
+        "operationId": "approve_or_reject_decision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideOnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionRecord"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Or Reject Decision",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/history": {
+      "get": {
+        "operationId": "get_session_history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Session History",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/ingest": {
+      "post": {
+        "operationId": "ingest_text_claims",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingest Text Claims",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/resolve": {
+      "post": {
+        "operationId": "resolve_contradiction",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulationState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Contradiction",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/retract": {
+      "post": {
+        "operationId": "retract_claim",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulationState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retract Claim",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/state": {
+      "get": {
+        "operationId": "get_session_state",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulationState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Session State",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/sessions/{session_id}/understanding": {
+      "get": {
+        "operationId": "get_session_understanding",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnderstandingReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Session Understanding",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/terminology/{factory_id}": {
+      "get": {
+        "operationId": "list_terms",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TermEntry"
+                  },
+                  "title": "Response List Terms",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Terms",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/terminology/{factory_id}/propose": {
+      "post": {
+        "operationId": "propose_term",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeTermRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Propose Term",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/terminology/{factory_id}/{term_id}": {
+      "get": {
+        "operationId": "get_term_history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_id",
+            "required": true,
+            "schema": {
+              "title": "Term Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TermEntry"
+                  },
+                  "title": "Response Get Term History",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Term History",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/terminology/{factory_id}/{term_id}/confirm": {
+      "post": {
+        "operationId": "confirm_term",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_id",
+            "required": true,
+            "schema": {
+              "title": "Term Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TermNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Term",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/terminology/{factory_id}/{term_id}/correct": {
+      "post": {
+        "operationId": "correct_term",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_id",
+            "required": true,
+            "schema": {
+              "title": "Term Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectTermRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Correct Term",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/terminology/{factory_id}/{term_id}/deprecate": {
+      "post": {
+        "operationId": "deprecate_term",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_id",
+            "required": true,
+            "schema": {
+              "title": "Term Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TermNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deprecate Term",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/terminology/{factory_id}/{term_id}/reject": {
+      "post": {
+        "operationId": "reject_term",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_id",
+            "required": true,
+            "schema": {
+              "title": "Term Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TermNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Term",
+        "tags": [
+          "industrial"
+        ]
+      }
+    },
+    "/api/v1/industrial/terminology/{factory_id}/{term_id}/rollback": {
+      "post": {
+        "operationId": "rollback_term",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factory_id",
+            "required": true,
+            "schema": {
+              "title": "Factory Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_id",
+            "required": true,
+            "schema": {
+              "title": "Term Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollbackTermRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rollback Term",
+        "tags": [
+          "industrial"
         ]
       }
     },

@@ -227,7 +227,20 @@ The first production-grade domain vertical implemented on the Solver Fabric is c
 
 ---
 
-## 8. Accurate Implementation Status
+## 8. Industrial Language Understanding & Factory Terminology
+
+To bridge colloquial shop-floor communication and formal optimization models, QORVEXA implements a 13-stage deterministic, bounded language intelligence pipeline (`qorvexa.industrial.understanding`):
+
+- **Multilingual Factory Intake**: Direct support for Egyptian Colloquial Arabic (`عامية مصري`), Modern Standard Arabic (`فصحى`), English, shop-floor code-switching, and Arabizi numerals and terminology.
+- **Quote-Grounded Claims**: Every extracted parameter, constraint, and capacity is strictly bound to verbatim character offsets within the source shift notes; fabricated, ungrounded, or distorted claims are marked `UNSUPPORTED` or `CONFLICTED`.
+- **Contradiction & Conflict Detection**: Evaluates numeric assertions within identical operational scopes (converting dimensional units exactly), surfacing mathematical and physical contradictions prior to formulation.
+- **Factory-Scoped Versioned Terminology**: Plant jargon, equipment aliases, and local product names are managed in factory-isolated dictionaries (`TerminologyBook`). Changes require an authorized human `TERMINOLOGY_REVIEWER`, appending immutable version events with full audit tracking.
+- **Untrusted Proposals Pipeline**: Extracted operational claims are emitted exclusively as untrusted `PROPOSAL` entries into the Fact Ledger (`emit_proposals`). LLMs cannot confirm facts, alter models, or trigger optimization runs autonomously.
+- **Interactive Clarification Loop**: Automatically identifies missing parameters (capacity gaps, undefined cost metrics) and prompts plant operators in their native language and dialect with targeted, non-duplicative questions.
+
+---
+
+## 9. Accurate Implementation Status
 
 To preserve engineering integrity, QORVEXA explicitly demarcates verified code from active work and planned architecture:
 
@@ -238,12 +251,17 @@ To preserve engineering integrity, QORVEXA explicitly demarcates verified code f
 | **HiGHS Worker & Adapter (Win32 Isolated)** | **Implemented & Tested** | `tests/test_sf_highs_adapter.py` (21/21 passed; Win32 Job Object, 4GB cap) |
 | **Independent Mathematical Verifier** | **Implemented & Tested** | `tests/test_sf_verifier.py` (primal/dual feasibility, duality gap, Farkas rays) |
 | **Production Planning Formulation Slice** | **Implemented & Tested** | `tests/test_production_planning.py` (64/64 dedicated passed; 220 combined) |
+| **Industrial Language Understanding** | **Implemented & Tested** | `tests/test_industrial_understanding.py` (43/43 passed; 13-stage pipeline) |
+| **Factory Terminology Lifecycle & Isolation** | **Implemented & Tested** | `tests/test_industrial_understanding_api.py` (11/11 passed; SQLite versioned store) |
+| **Dimensional Units Verification Engine** | **Implemented & Tested** | `tests/test_industrial_units.py` (64/64 passed; dimensional checking) |
+| **Fact Ledger & Governed Sessions (SQLite WAL)** | **Implemented & Tested** | `tests/test_governance.py`, `test_formulation.py` (tamper-evident hash chain) |
+| **Decision Intelligence & Pareto Frontier** | **Implemented & Tested** | `tests/test_decision_intelligence*.py` (multi-scenario ranking & trade-offs) |
+| **Phase B End-to-End Orchestrator Binding** | **Implemented & Tested** | `tests/test_sf_phase_b_integration.py` (21/21 passed) |
+| **Live HiGHS Solves on Production Planning** | **Implemented & Tested** | `tests/test_industrial_api_e2e.py` (verified with real HiGHS subprocess) |
 | **MetroPT-3 Real Telemetry Anomaly Detection** | **Implemented & Tested** | `tests/test_anomaly_*.py` (4/4 operator leak episodes detected; 0.026 FA/day) |
 | **Cryptographic Audit Trail (SHA-256)** | **Implemented & Tested** | `tests/test_audit_contention.py` (tamper-evident hash chain verification) |
 | **Safety Boundary Enforcement** | **Implemented & Tested** | `tests/test_safety_boundary.py` (enforces zero PLC/SCADA write endpoints) |
-| **Phase B End-to-End Orchestrator Binding** | *In Progress* | Orchestrator solver-adapter dispatch loop and verifier integration (Claude) |
-| **Live HiGHS Solves on Production Planning** | *In Progress* | Production Planning execution pipeline integration with real worker process |
-| **Public Platform Preview UI** | **Implemented & Deployed** | Deployed on Vercel: [qorvexa-delta.vercel.app](https://qorvexa-delta.vercel.app) |
+| **Public Platform Preview UI & Planning Studio** | **Implemented & Deployed** | Deployed on Vercel: [qorvexa-delta.vercel.app](https://qorvexa-delta.vercel.app) |
 | **Multi-Solver Concurrent Arbitration** | *Planned* | Concurrent dispatch across MILP, CSP, and numerical engines |
 | **Deep Fluid-Thermal Digital Twin Coupling** | *Planned* | Dynamic coupling between continuous optimizer and non-linear simulator |
 | **Industrial OT Connectors (OPC-UA/MQTT)** | *Planned* | Industrial client libraries and live plant historian streaming |
@@ -274,7 +292,7 @@ QORVEXA/
 │   │   │   └── production_planning/ # Continuous production planning formulation slice
 │   │   ├── solver_fabric/        # Canonical LP, HiGHS adapter, worker process, verifier
 │   │   └── twin/                 # Compressor physics & degradation simulation models
-│   ├── tests/                    # 925+ hermetic backend tests (pytest)
+│   ├── tests/                    # 1,800+ hermetic backend tests (pytest)
 │   └── pyproject.toml            # Dependencies (FastAPI, NumPy, SciPy, highspy==1.16.0)
 ├── frontend/
 │   ├── src/

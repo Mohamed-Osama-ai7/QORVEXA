@@ -4,7 +4,8 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-const API_TARGET = process.env.FACTORYMIND_API_URL ?? 'http://127.0.0.1:8000'
+const API_TARGET =
+  process.env.QORVEXA_API_URL ?? process.env.FACTORYMIND_API_URL ?? 'http://127.0.0.1:8000'
 
 export default defineConfig({
   plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],

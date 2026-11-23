@@ -4,6 +4,7 @@ export * from './copilot/copilot';
 export * from './digital-twin/digital-twin';
 export * from './edge/edge';
 export * from './incidents/incidents';
+export * from './industrial/industrial';
 export * from './knowledge/knowledge';
 export * from './ml/ml';
 export * from './optimization/optimization';

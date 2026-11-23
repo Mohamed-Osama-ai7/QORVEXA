@@ -209,6 +209,9 @@ describe('KnowledgeExplorer', () => {
     expect(screen.getByText(/Related Knowledge Graph relationships/)).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'correlational_indicator' })).toBeInTheDocument()
     expect(screen.getByText('0.7683')).toBeInTheDocument()
+    // `recall_at_5` is a hit rate and must not be labelled as recall.
+    expect(screen.getByRole('columnheader', { name: 'Hit rate@5' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: /Recall/ })).not.toBeInTheDocument()
     expect(seenUrls.some((u) => u.includes('node_id=null'))).toBe(false)
 
     // Whitespace query triggers inline validation alert + aria-invalid

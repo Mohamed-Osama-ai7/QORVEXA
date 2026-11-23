@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import type { ExtractedClaim } from '../../api/planningApi'
+import type { ExtractedClaim, IngestOptions } from '../../api/planningApi'
 
 interface Props {
   sessionId: string
-  onIngest: (text: string, claims?: ExtractedClaim[]) => Promise<void>
+  onIngest: (text: string, claims?: ExtractedClaim[], options?: IngestOptions) => Promise<void>
   isPending: boolean
 }
 
@@ -26,6 +26,20 @@ Units:
 - Product units: item
 - Resource units: hour
 - Currency: EUR`
+
+const SAMPLE_EGYPTIAN = `تقرير الوردية الصباحية - مصنع العصائر
+الفيلر طاقته 100 ساعة في الشيفت.
+عبوة عصير بتكسب 50 جنيه لكل قطعة، وبتحتاج ساعتين على الفيلر وساعة على الباكر.
+الباكر طاقته 80 ساعة، ومطلوب 500 عبوة كحد أقصى.`
+
+const SAMPLE_FORMAL_ARABIC = `تقرير تسليم الوردية - خط التعبئة والتغليف
+تبلغ الطاقة الإنتاجية لآلة الفيلر مائة ساعة عمل خلال دورة الإنتاج.
+يحقق المنتج أ هامش ربح قدره خمسون جنيها للوحدة، بمعدل استهلاك ساعتين لكل وحدة.
+الطاقة المتاحة لآلة التغليف ثمانون ساعة.`
+
+const SAMPLE_ARABIZI = `el filler taqeto 100 hours fel shift.
+juice product margin 50 egp per piece, we beye7tag 2 hours 3al filler w 1 hour 3al packer.
+el packer taqeto 80 hours.`
 
 const SAMPLE_CLAIMS: ExtractedClaim[] = [
   { key: 'problem:id', value: 'product_mix', quote: 'Problem ID: product_mix' },
@@ -54,6 +68,7 @@ const SAMPLE_CLAIMS: ExtractedClaim[] = [
 export function ProblemIntakeView({ onIngest, isPending }: Props) {
   const [text, setText] = useState(SAMPLE_TEXT)
   const [useSampleClaims, setUseSampleClaims] = useState(true)
+  const [factoryId, setFactoryId] = useState('factory-1')
 
   return (
     <div className="space-y-6">
@@ -62,21 +77,62 @@ export function ProblemIntakeView({ onIngest, isPending }: Props) {
           <div>
             <h2 className="text-lg font-semibold text-ink">Factory Language Intake</h2>
             <p className="text-xs text-muted">
-              Enter operational plant notes, shift handover reports, or specification text in English or Arabic.
+              Enter operational plant notes, shift handover reports, or specification text in English, Egyptian Arabic, or Arabizi.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => {
                 setText(SAMPLE_TEXT)
                 setUseSampleClaims(true)
               }}
-              className="rounded border border-border px-3 py-1.5 text-xs font-medium text-ink hover:bg-border"
+              className="rounded border border-border px-2.5 py-1 text-xs font-medium text-ink hover:bg-surface"
             >
-              Load Standard Factory Mix
+              Standard Mix (EN)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setText(SAMPLE_EGYPTIAN)
+                setUseSampleClaims(false)
+              }}
+              className="rounded border border-accent/40 bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent/20"
+            >
+              مصري دارج (Egyptian Arabic)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setText(SAMPLE_FORMAL_ARABIC)
+                setUseSampleClaims(false)
+              }}
+              className="rounded border border-border px-2.5 py-1 text-xs font-medium text-ink hover:bg-surface"
+            >
+              فصحى (Formal Arabic)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setText(SAMPLE_ARABIZI)
+                setUseSampleClaims(false)
+              }}
+              className="rounded border border-border px-2.5 py-1 text-xs font-medium text-purple-400 hover:bg-surface"
+            >
+              Arabizi
             </button>
           </div>
+        </div>
+
+        <div className="mt-4 flex items-center gap-4 text-xs">
+          <label className="text-muted">Target Factory Scope:</label>
+          <input
+            type="text"
+            value={factoryId}
+            onChange={(e) => setFactoryId(e.target.value)}
+            className="w-32 rounded border border-border bg-surface px-2.5 py-1 font-mono text-ink"
+            placeholder="factory-1"
+          />
         </div>
 
         <div className="mt-4">
@@ -107,10 +163,14 @@ export function ProblemIntakeView({ onIngest, isPending }: Props) {
           <button
             type="button"
             disabled={isPending || !text.trim()}
-            onClick={() => onIngest(text, useSampleClaims ? SAMPLE_CLAIMS : undefined)}
+            onClick={() =>
+              onIngest(text, useSampleClaims ? SAMPLE_CLAIMS : undefined, {
+                factory_id: factoryId,
+              })
+            }
             className="rounded bg-accent px-4 py-2 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50"
           >
-            {isPending ? 'Extracting Claims...' : 'Ingest & Generate Proposals'}
+            {isPending ? 'Understanding Pipeline Running...' : 'Ingest & Generate Proposals'}
           </button>
         </div>
       </div>
