@@ -240,7 +240,31 @@ To bridge colloquial shop-floor communication and formal optimization models, QO
 
 ---
 
-## 9. Accurate Implementation Status
+## 9. Discrete-Event Digital Twin & Simulation Engine
+
+To model operational dynamics that cannot be captured by static continuous LP formulations (such as buffer capacities, machine starvations, upstream blocking, stochastic shift downtime, and scrap generation), QORVEXA implements a high-performance Discrete-Event Simulation (DES) engine (`qorvexa.industrial.digital_twin`):
+
+- **Integer Tick Clock**: High-resolution integer-second event scheduler; durations are converted exactly by the Units Engine with zero silent rounding.
+- **Micro-State Machine Tracking**: Every machine instant is rigorously classified into exactly one mutually exclusive operational state (`PROCESSING`, `SETUP`, `BLOCKED`, `STARVED`, `WAITING_RESOURCE`, `DOWN`, `PLANNED_DOWNTIME`, `OFF_SHIFT`).
+- **Piece Conservation & Balances**: Validates exact mass and piece conservation across buffers, processing stations, and scraps (`Conservation.balanced`).
+- **Stochastic Disturbance Streams**: Independent, deterministic SHA-256 pseudo-random streams per `(seed, replication, stream)` generating bit-identical reproducible Monte Carlo executions (Triangular, Exponential, and Bernoulli distributions).
+- **Lineage-Checked Scenarios**: Immutable counterfactual scenario branches (`SimulationEvidence`) recording bottleneck candidates, machine utilization, WIP accumulation, and lateness distributions.
+
+---
+
+## 10. Optimization–Simulation Co-Orchestration (OSCO)
+
+A mathematically optimal plan is not automatically operationally viable on the factory floor. QORVEXA's Optimization–Simulation Co-Orchestration engine (`qorvexa.industrial.co_orchestration`) couples continuous mathematical optimization with discrete-event operational simulation in an iterative, evidence-grounded refinement loop:
+
+$$\text{Admitted Formulation} \longrightarrow \text{HiGHS Solve} \longrightarrow \text{Independent Verification} \longrightarrow \text{Digital Twin DES} \longrightarrow \text{Operational Violation Detection} \longrightarrow \text{Evidence-Justified Refinement} \longrightarrow \text{Re-Optimization} \longrightarrow \text{Pareto Decision Package}$$
+
+- **Closed-Loop Feedback**: If a mathematically optimal plan causes buffer overflow, machine deadlock, or delivery lateness in simulation, OSCO pinpoints the responsible operational bottleneck.
+- **Evidence-Justified Refinements**: Only proposes adjustments whose numeric bounds are directly justified by scheduled productive calendar time (`shifts - breaks - planned downtime - breakdowns`); capacities are never arbitrarily altered.
+- **Integrated Decision Intelligence**: Unifies mathematical objectives (profit, cost) with simulated operational metrics (WIP, throughput, makespan, late orders) into Pareto frontiers and multi-criteria ranking packages awaiting explicit human sign-off.
+
+---
+
+## 11. Accurate Implementation Status
 
 To preserve engineering integrity, QORVEXA explicitly demarcates verified code from active work and planned architecture:
 
@@ -252,10 +276,12 @@ To preserve engineering integrity, QORVEXA explicitly demarcates verified code f
 | **Independent Mathematical Verifier** | **Implemented & Tested** | `tests/test_sf_verifier.py` (primal/dual feasibility, duality gap, Farkas rays) |
 | **Production Planning Formulation Slice** | **Implemented & Tested** | `tests/test_production_planning.py` (64/64 dedicated passed; 220 combined) |
 | **Industrial Language Understanding** | **Implemented & Tested** | `tests/test_industrial_understanding.py` (43/43 passed; 13-stage pipeline) |
-| **Factory Terminology Lifecycle & Isolation** | **Implemented & Tested** | `tests/test_industrial_understanding_api.py` (11/11 passed; SQLite versioned store) |
+| **Factory Terminology Lifecycle & Isolation** | **Implemented & Tested** | `tests/test_industrial_understanding_api.py` (18/18 passed; SQLite versioned store) |
 | **Dimensional Units Verification Engine** | **Implemented & Tested** | `tests/test_industrial_units.py` (64/64 passed; dimensional checking) |
 | **Fact Ledger & Governed Sessions (SQLite WAL)** | **Implemented & Tested** | `tests/test_governance.py`, `test_formulation.py` (tamper-evident hash chain) |
 | **Decision Intelligence & Pareto Frontier** | **Implemented & Tested** | `tests/test_decision_intelligence*.py` (multi-scenario ranking & trade-offs) |
+| **Discrete-Event Digital Twin Simulator** | **Implemented & Tested** | `tests/test_industrial_digital_twin.py` (55/55 passed; micro-state accounting) |
+| **Optimization-Simulation Co-Orchestration** | **Implemented & Tested** | `tests/test_optimization_simulation_orchestration.py` (24/24 passed; closed-loop) |
 | **Phase B End-to-End Orchestrator Binding** | **Implemented & Tested** | `tests/test_sf_phase_b_integration.py` (21/21 passed) |
 | **Live HiGHS Solves on Production Planning** | **Implemented & Tested** | `tests/test_industrial_api_e2e.py` (verified with real HiGHS subprocess) |
 | **MetroPT-3 Real Telemetry Anomaly Detection** | **Implemented & Tested** | `tests/test_anomaly_*.py` (4/4 operator leak episodes detected; 0.026 FA/day) |
@@ -265,10 +291,24 @@ To preserve engineering integrity, QORVEXA explicitly demarcates verified code f
 | **Multi-Solver Concurrent Arbitration** | *Planned* | Concurrent dispatch across MILP, CSP, and numerical engines |
 | **Deep Fluid-Thermal Digital Twin Coupling** | *Planned* | Dynamic coupling between continuous optimizer and non-linear simulator |
 | **Industrial OT Connectors (OPC-UA/MQTT)** | *Planned* | Industrial client libraries and live plant historian streaming |
+| **Advanced GraphRAG & Causal Discovery** | *Planned* | Automated plant topology extraction from P&ID diagrams and telemetry |
 
 ---
 
-## 9. Safety & Governance Principles
+## 12. Data Grounding & Provenance
+
+To ensure scientific rigor, all datasets and benchmarks within QORVEXA are strictly labeled:
+
+1. **Real-World Industrial Telemetry**:
+   - **MetroPT-3 Dataset**: Real telemetry from an urban railway air production unit (compressor) containing pressure, temperature, current, and air consumption signals. Used for statistical PCA-SPE anomaly detection, regime calibration, and operator-confirmed leak detection.
+2. **Synthetic Operational Benchmarks**:
+   - **Production Planning Mix**: Deterministic formulation models based on classical operations research benchmark profiles (e.g., standard product mix, capacity bottlenecks, overtime expansion).
+   - **Digital Twin Tandem & Line Models**: Synthetic multi-machine configurations validated against closed-form analytic recurrence equations (e.g., tandem line blocking and starvation proofs).
+   - **Co-Orchestration Test Portfolios**: Controlled synthetic two-product line configurations with known bottleneck transitions and productive calendar time constraints.
+
+---
+
+## 13. Safety & Governance Principles
 
 1. **Advisory and Read-Only**: QORVEXA never executes autonomous machine actuations, setpoint changes, or PLC writes.
 2. **LLMs Are Not Mathematical Solvers**: Generative models structure and explain problems; mathematical truth is computed solely by specialized solvers and validated by independent verifiers.
@@ -278,7 +318,7 @@ To preserve engineering integrity, QORVEXA explicitly demarcates verified code f
 
 ---
 
-## 10. Repository Layout
+## 14. Repository Layout
 
 ```
 QORVEXA/
@@ -289,20 +329,29 @@ QORVEXA/
 │   │   ├── assets/               # Digital Asset Passports & sensor manifests
 │   │   ├── contracts/            # Frozen runtime contracts (solver_runtime, solver_fabric)
 │   │   ├── industrial/
-│   │   │   └── production_planning/ # Continuous production planning formulation slice
+│   │   │   ├── co_orchestration/ # Closed-loop optimization-simulation co-orchestration (OSCO)
+│   │   │   ├── decision_intelligence/ # Pareto analysis, trade-off matrix, scenario ranking
+│   │   │   ├── digital_twin/     # Discrete-event production line simulator & state engine
+│   │   │   ├── formulation/      # Append-only Fact Ledger & canonical LP compiler
+│   │   │   ├── governance/       # Governed Sessions & SQLite WAL persistence
+│   │   │   ├── ontology/         # Content-addressed factory asset graph & relations
+│   │   │   ├── production_planning/ # Continuous production planning formulation slice
+│   │   │   ├── understanding/    # Multilingual factory language intelligence pipeline
+│   │   │   └── units/            # Strict dimensional units engine & conversions
 │   │   ├── solver_fabric/        # Canonical LP, HiGHS adapter, worker process, verifier
 │   │   └── twin/                 # Compressor physics & degradation simulation models
-│   ├── tests/                    # 1,800+ hermetic backend tests (pytest)
+│   ├── tests/                    # 1,924+ hermetic backend tests (pytest)
 │   └── pyproject.toml            # Dependencies (FastAPI, NumPy, SciPy, highspy==1.16.0)
 ├── frontend/
 │   ├── src/
+│   │   ├── api/                  # Typed API clients & generated Orval bindings
 │   │   ├── auth/                 # Enterprise OIDC provider & strict authentication gate
 │   │   ├── features/
-│   │   │   ├── public/           # Public product & architecture landing page
-│   │   │   ├── solver/           # Solver workspace & problem formulation wizard
 │   │   │   ├── anomaly/          # Real-time MetroPT-3 telemetry inspection
-│   │   │   ├── twin/             # Digital Twin simulator interface
-│   │   │   └── incidents/        # Incident investigation & human outcome verification
+│   │   │   ├── incidents/        # Incident investigation & human outcome verification
+│   │   │   ├── planning/         # Production Planning & Decision Studio
+│   │   │   ├── solver/           # Solver workspace & problem formulation wizard
+│   │   │   └── twin/             # Digital Twin simulator interface
 │   │   └── routes/               # TanStack Router page layouts & control room shell
 │   └── package.json              # React 19, TypeScript 5.7, Tailwind CSS v4, Vite 8
 └── docs/
@@ -311,56 +360,85 @@ QORVEXA/
 
 ---
 
-## 11. Quick Start (Local Development)
+## 15. Contributor Quick Start & Development Workflow
 
 ### Prerequisites
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/) package manager
-- Node.js 24+ and npm
+- **Python**: 3.12 (strictly tested on Python 3.12)
+- **Package Manager**: [uv](https://docs.astral.sh/uv/) (Astral)
+- **Node.js**: v24+ and npm v10+
+- **Git**: 2.40+
 
-### Backend Setup
+### Clone & Environment Setup
 ```bash
-# Clone the repository
-git clone https://github.com/Mohamed-Osama-ai7/QORVEXA.git
-cd QORVEXA/backend
+# Clone the consolidated contributor branch
+git clone -b collaboration/qorvexa-current https://github.com/Mohamed-Osama-ai7/QORVEXA.git
+cd QORVEXA
+```
 
-# Install dependencies and sync virtual environment
+### Backend Setup & Test Execution
+```bash
+cd backend
+
+# 1. Install locked dependencies in hermetic virtual environment
 uv sync
 
-# Run the complete test suite (includes Solver Fabric and HiGHS tests)
-uv run pytest
+# 2. Run the complete hermetic test suite (1,924 tests)
+uv run pytest --basetemp=../tmp_pytest -q
 
-# Launch the advisory FastAPI backend
+# 3. Run targeted subsystem test suites
+uv run pytest tests/test_optimization_simulation_orchestration.py -q  # OSCO (24 tests)
+uv run pytest tests/test_industrial_digital_twin.py -q               # Digital Twin (55 tests)
+uv run pytest tests/test_industrial_understanding_api.py -q          # Understanding & Auth (18 tests)
+uv run pytest tests/test_sf_highs_adapter.py -q                      # HiGHS Subprocess (21 tests)
+
+# 4. Code quality & type checks
+uv run ruff check
+uv run ruff format --check
+uv run mypy src/qorvexa/api/industrial.py src/qorvexa/industrial/
+
+# 5. Launch local advisory API server
 uv run uvicorn qorvexa.api.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### Frontend Setup
+### Frontend Setup & Test Execution
 ```bash
 cd ../frontend
 
-# Install dependencies
+# 1. Install dependencies
 npm ci
 
-# Run unit and integration tests
+# 2. Run Vitest suite (75 tests across 20 files)
 npm test
 
-# Start the Vite development server
+# 3. Verify TypeScript build and Vite compilation
+npm run build
+
+# 4. Launch local development server
 npm run dev
-# Operational preview available at http://localhost:5173
+# Studio preview available at http://localhost:5173/planning
 ```
+
+### Contributor Code Quality Gates
+Before submitting changes, contributors must ensure:
+1. `uv run ruff check` reports zero linting issues.
+2. `uv run ruff format --check` reports all files formatted.
+3. `uv run mypy` reports zero type errors on touched modules.
+4. `uv run pytest` passes 100% without test skips or weakened assertions.
+5. `npm test` and `npm run build` succeed cleanly in `frontend/`.
+6. Safety boundary invariant: no endpoints or workers may perform writes to PLCs or physical automation equipment.
 
 ---
 
-## 12. Deployment & Live Platform Preview
+## 16. Deployment & Live Platform Preview
 
-- **Public Preview URL**: [https://qorvexa-delta.vercel.app](https://qorvexa-delta.vercel.app)
+- **Public Preview URL**: [https://qorvexa-delta.vercel.app/planning](https://qorvexa-delta.vercel.app/planning)
 - **Deployment Platform**: Vercel (Edge Network / Vite SPA)
-- **Public Mode Capabilities**: Verified architectural showcase, multi-paradigm router details, Solver Fabric specification, 14-stage workflow walkthrough, Production Planning formulation review, and real-time implementation status matrix.
+- **Public Mode Capabilities**: Verified architectural showcase, Production Planning & Decision Studio, Factory Language Intake (Egyptian Arabic/Arabizi), Terminology Manager, Fact Board, HiGHS Optimization Solver view, Scenario Workbench, and Decision Intelligence Briefs.
 - **Enterprise Mode**: Live industrial telemetry, asset control rooms, and incident audit workflows require an enterprise OIDC Identity Provider (Keycloak / Okta / Azure AD).
 
 ---
 
-## 13. Team & Research Direction
+## 17. Research Direction & Team
 
 - **Project Name**: QORVEXA
 - **Descriptor**: Industrial AI Research Lab
