@@ -29,6 +29,14 @@ class WorkflowValidationError(ValueError):
     """The graph or the run envelope cannot be executed as submitted."""
 
 
+class TaskInvocationError(RuntimeError):
+    """A trusted execution policy stopped a task with a stable failure code."""
+
+    def __init__(self, failure: TaskFailure) -> None:
+        super().__init__(failure.value)
+        self.failure = failure
+
+
 class TaskInvoker(Protocol):
     """Trusted execution policy boundary around a single validated task invocation."""
 
@@ -51,9 +59,16 @@ def _invoke(
 
 
 class Supervisor:
-    def __init__(self, registry: CapabilityRegistry, *, invoker: TaskInvoker = _invoke) -> None:
+    def __init__(
+        self,
+        registry: CapabilityRegistry,
+        *,
+        invoker: TaskInvoker = _invoke,
+        accept_result: Callable[[], None] | None = None,
+    ) -> None:
         self._registry = registry
         self._invoker = invoker
+        self._accept_result = accept_result
 
     def _plan(self, workflow: WorkflowSpec) -> tuple[tuple[TaskSpec, Capability], ...]:
         tasks: dict[str, tuple[TaskSpec, Capability]] = {}
@@ -89,6 +104,10 @@ class Supervisor:
         if len(plan) != len(tasks):
             raise WorkflowValidationError("Workflow dependencies contain a cycle")
         return tuple(plan)
+
+    def validate(self, workflow: WorkflowSpec) -> None:
+        """Validate the graph and all capability references before claiming a run."""
+        self._plan(workflow)
 
     def run(
         self,
@@ -164,6 +183,8 @@ class Supervisor:
                 context,
                 lambda: capability.handler(validated.model_copy(deep=True), context),
             )
+        except TaskInvocationError as exc:
+            return failure(exc.failure)
         except Exception:
             return failure(TaskFailure.HANDLER_FAILED)
 
@@ -186,4 +207,9 @@ class Supervisor:
             ),
             payload_json=serialized,
         )
+        if self._accept_result is not None:
+            try:
+                self._accept_result()
+            except TaskInvocationError as exc:
+                return failure(exc.failure)
         return TaskResult(task_id=context.task_id, status=TaskStatus.SUCCEEDED, artifact=artifact)

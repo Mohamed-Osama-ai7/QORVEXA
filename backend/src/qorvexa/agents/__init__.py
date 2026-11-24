@@ -12,12 +12,30 @@ from qorvexa.agents.contracts import (
     WorkflowScope,
     WorkflowSpec,
 )
+from qorvexa.agents.execution import (
+    CancellationToken,
+    ExecutionPolicy,
+    ExecutionService,
+    ReplaySafeTransientError,
+    task_checkpoint,
+    task_remaining_seconds,
+)
+from qorvexa.agents.run_store import RunConflictError, RunEventKind, RunRecord, RunState, RunStore
 from qorvexa.agents.runtime import Supervisor, TaskInvoker, WorkflowValidationError
 
 __all__ = [
     "ArtifactRef",
+    "CancellationToken",
     "Capability",
     "CapabilityRegistry",
+    "ExecutionPolicy",
+    "ExecutionService",
+    "ReplaySafeTransientError",
+    "RunConflictError",
+    "RunEventKind",
+    "RunRecord",
+    "RunState",
+    "RunStore",
     "Supervisor",
     "TaskArtifact",
     "TaskContext",
@@ -30,4 +48,6 @@ __all__ = [
     "WorkflowScope",
     "WorkflowSpec",
     "WorkflowValidationError",
+    "task_checkpoint",
+    "task_remaining_seconds",
 ]

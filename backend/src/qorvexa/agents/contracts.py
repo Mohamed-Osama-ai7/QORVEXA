@@ -101,6 +101,11 @@ class TaskFailure(StrEnum):
     INPUT_INVALID = "input_invalid"
     OUTPUT_INVALID = "output_invalid"
     HANDLER_FAILED = "handler_failed"
+    CANCELLED = "cancelled"
+    TIMED_OUT = "timed_out"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+    RETRIES_EXHAUSTED = "retries_exhausted"
+    JOURNAL_UNAVAILABLE = "journal_unavailable"
 
 
 class TaskResult(FrozenContract):
