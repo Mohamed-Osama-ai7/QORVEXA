@@ -142,6 +142,12 @@ def test_completed_idempotency_binds_scope_input_version_and_permissions(tmp_pat
     assert independent.run_id != first.run_id
     assert calls[-1] == other
 
+    asset = WorkflowScope(tenant_id=SCOPE.tenant_id, asset_id=SCOPE.factory_id)
+    assert store.events(asset, "key") == ()
+    asset_run = service.run(_workflow("a"), scope=asset, idempotency_key="key")
+    assert asset_run.run_id not in {first.run_id, independent.run_id}
+    assert calls[-1] == asset
+
 
 def test_concurrent_duplicate_observes_running_claim_and_does_not_invoke(tmp_path: Path) -> None:
     entered = Event()
