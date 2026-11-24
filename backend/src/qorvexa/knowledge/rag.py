@@ -9,7 +9,7 @@ import threading
 import unicodedata
 from collections import Counter
 from collections.abc import Sequence
-from typing import Final, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 import numpy as np
 from sklearn.decomposition import TruncatedSVD
@@ -23,7 +23,10 @@ from qorvexa.contracts.knowledge import (
 )
 from qorvexa.knowledge.kg import IndustrialKnowledgeGraph, infer_linked_kg_nodes
 
-SearchMode = Literal["bm25_only", "dense_svd_only", "hybrid_rrf"]
+if TYPE_CHECKING:
+    from qorvexa.knowledge.embeddings import TextEmbedder
+
+SearchMode = Literal["bm25_only", "dense_svd_only", "dense_neural_only", "hybrid_rrf"]
 _TOKEN_RE = re.compile(r"[a-z0-9_\u0621-\u064A]+")
 _CONTRACTION_NOT_RE = re.compile(r"\b([a-z0-9_]+)n['\u2019]t\b")
 _CONTRACTION_SUFFIX_RE = re.compile(r"(?<=[a-z0-9_])['\u2019](?:s|re|ve|ll|d|m)\b")
@@ -320,16 +323,19 @@ def _snippet_around(text: str, query_tokens: Sequence[str], max_len: int = 280) 
 
 
 class _ScopedSliceIndex:
-    """BM25 + TF-IDF/TruncatedSVD index built strictly over one authorized chunk partition."""
+    """BM25 + Neural Embeddings / TF-IDF TruncatedSVD index built strictly over one partition."""
 
     def __init__(
         self,
         chunks: Sequence[KnowledgeDocumentChunk],
         *,
+        embedder: TextEmbedder | None = None,
         k1: float,
         b: float,
     ) -> None:
         self.chunks = list(chunks)
+        self._embedder = embedder
+        self._dense_backend = "neural" if embedder is not None else "tfidf_svd"
         self._k1 = k1
         self._b = b
         self._doc_tokens: list[list[str]] = [
@@ -353,28 +359,35 @@ class _ScopedSliceIndex:
         self._vectorizer: TfidfVectorizer | None = None
         self._svd: TruncatedSVD | None = None
         self._dense_matrix: np.ndarray | None = None
-        if n_docs >= 1 and df:
+        if n_docs >= 1:
             corpus_texts = [f"{c.title} {c.section} {c.text}" for c in self.chunks]
-            vec = TfidfVectorizer(
-                tokenizer=extract_content_tokens,
-                token_pattern=None,
-                ngram_range=(1, 2),
-                sublinear_tf=True,
-                lowercase=False,
-            )
-            tfidf = vec.fit_transform(corpus_texts)
-            n_features = tfidf.shape[1]
-            self._vectorizer = vec
-            max_comp = min(32, n_docs - 1, n_features - 1)
-            if max_comp >= 2:
-                svd = TruncatedSVD(n_components=max_comp, random_state=42)
-                reduced = svd.fit_transform(tfidf)
-                self._svd = svd
-                self._dense_matrix = np.asarray(normalize(reduced, norm="l2"), dtype="float64")
-            else:
-                self._dense_matrix = np.asarray(
-                    normalize(tfidf.toarray(), norm="l2"), dtype="float64"
+            if self._embedder is not None:
+                self._dense_matrix = self._embedder.embed_texts(corpus_texts)
+            elif df:
+                vec = TfidfVectorizer(
+                    tokenizer=extract_content_tokens,
+                    token_pattern=None,
+                    ngram_range=(1, 2),
+                    sublinear_tf=True,
+                    lowercase=False,
                 )
+                tfidf = vec.fit_transform(corpus_texts)
+                n_features = tfidf.shape[1]
+                self._vectorizer = vec
+                max_comp = min(32, n_docs - 1, n_features - 1)
+                if max_comp >= 2:
+                    svd = TruncatedSVD(n_components=max_comp, random_state=42)
+                    reduced = svd.fit_transform(tfidf)
+                    self._svd = svd
+                    self._dense_matrix = np.asarray(normalize(reduced, norm="l2"), dtype="float64")
+                else:
+                    self._dense_matrix = np.asarray(
+                        normalize(tfidf.toarray(), norm="l2"), dtype="float64"
+                    )
+
+    @property
+    def dense_backend(self) -> str:
+        return self._dense_backend
 
     def has_alpha_oov(self, unique_q: Sequence[str]) -> bool:
         return any(_has_alpha(tok) and tok not in self._idf for tok in unique_q)
@@ -417,7 +430,17 @@ class _ScopedSliceIndex:
 
     def dense_scores(self, query: str) -> list[float]:
         n = len(self.chunks)
-        if self._vectorizer is None or self._dense_matrix is None or n == 0:
+        if self._dense_matrix is None or n == 0 or not query.strip():
+            return [0.0] * n
+
+        if self._embedder is not None:
+            q_vec = self._embedder.embed_query(query)
+            if not np.any(q_vec):
+                return [0.0] * n
+            sims = self._dense_matrix @ q_vec
+            return [float(max(0.0, sims[pos])) for pos in range(n)]
+
+        if self._vectorizer is None:
             return [0.0] * n
         q_tfidf = self._vectorizer.transform([query])
         q_vec = self._svd.transform(q_tfidf) if self._svd is not None else q_tfidf.toarray()
@@ -429,11 +452,11 @@ class _ScopedSliceIndex:
 
 
 class HybridRagIndex:
-    """Tenant- and asset-scoped hybrid lexical + latent-semantic retriever.
+    """Tenant- and asset-scoped hybrid lexical + neural / latent-semantic retriever.
 
-    Security invariant: separate BM25/IDF/TF-IDF/SVD indices are built per
+    Security invariant: separate BM25/IDF/Dense indices are built per
     ``(tenant_id, frozenset(allowed_asset_ids))`` slice so ungranted tenants or assets never
-    influence vocabulary, IDF weights, latent SVD components, or returned corpus totals.
+    influence vocabulary, IDF weights, embeddings, or returned corpus totals.
     """
 
     def __init__(
@@ -441,12 +464,14 @@ class HybridRagIndex:
         chunks: Sequence[KnowledgeDocumentChunk],
         *,
         kg: IndustrialKnowledgeGraph | None = None,
+        embedder: TextEmbedder | None = None,
         k1: float = 1.5,
         b: float = 0.75,
         rrf_k: int = 60,
     ) -> None:
         self._chunks = list(chunks)
         self._kg = kg or IndustrialKnowledgeGraph()
+        self._embedder = embedder
         self._k1 = k1
         self._b = b
         self._rrf_k = rrf_k
@@ -460,6 +485,14 @@ class HybridRagIndex:
     @property
     def kg(self) -> IndustrialKnowledgeGraph:
         return self._kg
+
+    @property
+    def embedder(self) -> TextEmbedder | None:
+        return self._embedder
+
+    @property
+    def dense_backend(self) -> str:
+        return "neural" if self._embedder is not None else "tfidf_svd"
 
     def accessible_chunks(
         self, *, tenant_id: str, allowed_asset_ids: set[str]
@@ -479,7 +512,12 @@ class HybridRagIndex:
         if cached is not None:
             return cached
         scoped = self.accessible_chunks(tenant_id=tenant_id, allowed_asset_ids=allowed_asset_ids)
-        built = _ScopedSliceIndex(scoped, k1=self._k1, b=self._b)
+        built = _ScopedSliceIndex(
+            scoped,
+            embedder=self._embedder,
+            k1=self._k1,
+            b=self._b,
+        )
         with self._lock:
             existing = self._partitions.get(key)
             if existing is not None:
@@ -497,6 +535,16 @@ class HybridRagIndex:
         mode: SearchMode = "hybrid_rrf",
     ) -> HybridSearchResponse:
         slice_index = self._partition(tenant_id=tenant_id, allowed_asset_ids=allowed_asset_ids)
+        if mode == "dense_neural_only" and slice_index.dense_backend != "neural":
+            raise ValueError(
+                "Search mode 'dense_neural_only' requires a neural embedder, but index "
+                f"dense backend is '{slice_index.dense_backend}'."
+            )
+        if mode == "dense_svd_only" and slice_index.dense_backend != "tfidf_svd":
+            raise ValueError(
+                "Search mode 'dense_svd_only' requires TF-IDF/SVD backend, but index "
+                f"dense backend is '{slice_index.dense_backend}'."
+            )
         scoped = slice_index.chunks
         q_tokens = list(dict.fromkeys(extract_content_tokens(query)))
         if not scoped or not q_tokens:
@@ -553,7 +601,7 @@ class HybridRagIndex:
         for idx in indices:
             if mode == "bm25_only":
                 rrf_scores[idx] = bm25[idx]
-            elif mode == "dense_svd_only":
+            elif mode in ("dense_svd_only", "dense_neural_only"):
                 rrf_scores[idx] = dense[idx]
             else:
                 b_term = 1.0 / (self._rrf_k + bm25_pos[idx]) if bm25[idx] > 0.0 else 0.0

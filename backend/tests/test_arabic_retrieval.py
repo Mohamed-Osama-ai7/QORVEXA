@@ -1,4 +1,3 @@
-# ruff: noqa: RUF001, RUF003, E501
 # ruff: noqa: RUF003, E501
 """Tests for Task 1 (Member 3): Arabic & Multilingual Retrieval Support (P0).
 
