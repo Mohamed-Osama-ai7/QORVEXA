@@ -8,6 +8,7 @@ import sqlite3
 import time
 from collections.abc import Callable, Mapping
 from contextvars import ContextVar
+from functools import partial
 from threading import Event, Lock, local
 from typing import Annotated, Final
 
@@ -23,6 +24,7 @@ from qorvexa.agents.contracts import (
     WorkflowSpec,
     encode_task_payload,
 )
+from qorvexa.agents.resource_budgets import ResourceBudgetPolicy, _resource_attempt, _ResourceLedger
 from qorvexa.agents.run_store import RunEvent, RunEventKind, RunRecord, RunStore
 from qorvexa.agents.runtime import Supervisor, TaskInvocationError, WorkflowValidationError
 from qorvexa.auth.principal import Permission
@@ -38,6 +40,7 @@ class ExecutionPolicy(FrozenContract):
     max_concurrency: Annotated[int, Field(ge=1, le=MAX_CONCURRENCY)] = 1
     initial_backoff_s: Annotated[float, Field(ge=0, le=60, allow_inf_nan=False)] = 0.1
     max_backoff_s: Annotated[float, Field(ge=0, le=60, allow_inf_nan=False)] = 1.0
+    resource_budgets: ResourceBudgetPolicy | None = None
 
     @model_validator(mode="after")
     def validate_backoff(self) -> ExecutionPolicy:
@@ -71,18 +74,29 @@ class ReplaySafeTransientError(RuntimeError):
 
 class _TaskControl:
     def __init__(
-        self, cancellation: CancellationToken, deadline: float, clock: Callable[[], float]
+        self,
+        cancellation: CancellationToken,
+        deadline: float,
+        clock: Callable[[], float],
+        check_resources: Callable[[], None] | None = None,
     ) -> None:
         self._cancellation = cancellation
         self._deadline = deadline
         self._clock = clock
+        self._check_resources = check_resources
 
-    def remaining(self) -> float:
+    def _time_remaining(self) -> float:
         if self._cancellation.is_cancelled():
             raise TaskInvocationError(TaskFailure.CANCELLED)
         remaining = self._deadline - self._clock()
         if remaining <= 0:
             raise TaskInvocationError(TaskFailure.TIMED_OUT)
+        return remaining
+
+    def remaining(self) -> float:
+        remaining = self._time_remaining()
+        if self._check_resources is not None:
+            self._check_resources()
         return remaining
 
 
@@ -121,6 +135,11 @@ class _ExecutionInvoker:
         self._wall_clock = wall_clock
         self._wait = wait
         self._lock = Lock()
+        self._resources = (
+            _ResourceLedger(policy.resource_budgets)
+            if policy.resource_budgets is not None
+            else None
+        )
         self._attempts = 0
         self._journal_failed = False
         self._result_control = local()
@@ -173,6 +192,9 @@ class _ExecutionInvoker:
             self._cancellation,
             min(self._deadline, self._clock() + policy.task_timeout_s),
             self._clock,
+            partial(self._resources.check, context.task_id)
+            if self._resources is not None
+            else None,
         )
         attempt = 0
         backoff = policy.initial_backoff_s
@@ -181,7 +203,8 @@ class _ExecutionInvoker:
             self._start_attempt(control, context.task_id, attempt)
             active_token = _ACTIVE_TASK.set(control)
             try:
-                result = operation()
+                with _resource_attempt(self._resources, context.task_id, control._time_remaining):
+                    result = operation()
                 control.remaining()
             except ReplaySafeTransientError as exc:
                 self._journal(RunEventKind.ATTEMPT_FAILED, context.task_id, attempt)
@@ -296,7 +319,7 @@ def _request_digest(
         {**task.model_dump(mode="json"), "dependencies": sorted(task.dependencies)}
         for task in sorted(workflow.tasks, key=lambda task: task.task_id)
     ]
-    policy_data = policy.model_dump(mode="json")
+    policy_data = policy.model_dump(mode="json", exclude_none=True)
     if policy.max_concurrency == 1:
         # Preserve established keys for the original serial policy.
         policy_data.pop("max_concurrency")
