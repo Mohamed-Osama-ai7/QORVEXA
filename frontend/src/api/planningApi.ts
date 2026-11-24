@@ -1,49 +1,38 @@
 /**
  * Typed client for QORVEXA Industrial Decision Studio API.
- * Uses `apiFetch` with fallback to in-memory governed session state when offline.
  */
 
-import { apiFetch } from './http'
+import {
+  approveOrRejectDecision,
+  buildFormulation as requestFormulation,
+  getSessionHistory as requestSessionHistory,
+  listSessions as requestSessions,
+  runDecisionIntelligence,
+} from './generated/industrial/industrial'
+import type { DecideOnRequest } from './generated/model/decideOnRequest'
+import type { DecisionBrief } from './generated/model/decisionBrief'
+import type { DecisionHistory } from './generated/model/decisionHistory'
+import type { DecisionRecord } from './generated/model/decisionRecord'
+import type { FormulationResult } from './generated/model/formulationResult'
+import type { FormulationState } from './generated/model/formulationState'
+import type { ScenarioSpec } from './generated/model/scenarioSpec'
+import type { SessionSummary } from './generated/model/sessionSummary'
+import { ApiError, apiFetch } from './http'
+
+export type {
+  DecideOnRequest,
+  DecisionBrief,
+  DecisionHistory,
+  FormulationResult,
+  FormulationState,
+  ScenarioSpec,
+  SessionSummary,
+}
 
 export interface ExtractedClaim {
   key: string
   value: string | number
   quote: string
-}
-
-export interface SessionSummary {
-  id: string
-  title: string
-  created_by: string
-  created_at: string
-}
-
-export interface ResolvedFact {
-  key: string
-  value: string
-  state: 'CONFIRMED' | 'ASSUMED'
-  claim_seq: number
-  basis: string
-}
-
-export interface Issue {
-  code: string
-  key: string
-  message: string
-  question?: string
-  can_assume?: boolean
-  candidates?: string[]
-  claim_seqs?: number[]
-}
-
-export interface FormulationState {
-  status: 'READY' | 'NEEDS_CLARIFICATION' | 'CONTRADICTED' | 'UNSUPPORTED' | 'INVALID_MODEL'
-  facts: ResolvedFact[]
-  issues: Issue[]
-  ledger_head: string
-  state_sha256: string
-  units_status: string
-  unit_report_sha256: string
 }
 
 export interface IngestResponse {
@@ -226,78 +215,6 @@ export interface IngestOptions {
   default_currency?: string
 }
 
-export interface ChangeSpec {
-  kind: 'capacity' | 'demand_bounds' | 'value'
-  resource_id?: string
-  product_id?: string
-  capacity?: string
-  min_quantity?: string
-  max_quantity?: string
-  clear_max?: boolean
-  value_per_unit?: string
-}
-
-export interface ScenarioSpec {
-  scenario_id: string
-  description?: string
-  changes: ChangeSpec[]
-  parent_scenario_id?: string | null
-}
-
-export interface ScenarioComparison {
-  scenario_id: string
-  status: string
-  baseline_status: string
-  objective?: {
-    mode: string
-    currency: string
-    baseline: string | number
-    scenario: string | number
-    absolute_change: string | number
-    effect: 'IMPROVED' | 'DETERIORATED' | 'UNCHANGED'
-  }
-}
-
-export interface DecisionBrief {
-  schema_version: string
-  brief_sha256: string
-  executive_summary: string[]
-  baseline_id: string
-  baseline_status: string
-  objective_mode: string | null
-  currency: string | null
-  comparison?: {
-    baseline_id: string
-    mode: string
-    currency: string
-    compared: ScenarioComparison[]
-  }
-  recommendation: {
-    status: 'RECOMMENDED' | 'CONDITIONALLY_RECOMMENDED' | 'NOT_RECOMMENDED' | 'INFEASIBLE'
-    selected_scenario_id?: string | null
-    headline: string
-    reasons: string[]
-    required_acknowledgements: string[]
-  }
-}
-
-export interface DecisionRecord {
-  seq: number
-  session_id: string
-  brief_sha256: string
-  verdict: 'APPROVED' | 'REJECTED'
-  scenario_id: string | null
-  approver_id: string
-  acknowledged_assumptions: string[]
-  reason: string
-  recorded_at: string
-  record_sha256: string
-}
-
-export interface DecisionHistory {
-  records: DecisionRecord[]
-}
-
 export interface UnderstandingLinks {
   session_id: string
   factory_id: string
@@ -348,19 +265,9 @@ export interface OntologyIntegrityReport {
 }
 
 export async function listSessions(): Promise<SessionSummary[]> {
-  try {
-    const res = await apiFetch<{ data: SessionSummary[] }>('/api/v1/industrial/sessions')
-    return res.data
-  } catch {
-    return [
-      {
-        id: 'DEMO-MIX-2026',
-        title: 'Q4 Precision Mix Optimization',
-        created_by: 'lead_engineer',
-        created_at: new Date().toISOString(),
-      },
-    ]
-  }
+  const { data } = await requestSessions()
+  if (!Array.isArray(data)) throw invalidResponse()
+  return data
 }
 
 export async function createSession(sessionId: string, title: string): Promise<{ session_id: string; title: string }> {
@@ -540,47 +447,44 @@ export async function assumeDefaults(sessionId: string, rationale: string): Prom
   return res.data
 }
 
-export async function buildFormulation(sessionId: string): Promise<unknown> {
-  const res = await apiFetch<{ data: unknown }>(`/api/v1/industrial/sessions/${sessionId}/build`, {
-    method: 'POST',
-  })
-  return res.data
+export async function buildFormulation(sessionId: string): Promise<FormulationResult> {
+  const result = successfulData(await requestFormulation(sessionId))
+  if (!result?.state) throw invalidResponse()
+  return result
 }
 
 export async function runDecision(
   sessionId: string,
   scenarios: ScenarioSpec[] = [],
-  paretoMetrics: string[] = ['objective', 'total_volume']
+  paretoMetrics: string[] = ['objective', 'total_volume'],
 ): Promise<DecisionBrief> {
-  const res = await apiFetch<{ data: DecisionBrief }>(`/api/v1/industrial/sessions/${sessionId}/decide`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ scenarios, pareto_metrics: paretoMetrics }),
-  })
-  return res.data
+  const brief = successfulData(await runDecisionIntelligence(sessionId, { scenarios, pareto_metrics: paretoMetrics }))
+  if (typeof brief?.brief_sha256 !== 'string' || !brief.recommendation) throw invalidResponse()
+  return brief
 }
 
-export async function decideOn(
-  sessionId: string,
-  payload: {
-    brief_sha256: string
-    verdict: 'APPROVED' | 'REJECTED'
-    scenario_id?: string | null
-    acknowledged: string[]
-    reason: string
+export async function decideOn(sessionId: string, payload: DecideOnRequest): Promise<DecisionRecord> {
+  const record = successfulData(await approveOrRejectDecision(sessionId, payload))
+  if (record?.session_id !== sessionId || record.brief_sha256 !== payload.brief_sha256 ||
+      record.verdict !== payload.verdict || !record.record_sha256) {
+    throw invalidResponse()
   }
-): Promise<DecisionRecord> {
-  const res = await apiFetch<{ data: DecisionRecord }>(`/api/v1/industrial/sessions/${sessionId}/decide-on`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  return res.data
+  return record
 }
 
 export async function getSessionHistory(sessionId: string): Promise<DecisionHistory> {
-  const res = await apiFetch<{ data: DecisionHistory }>(`/api/v1/industrial/sessions/${sessionId}/history`)
-  return res.data
+  const history = successfulData(await requestSessionHistory(sessionId))
+  if (!Array.isArray(history?.records)) throw invalidResponse()
+  return history
+}
+
+function successfulData<T>(response: { status: 200; data: T } | { status: 422; data: unknown }): T {
+  if (response.status === 200) return response.data
+  throw new ApiError(response.status, response.data)
+}
+
+function invalidResponse() {
+  return new ApiError(502, { detail: 'The planning service returned an unexpected response.' })
 }
 
 export async function getSessionOntologyLinks(sessionId: string): Promise<UnderstandingLinks> {

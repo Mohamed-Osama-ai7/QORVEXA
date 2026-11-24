@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ExtractedClaim, IngestOptions } from '../../api/planningApi'
 
 interface Props {
-  sessionId: string
+  hasSession: boolean
   factoryId: string
   onIngest: (text: string, claims?: ExtractedClaim[], options?: IngestOptions) => Promise<void>
   isPending: boolean
@@ -66,9 +66,9 @@ const SAMPLE_CLAIMS: ExtractedClaim[] = [
   { key: 'consumption:P_B:LABOR:rate', value: 2, quote: '2 hours on LABOR' },
 ]
 
-export function ProblemIntakeView({ factoryId: initialFactoryId, onIngest, isPending }: Props) {
-  const [text, setText] = useState(SAMPLE_TEXT)
-  const [useSampleClaims, setUseSampleClaims] = useState(true)
+export function ProblemIntakeView({ factoryId: initialFactoryId, onIngest, isPending, hasSession }: Props) {
+  const [text, setText] = useState('')
+  const [useSampleClaims, setUseSampleClaims] = useState(false)
   const [factoryId, setFactoryId] = useState(initialFactoryId)
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export function ProblemIntakeView({ factoryId: initialFactoryId, onIngest, isPen
               }}
               className="rounded border border-border px-2.5 py-1 text-xs font-medium text-ink hover:bg-surface"
             >
-              Standard Mix (EN)
+              Sample: Standard Mix (EN)
             </button>
             <button
               type="button"
@@ -162,17 +162,18 @@ export function ProblemIntakeView({ factoryId: initialFactoryId, onIngest, isPen
             <input
               type="checkbox"
               checked={useSampleClaims}
+              disabled={text !== SAMPLE_TEXT}
               onChange={(e) => setUseSampleClaims(e.target.checked)}
               className="rounded border-border bg-surface text-accent"
             />
-            Attach verified claim quotes for instant deterministic ingestion (offline/demo mode)
+            Attach prepared claim proposals for the standard mix sample
           </label>
 
           <button
             type="button"
-            disabled={isPending || !text.trim()}
+            disabled={!hasSession || isPending || !text.trim()}
             onClick={() =>
-              onIngest(text, useSampleClaims ? SAMPLE_CLAIMS : undefined, {
+              onIngest(text, useSampleClaims && text === SAMPLE_TEXT ? SAMPLE_CLAIMS : undefined, {
                 factory_id: factoryId,
               })
             }
