@@ -41,6 +41,7 @@ from qorvexa.contracts.optimization import (
     MaintenanceDecisionRequest,
 )
 from qorvexa.contracts.rca import RcaAssessment, RcaHypothesisCategory
+from qorvexa.copilot.evidence_workflow import retrieve_document_evidence
 from qorvexa.db.models import EvidenceRow, HumanObservation, Incident
 from qorvexa.db.repository import IncidentRepo
 from qorvexa.decision.optimizer import compare_maintenance_options
@@ -558,18 +559,13 @@ class ControlledCopilot:
                 ev_rows = repo.evidence(inc)
                 obs_rows = repo.observations(inc)
 
-        rag_res = (
-            self._knowledge.search(
-                req.question,
-                tenant_id=principal.tenant_id,
-                allowed_asset_ids=allowed_assets,
-                top_k=3,
-                mode="hybrid_rrf",
+        document_hits = (
+            retrieve_document_evidence(
+                self._knowledge, principal, asset_id=req.asset_id, question=req.question
             )
             if asset_allowed
-            else None
+            else ()
         )
-        has_doc_hits = rag_res is not None and bool(rag_res.items)
 
         # Gate downstream synthesis/KG/Twin/Optimizer tools when retrieval is empty/irrelevant and
         # no authorized incident diagnosis grounds the question.
@@ -577,7 +573,7 @@ class ControlledCopilot:
             req,
             allowed_assets=allowed_assets,
             asset_allowed=asset_allowed,
-            has_doc_hits=has_doc_hits,
+            has_doc_hits=bool(document_hits),
             inc=inc,
             ev_rows=ev_rows,
         )
@@ -798,7 +794,7 @@ class ControlledCopilot:
                 )
 
         # Step 3: Asset-scoped tools (Permission.ASSET_READ)
-        if not asset_allowed or rag_res is None:
+        if not asset_allowed:
             for t_name in _ASSET_TOOLS:
                 invocations.append(
                     CopilotToolInvocation(
@@ -810,7 +806,7 @@ class ControlledCopilot:
                     )
                 )
         else:
-            for hit in rag_res.items:
+            for hit in document_hits:
                 citations.append(
                     CopilotCitation(
                         citation_id=f"C{len(citations) + 1}",
@@ -828,8 +824,8 @@ class ControlledCopilot:
                     tool="search_docs",
                     permitted=True,
                     status="executed",
-                    record_count=len(rag_res.items),
-                    summary=f"Retrieved {len(rag_res.items)} verified doc chunks.",
+                    record_count=len(document_hits),
+                    summary=f"Retrieved {len(document_hits)} verified doc chunks.",
                 )
             )
 
