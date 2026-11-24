@@ -8,13 +8,14 @@ import sqlite3
 import time
 from collections.abc import Callable, Mapping
 from contextvars import ContextVar
-from threading import Event
+from threading import Event, Lock, local
 from typing import Annotated, Final
 
 from pydantic import BaseModel, Field, JsonValue, TypeAdapter, model_validator
 
 from qorvexa.agents.capabilities import Capability, CapabilityRegistry, TaskContext
 from qorvexa.agents.contracts import (
+    MAX_CONCURRENCY,
     FrozenContract,
     Identifier,
     TaskFailure,
@@ -34,6 +35,7 @@ class ExecutionPolicy(FrozenContract):
     task_timeout_s: Annotated[float, Field(ge=0.001, le=3600, allow_inf_nan=False)] = 15.0
     max_run_attempts: Annotated[int, Field(ge=1, le=256)] = 64
     max_task_attempts: Annotated[int, Field(ge=1, le=8)] = 1
+    max_concurrency: Annotated[int, Field(ge=1, le=MAX_CONCURRENCY)] = 1
     initial_backoff_s: Annotated[float, Field(ge=0, le=60, allow_inf_nan=False)] = 0.1
     max_backoff_s: Annotated[float, Field(ge=0, le=60, allow_inf_nan=False)] = 1.0
 
@@ -118,17 +120,24 @@ class _ExecutionInvoker:
         self._clock = clock
         self._wall_clock = wall_clock
         self._wait = wait
+        self._lock = Lock()
         self._attempts = 0
         self._journal_failed = False
-        self._result_control: _TaskControl | None = None
+        self._result_control = local()
 
     def accept_result(self) -> None:
-        if self._result_control is not None:
-            self._result_control.remaining()
+        control: _TaskControl = self._result_control.value
+        del self._result_control.value
+        with self._lock:
+            self._check_journal()
+            control.remaining()
 
-    def _journal(self, kind: RunEventKind, task_id: str, attempt: int) -> None:
+    def _check_journal(self) -> None:
         if self._journal_failed:
             raise TaskInvocationError(TaskFailure.JOURNAL_UNAVAILABLE)
+
+    def _write_journal(self, kind: RunEventKind, task_id: str, attempt: int) -> None:
+        self._check_journal()
         try:
             active = self._store.append(
                 self._run, RunEvent(kind, self._wall_clock(), task_id, attempt)
@@ -139,6 +148,22 @@ class _ExecutionInvoker:
         if not active:
             self._journal_failed = True
             raise TaskInvocationError(TaskFailure.JOURNAL_UNAVAILABLE)
+
+    def _journal(self, kind: RunEventKind, task_id: str, attempt: int) -> None:
+        with self._lock:
+            self._write_journal(kind, task_id, attempt)
+
+    def _check_attempt_budget(self) -> None:
+        if self._attempts >= self._policy.max_run_attempts:
+            raise TaskInvocationError(TaskFailure.BUDGET_EXHAUSTED)
+
+    def _start_attempt(self, control: _TaskControl, task_id: str, attempt: int) -> None:
+        with self._lock:
+            control.remaining()
+            self._check_attempt_budget()
+            self._write_journal(RunEventKind.ATTEMPT_STARTED, task_id, attempt)
+            control.remaining()
+            self._attempts += 1
 
     def __call__(
         self, capability: Capability, context: TaskContext, operation: Callable[[], BaseModel], /
@@ -152,13 +177,8 @@ class _ExecutionInvoker:
         attempt = 0
         backoff = policy.initial_backoff_s
         while True:
-            control.remaining()
-            if self._attempts >= policy.max_run_attempts:
-                raise TaskInvocationError(TaskFailure.BUDGET_EXHAUSTED)
             attempt += 1
-            self._journal(RunEventKind.ATTEMPT_STARTED, context.task_id, attempt)
-            control.remaining()
-            self._attempts += 1
+            self._start_attempt(control, context.task_id, attempt)
             active_token = _ACTIVE_TASK.set(control)
             try:
                 result = operation()
@@ -170,8 +190,8 @@ class _ExecutionInvoker:
                     raise
                 if attempt >= policy.max_task_attempts:
                     raise TaskInvocationError(TaskFailure.RETRIES_EXHAUSTED) from exc
-                if self._attempts >= policy.max_run_attempts:
-                    raise TaskInvocationError(TaskFailure.BUDGET_EXHAUSTED) from exc
+                with self._lock:
+                    self._check_attempt_budget()
             except Exception:
                 self._journal(RunEventKind.ATTEMPT_FAILED, context.task_id, attempt)
                 control.remaining()
@@ -179,7 +199,7 @@ class _ExecutionInvoker:
             else:
                 self._journal(RunEventKind.ATTEMPT_RETURNED, context.task_id, attempt)
                 control.remaining()
-                self._result_control = control
+                self._result_control.value = control
                 return result
             finally:
                 _ACTIVE_TASK.reset(active_token)
@@ -251,7 +271,10 @@ class ExecutionService:
             self._wait,
         )
         supervisor = Supervisor(
-            self._registry, invoker=invoker, accept_result=invoker.accept_result
+            self._registry,
+            invoker=invoker,
+            accept_result=invoker.accept_result,
+            max_concurrency=policy.max_concurrency,
         )
         result = supervisor.run(workflow, scope=scope, inputs=snapshots, permissions=permissions)
         return self._store.finalize(record, idempotency_key, result, now=self._wall_clock())
@@ -273,13 +296,17 @@ def _request_digest(
         {**task.model_dump(mode="json"), "dependencies": sorted(task.dependencies)}
         for task in sorted(workflow.tasks, key=lambda task: task.task_id)
     ]
+    policy_data = policy.model_dump(mode="json")
+    if policy.max_concurrency == 1:
+        # Preserve established keys for the original serial policy.
+        policy_data.pop("max_concurrency")
     encoded = json.dumps(
         {
             "workflow": graph,
             "scope": scope.model_dump(mode="json"),
             "inputs": inputs,
             "permissions": sorted(permissions),
-            "policy": policy.model_dump(mode="json"),
+            "policy": policy_data,
         },
         allow_nan=False,
         sort_keys=True,

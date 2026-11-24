@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import hashlib
 import heapq
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
+from contextvars import copy_context
 from typing import Protocol
 
 from pydantic import BaseModel, JsonValue
 
 from qorvexa.agents.capabilities import Capability, CapabilityRegistry, TaskContext
 from qorvexa.agents.contracts import (
+    MAX_CONCURRENCY,
     ArtifactRef,
     TaskArtifact,
     TaskFailure,
@@ -23,6 +27,8 @@ from qorvexa.agents.contracts import (
     encode_task_payload,
 )
 from qorvexa.auth.principal import Permission
+
+type PlannedTask = tuple[TaskSpec, Capability]
 
 
 class WorkflowValidationError(ValueError):
@@ -65,13 +71,17 @@ class Supervisor:
         *,
         invoker: TaskInvoker = _invoke,
         accept_result: Callable[[], None] | None = None,
+        max_concurrency: int = 1,
     ) -> None:
+        if type(max_concurrency) is not int or not 1 <= max_concurrency <= MAX_CONCURRENCY:
+            raise ValueError(f"Maximum concurrency must be between 1 and {MAX_CONCURRENCY}")
         self._registry = registry
         self._invoker = invoker
         self._accept_result = accept_result
+        self._max_concurrency = max_concurrency
 
-    def _plan(self, workflow: WorkflowSpec) -> tuple[tuple[TaskSpec, Capability], ...]:
-        tasks: dict[str, tuple[TaskSpec, Capability]] = {}
+    def _plan(self, workflow: WorkflowSpec) -> tuple[PlannedTask, ...]:
+        tasks: dict[str, PlannedTask] = {}
         for task in workflow.tasks:
             if task.task_id in tasks:
                 raise WorkflowValidationError(f"Duplicate task ID: {task.task_id}")
@@ -93,7 +103,7 @@ class Supervisor:
 
         ready = [task_id for task_id, count in remaining.items() if count == 0]
         heapq.heapify(ready)
-        plan: list[tuple[TaskSpec, Capability]] = []
+        plan: list[PlannedTask] = []
         while ready:
             task_id = heapq.heappop(ready)
             plan.append(tasks[task_id])
@@ -104,6 +114,25 @@ class Supervisor:
         if len(plan) != len(tasks):
             raise WorkflowValidationError("Workflow dependencies contain a cycle")
         return tuple(plan)
+
+    def _batches(self, plan: tuple[PlannedTask, ...]) -> Iterator[tuple[PlannedTask, ...]]:
+        remaining = plan
+        finished: set[str] = set()
+        while remaining:
+            batch: list[PlannedTask] = []
+            for entry in remaining:
+                task, capability = entry
+                if not finished.issuperset(task.dependencies):
+                    continue
+                if batch and not capability.parallel_safe:
+                    break
+                batch.append(entry)
+                if not capability.parallel_safe or len(batch) == self._max_concurrency:
+                    break
+            yield tuple(batch)
+            completed = {task.task_id for task, _ in batch}
+            finished.update(completed)
+            remaining = tuple(entry for entry in remaining if entry[0].task_id not in completed)
 
     def validate(self, workflow: WorkflowSpec) -> None:
         """Validate the graph and all capability references before claiming a run."""
@@ -130,14 +159,15 @@ class Supervisor:
                 encoded[task_id] = None
 
         results: dict[str, TaskResult] = {}
-        for task, capability in plan:
+
+        def run_task(entry: PlannedTask) -> TaskResult:
+            task, capability = entry
             dependencies = tuple(results[task_id] for task_id in sorted(task.dependencies))
             blocked_by = tuple(d.task_id for d in dependencies if d.status != TaskStatus.SUCCEEDED)
             if blocked_by:
-                results[task.task_id] = TaskResult(
+                return TaskResult(
                     task_id=task.task_id, status=TaskStatus.BLOCKED, blocked_by=blocked_by
                 )
-                continue
             context = TaskContext(
                 scope=scope,
                 workflow_id=workflow.workflow_id,
@@ -145,15 +175,31 @@ class Supervisor:
                 task_id=task.task_id,
                 dependencies=tuple(d.artifact for d in dependencies if d.artifact is not None),
             )
-            results[task.task_id] = self._execute(
-                capability, context, encoded.get(task.task_id, "{}"), permissions
-            )
+            return self._execute(capability, context, encoded.get(task.task_id, "{}"), permissions)
+
+        executor = (
+            ThreadPoolExecutor(max_workers=self._max_concurrency)
+            if self._max_concurrency > 1
+            else nullcontext()
+        )
+        with executor as pool:
+            batches = self._batches(plan) if pool is not None else ((entry,) for entry in plan)
+            for batch in batches:
+                completed: tuple[TaskResult, ...]
+                if pool is None or len(batch) == 1:
+                    completed = (run_task(batch[0]),)
+                else:
+                    scheduled = tuple(
+                        pool.submit(copy_context().run, run_task, entry) for entry in batch
+                    )
+                    completed = tuple(future.result() for future in scheduled)
+                results.update((result.task_id, result) for result in completed)
 
         return WorkflowResult(
             scope=scope,
             workflow_id=workflow.workflow_id,
             version=workflow.version,
-            tasks=tuple(results.values()),
+            tasks=tuple(results[task.task_id] for task, _ in plan),
         )
 
     def _execute(

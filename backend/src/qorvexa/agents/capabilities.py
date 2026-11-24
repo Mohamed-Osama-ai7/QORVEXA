@@ -51,6 +51,7 @@ class Capability:
     handler: Callable[[BaseModel, TaskContext], BaseModel]
     required_permissions: frozenset[Permission]
     replay_safe: bool = False
+    parallel_safe: bool = False
 
     def __post_init__(self) -> None:
         _IDENTIFIER.validate_python(self.capability_id, strict=True)
@@ -59,6 +60,8 @@ class Capability:
             raise ValueError("Capability schemas must describe JSON objects")
         if not isinstance(self.replay_safe, bool):
             raise TypeError("Replay safety must be declared as a boolean")
+        if not isinstance(self.parallel_safe, bool):
+            raise TypeError("Parallel safety must be declared as a boolean")
         required = frozenset(self.required_permissions)
         if not required <= _ADVISORY_PERMISSIONS:
             raise ValueError("Workflow capabilities may require only advisory read permissions")
@@ -74,6 +77,7 @@ class Capability:
         handler: Callable[[InputT, TaskContext], OutputT],
         required_permissions: frozenset[Permission] = frozenset(),
         replay_safe: bool = False,
+        parallel_safe: bool = False,
     ) -> Capability:
         def invoke(value: BaseModel, context: TaskContext) -> BaseModel:
             return handler(cast(InputT, value), context)
@@ -86,6 +90,7 @@ class Capability:
             invoke,
             required_permissions,
             replay_safe,
+            parallel_safe,
         )
 
 
