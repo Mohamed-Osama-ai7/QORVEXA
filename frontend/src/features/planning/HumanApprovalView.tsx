@@ -1,57 +1,48 @@
 import { useState } from 'react'
-import type { DecisionBrief, DecisionHistory } from '../../api/planningApi'
+import type { DecideOnRequest, DecisionBrief, DecisionHistory } from '../../api/planningApi'
 
 interface Props {
   brief: DecisionBrief | null
   history: DecisionHistory | null
-  onDecideOn: (payload: {
-    brief_sha256: string
-    verdict: 'APPROVED' | 'REJECTED'
-    scenario_id?: string | null
-    acknowledged: string[]
-    reason: string
-  }) => Promise<void>
+  canDecide: boolean
+  onDecideOn: (payload: DecideOnRequest) => Promise<void>
   isPending: boolean
 }
 
-export function HumanApprovalView({
-  brief,
-  history,
-  onDecideOn,
-  isPending,
-}: Props) {
-  const [verdict, setVerdict] = useState<'APPROVED' | 'REJECTED'>('APPROVED')
-  const [selectedScenario, setSelectedScenario] = useState<string>(
-    brief?.recommendation?.selected_scenario_id || 'MACH120'
-  )
-  const [reason, setReason] = useState(
-    'Capacity expansion on machine shop to 120 hours approved based on verified +200 EUR contribution margin gain.'
-  )
-  const [acknowledged, setAcknowledged] = useState<string[]>(
-    brief?.recommendation?.required_acknowledgements || []
-  )
+export function HumanApprovalView(props: Props) {
+  return <ApprovalPanel key={props.brief?.brief_sha256} {...props} />
+}
 
-  const requiredAcks = brief?.recommendation?.required_acknowledgements || []
+function ApprovalPanel({ brief, history, canDecide, onDecideOn, isPending }: Props) {
+  const [verdict, setVerdict] = useState<DecideOnRequest['verdict'] | null>(null)
+  const [reason, setReason] = useState('')
+  const [acknowledged, setAcknowledged] = useState<string[]>([])
+
+  const recommendation = brief?.recommendation
+  const selectedScenario = recommendation?.recommended_scenario_id
+  const approvable = Boolean(selectedScenario) &&
+    (recommendation?.status === 'RECOMMENDED' || recommendation?.status === 'CONDITIONALLY_RECOMMENDED')
+  const requiredAcks = recommendation?.unresolved_assumptions ?? []
+  const allAcksChecked = requiredAcks.every((item) => acknowledged.includes(item))
+  const canSubmit = canDecide && reason.trim().length >= 10 &&
+    (verdict === 'REJECTED' || (verdict === 'APPROVED' && approvable && allAcksChecked))
 
   const toggleAck = (item: string) => {
     setAcknowledged((prev) =>
-      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
     )
   }
 
-  const allAcksChecked = requiredAcks.every((item) => acknowledged.includes(item))
-  const canSubmit = brief && reason.trim().length >= 10 && (verdict === 'REJECTED' || allAcksChecked)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!brief || !canSubmit) return
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!brief || !verdict || !canSubmit || isPending) return
 
     await onDecideOn({
       brief_sha256: brief.brief_sha256,
       verdict,
-      scenario_id: selectedScenario || null,
-      acknowledged,
-      reason,
+      scenario_id: verdict === 'APPROVED' ? selectedScenario : null,
+      acknowledged: verdict === 'APPROVED' ? acknowledged : [],
+      reason: reason.trim(),
     })
   }
 
@@ -62,13 +53,15 @@ export function HumanApprovalView({
         <h2 className="text-lg font-semibold text-ink">Human Approval &amp; Decision Sign-Off</h2>
         <p className="mt-1 text-xs text-muted">
           QORVEXA is advisory and read-only. Industrial changes must be authorized by an accountable human engineer.
-          Signing this record creates an immutable entry in the audit hash chain.
+          The server records the verdict and rationale in the audit history.
         </p>
 
         {!brief ? (
           <div className="mt-4 rounded bg-surface p-4 text-xs text-muted">
-            Please run optimization and compute a decision brief before recording human sign-off.
+            A decision brief is required before recording human sign-off.
           </div>
+        ) : !canDecide ? (
+          <p className="mt-4 text-xs text-muted">Decision sign-off requires an approver account.</p>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             {/* Verdict Selection */}
@@ -81,10 +74,11 @@ export function HumanApprovalView({
                     name="verdict"
                     value="APPROVED"
                     checked={verdict === 'APPROVED'}
+                    disabled={!approvable || isPending}
                     onChange={() => setVerdict('APPROVED')}
                     className="text-ok focus:ring-ok"
                   />
-                  <span className="text-ok font-semibold">APPROVE</span> (Authorize operational adoption)
+                  <span className="text-ok font-semibold">APPROVE</span> (Accept the recommendation)
                 </label>
                 <label className="flex items-center gap-2 text-xs font-medium text-ink cursor-pointer">
                   <input
@@ -92,6 +86,7 @@ export function HumanApprovalView({
                     name="verdict"
                     value="REJECTED"
                     checked={verdict === 'REJECTED'}
+                    disabled={isPending}
                     onChange={() => setVerdict('REJECTED')}
                     className="text-critical focus:ring-critical"
                   />
@@ -100,23 +95,10 @@ export function HumanApprovalView({
               </div>
             </div>
 
-            {/* Target Scenario Selection */}
             {verdict === 'APPROVED' && (
-              <div>
-                <label htmlFor="target-scenario" className="block text-xs font-medium text-muted">
-                  Approved Production Scenario
-                </label>
-                <select
-                  id="target-scenario"
-                  value={selectedScenario}
-                  onChange={(e) => setSelectedScenario(e.target.value)}
-                  className="mt-1 w-full max-w-xs rounded border border-border bg-surface px-3 py-1.5 font-mono text-xs text-ink focus:border-accent focus:outline-none"
-                >
-                  <option value="MACH120">MACH120 (+200 EUR Net Margin)</option>
-                  <option value="BASE">BASE (2,600 EUR Unmodified Baseline)</option>
-                  <option value="MACH80">MACH80 (Reduced Outage Schedule)</option>
-                </select>
-              </div>
+              <p className="text-xs text-muted">
+                Scenario to approve: <strong>{selectedScenario}</strong>
+              </p>
             )}
 
             {/* Mandatory Acknowledgements */}
@@ -130,6 +112,7 @@ export function HumanApprovalView({
                     <label key={ack} className="flex items-center gap-2 text-xs text-ink cursor-pointer">
                       <input
                         type="checkbox"
+                        disabled={isPending}
                         checked={acknowledged.includes(ack)}
                         onChange={() => toggleAck(ack)}
                         className="rounded border-border text-ok"
@@ -150,6 +133,8 @@ export function HumanApprovalView({
                 id="reason-text"
                 rows={3}
                 value={reason}
+                disabled={isPending}
+                maxLength={2000}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Enter engineering rationale for audit record..."
                 className="mt-1 w-full rounded border border-border bg-surface p-3 text-xs text-ink focus:border-accent focus:outline-none"
@@ -169,21 +154,16 @@ export function HumanApprovalView({
 
       {/* Persistent Audit History */}
       <div className="rounded-lg border border-border bg-panel p-6">
-        <div className="flex items-center justify-between border-b border-border pb-3">
-          <div>
-            <h3 className="text-base font-semibold text-ink">Persistent Audit History</h3>
-            <p className="text-xs text-muted">
-              Re-verified from SQLite WAL storage. Replaying this history verifies cryptographic hash continuity.
-            </p>
-          </div>
-          <span className="rounded bg-ok/10 px-2 py-1 font-mono text-xs text-ok">
-            Hash Chain: Verified
-          </span>
-        </div>
-
+        <h3 className="border-b border-border pb-3 text-base font-semibold text-ink">
+          Persistent Audit History
+        </h3>
         <div className="mt-4 overflow-x-auto">
-          {(!history || history.records.length === 0) ? (
-            <p className="py-6 text-center text-xs text-muted">No decision records signed yet for this session.</p>
+          {history === null ? (
+            <p className="py-6 text-center text-xs text-muted">
+              {isPending ? 'Loading audit history…' : 'Audit history is unavailable.'}
+            </p>
+          ) : !history.records?.length ? (
+            <p className="py-6 text-center text-xs text-muted">No decisions are recorded for this session.</p>
           ) : (
             <table className="w-full text-left text-xs font-mono">
               <thead>
@@ -211,7 +191,7 @@ export function HumanApprovalView({
                         {rec.verdict}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-ink font-semibold">{rec.scenario_id || 'BASE'}</td>
+                    <td className="py-2.5 px-3 text-ink font-semibold">{rec.scenario_id ?? '—'}</td>
                     <td className="py-2.5 px-3 text-muted">{rec.approver_id}</td>
                     <td className="py-2.5 px-3 text-muted">{rec.recorded_at}</td>
                     <td className="py-2.5 px-3 text-ink truncate max-w-xs">{rec.record_sha256}</td>

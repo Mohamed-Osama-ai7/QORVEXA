@@ -11,7 +11,7 @@ interface Props {
 
 export function FactBoardView({ state, onConfirm, onAssume, onAssert, isPending }: Props) {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
-  const [rationale, setRationale] = useState('Standard production planning assumptions verified by industrial engineer')
+  const [rationale, setRationale] = useState('')
   const [manualKey, setManualKey] = useState('')
   const [manualValue, setManualValue] = useState('')
 

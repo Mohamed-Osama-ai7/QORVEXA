@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import type { PlanningProblem } from '../../api/generated/model/planningProblem'
 import type { ScenarioSpec } from '../../api/planningApi'
 
 interface Props {
+  problem: PlanningProblem | null
   scenarios: ScenarioSpec[]
   onUpdateScenarios: (scenarios: ScenarioSpec[]) => void
   onRunDecision: () => Promise<void>
@@ -11,7 +13,7 @@ interface Props {
 const PRESET_SCENARIOS: ScenarioSpec[] = [
   {
     scenario_id: 'MACH120',
-    description: 'Overtime expansion: Machine shop capacity expanded to 120 hours (+20 hrs)',
+    description: 'Example: Set machine shop capacity to 120 resource units',
     changes: [
       {
         kind: 'capacity',
@@ -22,7 +24,7 @@ const PRESET_SCENARIOS: ScenarioSpec[] = [
   },
   {
     scenario_id: 'MACH80',
-    description: 'Planned maintenance: Machine shop capacity reduced to 80 hours (-20 hrs)',
+    description: 'Example: Set machine shop capacity to 80 resource units',
     changes: [
       {
         kind: 'capacity',
@@ -33,7 +35,7 @@ const PRESET_SCENARIOS: ScenarioSpec[] = [
   },
   {
     scenario_id: 'B90',
-    description: 'Priority order: Product B minimum production raised to 90 units',
+    description: 'Example: Set Product B minimum production to 90 units',
     changes: [
       {
         kind: 'demand_bounds',
@@ -45,6 +47,7 @@ const PRESET_SCENARIOS: ScenarioSpec[] = [
 ]
 
 export function ScenarioWorkbenchView({
+  problem,
   scenarios,
   onUpdateScenarios,
   onRunDecision,
@@ -52,8 +55,27 @@ export function ScenarioWorkbenchView({
 }: Props) {
   const [newId, setNewId] = useState('')
   const [newDesc, setNewDesc] = useState('')
-  const [resId, setResId] = useState('MACHINE')
-  const [resCap, setResCap] = useState('110')
+  const [resId, setResId] = useState('')
+  const [resCap, setResCap] = useState('')
+
+  if (!problem) {
+    return (
+      <div className="rounded-lg border border-border bg-panel p-5">
+        <h2 className="text-lg font-semibold text-ink">Scenario Workbench</h2>
+        <p className="text-xs text-muted">Compile the formulation before running a decision.</p>
+      </div>
+    )
+  }
+
+  const activeResource = problem.resources.find((resource) => resource.id === resId)
+  const canAddScenario = !isPending && activeResource && resCap.trim() !== '' &&
+    Number.isFinite(Number(resCap)) && Number(resCap) >= 0 && newId.trim() !== '' &&
+    !scenarios.some((scenario) => scenario.scenario_id === newId.trim().toUpperCase())
+  const presets = PRESET_SCENARIOS.filter((preset) => preset.changes.every((change) =>
+    'resource_id' in change
+      ? problem.resources.some((resource) => resource.id === change.resource_id)
+      : problem.products.some((product) => product.id === change.product_id),
+  ))
 
   const addPreset = (preset: ScenarioSpec) => {
     if (scenarios.some((s) => s.scenario_id === preset.scenario_id)) return
@@ -65,7 +87,7 @@ export function ScenarioWorkbenchView({
   }
 
   const addCustomScenario = () => {
-    if (!newId.trim()) return
+    if (!canAddScenario) return
     const custom: ScenarioSpec = {
       scenario_id: newId.trim().toUpperCase(),
       description: newDesc.trim() || `Capacity adjustment on ${resId} to ${resCap}`,
@@ -104,31 +126,33 @@ export function ScenarioWorkbenchView({
       </div>
 
       {/* Preset Scenarios Buttons */}
-      <div className="rounded-lg border border-border bg-panel p-4">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Quick Load What-If Scenarios
-        </span>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {PRESET_SCENARIOS.map((preset) => {
-            const isAdded = scenarios.some((s) => s.scenario_id === preset.scenario_id)
-            return (
-              <button
-                key={preset.scenario_id}
-                type="button"
-                disabled={isAdded}
-                onClick={() => addPreset(preset)}
-                className={`rounded border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  isAdded
-                    ? 'border-border bg-surface text-muted cursor-default'
-                    : 'border-border bg-panel text-ink hover:border-accent hover:text-accent'
-                }`}
-              >
-                + {preset.scenario_id} ({preset.changes[0]?.resource_id || preset.changes[0]?.product_id || 'PARAM'})
-              </button>
-            )
-          })}
+      {presets.length > 0 && (
+        <div className="rounded-lg border border-border bg-panel p-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+            Example What-If Scenarios
+          </span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {presets.map((preset) => {
+              const isAdded = scenarios.some((s) => s.scenario_id === preset.scenario_id)
+              return (
+                <button
+                  key={preset.scenario_id}
+                  type="button"
+                  disabled={isPending || isAdded}
+                  onClick={() => addPreset(preset)}
+                  className={`rounded border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    isAdded
+                      ? 'border-border bg-surface text-muted cursor-default'
+                      : 'border-border bg-panel text-ink hover:border-accent hover:text-accent'
+                  }`}
+                >
+                  + {preset.scenario_id}
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Active Scenarios List */}
       <div className="space-y-3">
@@ -144,7 +168,7 @@ export function ScenarioWorkbenchView({
             <span className="text-xs font-medium text-muted">Primary Anchor (Reference)</span>
           </div>
           <p className="mt-1 text-xs text-muted">
-            Unmodified production plan: 100 hrs Machine, 100 hrs Labor, 40 max P_A, 50 max P_B.
+            {problem.resources.map((resource) => `${resource.name}: ${resource.capacity} ${resource.unit}`).join(' · ')}
           </p>
         </div>
 
@@ -160,6 +184,7 @@ export function ScenarioWorkbenchView({
               </div>
               <button
                 type="button"
+                disabled={isPending}
                 onClick={() => removeScenario(sc.scenario_id)}
                 className="text-xs text-critical hover:underline"
               >
@@ -169,9 +194,11 @@ export function ScenarioWorkbenchView({
             <div className="mt-2 flex flex-wrap gap-2 text-xs font-mono text-muted">
               {sc.changes.map((ch, idx) => (
                 <span key={idx} className="rounded bg-surface px-2 py-0.5 border border-border">
-                  {ch.kind === 'capacity'
+                  {'resource_id' in ch
                     ? `${ch.resource_id}.capacity = ${ch.capacity}`
-                    : `${ch.product_id}.min_quantity = ${ch.min_quantity}`}
+                    : 'value_per_unit' in ch
+                      ? `${ch.product_id}.value_per_unit = ${ch.value_per_unit}`
+                      : `${ch.product_id} demand bounds`}
                 </span>
               ))}
             </div>
@@ -184,6 +211,7 @@ export function ScenarioWorkbenchView({
         <h3 className="text-sm font-semibold text-ink">Add Custom Parameter Variation</h3>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-3">
           <input
+            disabled={isPending}
             type="text"
             value={newId}
             onChange={(e) => setNewId(e.target.value)}
@@ -191,14 +219,19 @@ export function ScenarioWorkbenchView({
             className="rounded border border-border bg-surface px-3 py-1.5 font-mono text-xs text-ink focus:border-accent focus:outline-none"
           />
           <select
-            value={resId}
+            aria-label="Resource"
+            disabled={isPending}
+            value={activeResource?.id ?? ''}
             onChange={(e) => setResId(e.target.value)}
             className="rounded border border-border bg-surface px-3 py-1.5 text-xs text-ink focus:border-accent focus:outline-none"
           >
-            <option value="MACHINE">Resource: Machine Shop (MACHINE)</option>
-            <option value="LABOR">Resource: Labor Force (LABOR)</option>
+            <option value="">Choose a resource</option>
+            {problem.resources.map((resource) => (
+              <option key={resource.id} value={resource.id}>{resource.name} ({resource.id}, {resource.unit})</option>
+            ))}
           </select>
           <input
+            disabled={isPending}
             type="number"
             value={resCap}
             onChange={(e) => setResCap(e.target.value)}
@@ -207,7 +240,7 @@ export function ScenarioWorkbenchView({
           />
           <button
             type="button"
-            disabled={!newId.trim()}
+            disabled={!canAddScenario}
             onClick={addCustomScenario}
             className="rounded border border-border px-3 py-1.5 text-xs font-medium text-ink hover:bg-border disabled:opacity-50"
           >
