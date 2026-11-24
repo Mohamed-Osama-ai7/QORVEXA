@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 from fastapi import Request
 
 from qorvexa.anomaly.service import AnomalyService
@@ -158,6 +159,26 @@ def test_copilot_per_tool_rbac_kg_depth_and_citation_completeness() -> None:
         principal=eng,
     )
     assert all(t.status == "denied_permission" for t in ungranted_res.tools_executed)
+
+
+def test_copilot_refuses_document_results_outside_the_workflow_scope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    copilot = _make_copilot()
+    caller = Principal("engineer", "acme", frozenset({Role.ENGINEER}), frozenset({ASSET}))
+    original_search = HybridRagIndex.search
+    returned_scopes: list[tuple[str, set[str]]] = []
+
+    def wrong_asset(index: HybridRagIndex, question: str, **kwargs):
+        result = original_search(index, question, **kwargs)
+        wrong_hit = result.items[0].model_copy(update={"asset_id": "other-asset"})
+        returned_scopes.append((kwargs["tenant_id"], kwargs["allowed_asset_ids"]))
+        return result.model_copy(update={"items": [wrong_hit]})
+
+    monkeypatch.setattr(HybridRagIndex, "search", wrong_asset)
+    with pytest.raises(RuntimeError, match="document evidence retrieval failed"):
+        copilot.run_query(CopilotQueryRequest(question="Unloaded TP3 air leak"), principal=caller)
+    assert returned_scopes == [("acme", {ASSET})]
 
 
 def test_copilot_red_team_evasions_indirect_injection_and_llm_grounding() -> None:
