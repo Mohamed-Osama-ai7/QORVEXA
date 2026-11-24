@@ -20,6 +20,11 @@ from qorvexa.agents.execution import (
     task_checkpoint,
     task_remaining_seconds,
 )
+from qorvexa.agents.resource_budgets import (
+    ResourceAmounts,
+    ResourceBudgetPolicy,
+    reserve_task_resources,
+)
 from qorvexa.agents.run_store import RunConflictError, RunEventKind, RunRecord, RunState, RunStore
 from qorvexa.agents.runtime import Supervisor, TaskInvoker, WorkflowValidationError
 
@@ -31,6 +36,8 @@ __all__ = [
     "ExecutionPolicy",
     "ExecutionService",
     "ReplaySafeTransientError",
+    "ResourceAmounts",
+    "ResourceBudgetPolicy",
     "RunConflictError",
     "RunEventKind",
     "RunRecord",
@@ -48,6 +55,7 @@ __all__ = [
     "WorkflowScope",
     "WorkflowSpec",
     "WorkflowValidationError",
+    "reserve_task_resources",
     "task_checkpoint",
     "task_remaining_seconds",
 ]
