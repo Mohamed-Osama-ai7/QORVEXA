@@ -9,3 +9,13 @@ Successful reservations are charged immediately and stay charged if an attempt f
 Reservations are cooperative. An adapter must reserve before making a call or dispatching work to a thread, and must join any work it starts before returning. The runtime closes the reservation context when the attempt returns. A budget policy has no effect on calls that bypass the reservation API. When budgets are disabled, use `task_checkpoint()` to check cancellation and the deadline before starting expensive work.
 
 From `backend/`, run `uv run pytest tests/test_agent_resource_budgets.py -q`.
+
+## Verified production planning adapter
+
+The factory-scoped planning route accepts a case ID and the digest of a server-owned case revision. A trusted caller resolves the case using the authorized tenant and factory before providing it to the adapter. The digest binds the case scope, problem, twin, and experiment configuration. Prepare this route through `WorkflowRouter.prepare` and run it through `ExecutionService` with server-selected resource budgets. Use the uncached OSCO engine and its standard bounded HiGHS solver for this route.
+
+The adapter reserves one solver unit per configured candidate and one simulation unit per candidate and requested replication. OSCO retains its per-run event limit. The adapter uses one OSCO worker inside the outer workflow, clamps the specialist and simulation time limits to the task deadline, and passes a cooperative cancellation check. An in-flight HiGHS solve is subject to its own worker limit. The outer task discards results returned after cancellation or its deadline.
+
+The adapter publishes evidence digests only after a completed recommendation with strictly admitted, verified math and complete simulation. The evidence is for authorized human review. The authenticated API must establish factory access before exposing the route.
+
+Run `uv run pytest tests/test_agent_planning_adapter.py tests/test_agent_admission_integration.py -q` to exercise the real solver and simulation gates using synthetic inputs.
