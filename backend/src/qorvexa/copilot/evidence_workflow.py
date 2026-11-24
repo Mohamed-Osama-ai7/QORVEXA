@@ -9,13 +9,13 @@ from pydantic import BaseModel, Field
 from qorvexa.agents import (
     Capability,
     CapabilityRegistry,
-    Supervisor,
     TaskContext,
     TaskSpec,
     TaskStatus,
     WorkflowScope,
     WorkflowSpec,
 )
+from qorvexa.agents.routing import RouteScope, WorkflowRoute, WorkflowRouter
 from qorvexa.auth.principal import Permission, Principal
 from qorvexa.contracts.knowledge import HybridSearchHit
 from qorvexa.knowledge.rag import HybridRagIndex
@@ -25,6 +25,7 @@ _WORKFLOW: Final = WorkflowSpec(
     version="1",
     tasks=(TaskSpec(task_id="search-docs", capability_id="search-docs", capability_version="1"),),
 )
+_DOCUMENT_ROUTE: Final = WorkflowRoute(_WORKFLOW, RouteScope.ASSET, "search-docs")
 
 
 class _Question(BaseModel):
@@ -66,10 +67,11 @@ def retrieve_document_evidence(
         handler=search,
         required_permissions=frozenset({Permission.ASSET_READ}),
     )
-    run = Supervisor(CapabilityRegistry((capability,))).run(
-        _WORKFLOW,
+    router = WorkflowRouter(CapabilityRegistry((capability,)), (_DOCUMENT_ROUTE,))
+    run = router.run(
+        _WORKFLOW.workflow_id,
         scope=WorkflowScope(tenant_id=principal.tenant_id, asset_id=asset_id),
-        inputs={"search-docs": {"question": question}},
+        arguments={"question": question},
         permissions=principal.permissions,
     )
     task = run.tasks[0]
