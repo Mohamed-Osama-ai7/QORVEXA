@@ -49,3 +49,14 @@ Record terminal state and result metadata together. A worker that loses its leas
 - Saturation returns a bounded admission response. A cancellation or expired lease cannot publish a late result. Queued cancellation and worker-issued terminal updates are race-tested.
 - A real, reproducible scoped workflow links inputs, verification and simulation evidence, and the resulting review summary. Failed verification blocks simulation. The human approval action remains separate.
 - Approve the OpenAPI contract, regenerate the client, and pass the route allowlist, access-control tests, full CI, and one authenticated staging smoke test.
+
+### Staging smoke procedure
+
+Use the staging identity provider and synthetic fixtures for two tenants, a requester and a separately authorized reviewer, plus an actor without the target resource grant. Record the deployment commit, template version, and staged input revision. Keep credentials in the team's staging secret store.
+
+1. Submit the pinned synthetic case twice as the same requester and compare the run IDs. Reuse the key with changed arguments and confirm that it returns a conflict. Submit as a different authorized actor and confirm that they receive their own run.
+2. Check status and evidence as the requester, reviewer if reviewer access is enabled, and actor outside the grant. Confirm storage-side filtering for listings and for evidence fetched by ID. Remove the requester's grant and confirm that later requests cannot retrieve or cancel the run.
+3. For a successful plan, record the template version and input, math verification, simulation, and review artifact digests. Confirm that the output still requires a human decision. Exercise an unverified solver result and an incomplete simulation with the existing synthetic cases.
+4. Cancel a queued run and a running run. Confirm that cancelled and interrupted runs remain terminal, with no late artifact publication. Exceed the staged queue and tenant capacities, then verify that new submissions get the corresponding admission response and that accepted work still drains.
+
+Use `tests/test_agent_planning_adapter.py` and `tests/test_agent_admission_integration.py` for the pre-deployment reference run. Keep the staging run IDs and redacted verification evidence with the release record.
