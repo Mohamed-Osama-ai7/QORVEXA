@@ -67,6 +67,16 @@ def _workflow(*tasks: TaskSpec) -> WorkflowSpec:
     return WorkflowSpec(workflow_id="advisory", version="1", tasks=tasks)
 
 
+def test_scope_requires_exactly_one_resource_partition() -> None:
+    asset = WorkflowScope(tenant_id="tenant-1", asset_id="asset-1")
+    assert asset.asset_id == "asset-1"
+    assert asset.factory_id is None
+    with pytest.raises(ValidationError, match="exactly one"):
+        WorkflowScope(tenant_id="tenant-1")
+    with pytest.raises(ValidationError, match="exactly one"):
+        WorkflowScope(tenant_id="tenant-1", asset_id="asset-1", factory_id="factory-1")
+
+
 def test_deterministic_graph_and_scoped_immutable_dependency_outputs() -> None:
     calls: list[str] = []
 

@@ -32,10 +32,17 @@ class FrozenContract(BaseModel):
 
 
 class WorkflowScope(FrozenContract):
-    """Tenant and factory scope established by the authenticated caller."""
+    """Tenant and one resource scope established by the calling service."""
 
     tenant_id: Identifier
-    factory_id: Identifier
+    factory_id: Identifier | None = None
+    asset_id: Identifier | None = None
+
+    @model_validator(mode="after")
+    def validate_partition(self) -> WorkflowScope:
+        if (self.factory_id is None) == (self.asset_id is None):
+            raise ValueError("Workflow scope requires exactly one factory or asset ID")
+        return self
 
 
 class TaskSpec(FrozenContract):
