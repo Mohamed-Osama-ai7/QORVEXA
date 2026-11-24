@@ -14,6 +14,7 @@ WORKFLOW_SCHEMA: Final = "qorvexa-workflow/1"
 MAX_TASKS: Final = 64
 MAX_DEPENDENCIES: Final = 16
 MAX_PAYLOAD_BYTES: Final = 65_536
+MAX_CONCURRENCY: Final = 8
 
 Identifier = Annotated[str, Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$")]
 Digest = Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
