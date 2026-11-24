@@ -105,12 +105,10 @@ def test_unrepresentable_out_of_scope_probe_is_not_a_false_abstention_success() 
     assert ok.metrics["out_of_scope_abstention"].value == 1.0
 
 
-def test_tokenizer_diagnostic_arabic_is_currently_unsupported() -> None:
-    """Documents a limitation: the retrieval tokenizer drops Arabic characters entirely. If this
-    starts failing the tokenizer changed: re-audit the gate and the Arabic claim before relying
-    on Arabic scores."""
-    assert extract_content_tokens("ضغط الهواء في الضاغط") == []
-    assert extract_content_tokens("air pressure ضغط") == ["air", "pressure"]
+def test_tokenizer_diagnostic_arabic_is_supported() -> None:
+    """Verifies Arabic and mixed Arabic/English content tokenization with stopword filtering."""
+    assert extract_content_tokens("ضغط الهواء في الضاغط") == ["ضغط", "الهواء", "الضاغط"]
+    assert extract_content_tokens("air pressure ضغط") == ["air", "pressure", "ضغط"]
 
 
 def _index(texts: dict[str, str]) -> HybridRagIndex:
@@ -146,7 +144,10 @@ def test_retrieval_cli_on_v1_starter_gates_arabic_and_writes_split_summary(tmp_p
     assert main(argv) == 0
     rows = [json.loads(x) for x in (out / "results.jsonl").read_text("utf-8").splitlines()]
     arabic = [r for r in rows if r["details"].get("language") == "ar"]
-    assert all(r["status"] == "unsupported_language" for r in arabic)
+    assert len(arabic) == 1
+    # Arabic probe is now representable: scored with correct out_of_scope_abstention
+    assert arabic[0]["status"] == "scored"
+    assert arabic[0]["metrics"]["out_of_scope_abstention"]["value"] == 1.0
     summary = json.loads((out / "summary.json").read_text("utf-8"))
     assert summary["summary_schema"] == "summary/v1" and "development" in summary["by_split"]
     manifest = json.loads((out / "manifest.json").read_text("utf-8"))
@@ -175,20 +176,26 @@ def test_diagnose_arabic_tokenization_detects_orthography_and_tokenizer_limits()
     assert en_diag.is_supported is True
     assert len(en_diag.issues) == 0
 
-    # 2. Pure Arabic text with default tokenizer: drops Arabic
+    # 2. Pure Arabic text with default tokenizer: now supported and normalized
     ar_diag = diagnose_arabic_tokenization("ضغط هواء الضاغط")
     assert ar_diag.has_arabic is True
     assert ar_diag.arabic_char_count > 0
-    assert ar_diag.tokens == []
-    assert ar_diag.is_supported is False
-    assert any("ASCII" in issue for issue in ar_diag.issues)
+    assert ar_diag.tokens == ["ضغط", "هواء", "الضاغط"]
+    assert ar_diag.is_supported is True
 
-    # 3. Arabic with tashkeel, tatweel, and hamza variants
+    # 3. Explicit unsupported tokenizer reproduces failure detection
+    unsupported_diag = diagnose_arabic_tokenization("ضغط هواء الضاغط", tokenizer_fn=lambda _: [])
+    assert unsupported_diag.is_supported is False
+    assert any("0 Arabic tokens" in issue for issue in unsupported_diag.issues)
+
+    # 4. Arabic with tashkeel, tatweel, and hamza variants
     complex_ar = "الـضَّــاغِطُ الأَوَّل"
     c_diag = diagnose_arabic_tokenization(complex_ar)
     assert c_diag.has_diacritics is True
     assert c_diag.has_tatweel is True
     assert c_diag.has_alif_variants is True
+    assert c_diag.tokens == ["الضاغط", "الاول"]
+    assert c_diag.is_supported is True
     assert any("tashkeel" in issue for issue in c_diag.issues)
     assert any("tatweel" in issue for issue in c_diag.issues)
     assert any("Alif" in issue for issue in c_diag.issues)

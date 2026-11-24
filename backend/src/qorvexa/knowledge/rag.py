@@ -1,3 +1,4 @@
+# ruff: noqa: RUF001
 """Hybrid RAG engine: Okapi BM25 + TF-IDF/TruncatedSVD dense cosine + Reciprocal Rank Fusion."""
 
 from __future__ import annotations
@@ -5,6 +6,7 @@ from __future__ import annotations
 import math
 import re
 import threading
+import unicodedata
 from collections import Counter
 from collections.abc import Sequence
 from typing import Final, Literal
@@ -22,14 +24,39 @@ from qorvexa.contracts.knowledge import (
 from qorvexa.knowledge.kg import IndustrialKnowledgeGraph, infer_linked_kg_nodes
 
 SearchMode = Literal["bm25_only", "dense_svd_only", "hybrid_rrf"]
-_TOKEN_RE = re.compile(r"[a-z0-9_]+")
+_TOKEN_RE = re.compile(r"[a-z0-9_\u0621-\u064A]+")
 _CONTRACTION_NOT_RE = re.compile(r"\b([a-z0-9_]+)n['\u2019]t\b")
 _CONTRACTION_SUFFIX_RE = re.compile(r"(?<=[a-z0-9_])['\u2019](?:s|re|ve|ll|d|m)\b")
+
+_ARABIC_DIACRITICS_RE: Final[re.Pattern[str]] = re.compile(r"[\u064B-\u065F\u0670]")
+_ARABIC_DIGITS_TRANS: Final[dict[int, str]] = str.maketrans(
+    "٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789"
+)
+_ARABIC_CHAR_TRANS: Final[dict[int, str]] = str.maketrans(
+    {
+        "أ": "ا",
+        "إ": "ا",
+        "آ": "ا",
+        "ٱ": "ا",
+        "ى": "ي",
+        "ة": "ه",
+    }
+)
+
+
+def normalize_arabic(text: str) -> str:
+    """Normalize Arabic text: decompose ligatures, strip tatweel/tashkeel, unify Alif/Ya/Taa."""
+    norm = unicodedata.normalize("NFKC", text)
+    norm = norm.replace("\u0640", "")
+    norm = _ARABIC_DIACRITICS_RE.sub("", norm)
+    norm = norm.translate(_ARABIC_DIGITS_TRANS)
+    return norm.translate(_ARABIC_CHAR_TRANS)
+
 
 # Grammatical function words, interrogatives, and generic request framing excluded from scoring
 # and relevance gating. Domain state/polarity tokens (e.g. ``off``, ``on``, ``no``, ``not``,
 # ``below``, ``above``, ``low``, ``high``) are intentionally kept as content tokens.
-_STOPWORDS: Final[frozenset[str]] = frozenset(
+_ENGLISH_STOPWORDS: Final[frozenset[str]] = frozenset(
     {
         "a",
         "an",
@@ -131,6 +158,80 @@ _STOPWORDS: Final[frozenset[str]] = frozenset(
     }
 )
 
+_ARABIC_STOPWORDS: Final[frozenset[str]] = frozenset(
+    {
+        # Prepositions & conjunctions
+        "في",
+        "من",
+        "علي",
+        "الي",
+        "عن",
+        "مع",
+        "حتي",
+        "منذ",
+        "بين",
+        "خلال",
+        "او",
+        "ام",
+        "ثم",
+        "لكن",
+        "بل",
+        "و",
+        # Pronouns & demonstratives
+        "هو",
+        "هي",
+        "هم",
+        "هن",
+        "نحن",
+        "انا",
+        "انت",
+        "انتم",
+        "هذا",
+        "هذه",
+        "ذلك",
+        "تلك",
+        "هؤلاء",
+        "اولئك",
+        "الذي",
+        "التي",
+        "الذين",
+        "اللواتي",
+        # Interrogatives & particles
+        "ما",
+        "ماذا",
+        "اين",
+        "متي",
+        "كيف",
+        "كم",
+        "لماذا",
+        "هل",
+        "ان",
+        "بان",
+        "لان",
+        "كل",
+        "بعض",
+        "اي",
+        "ايه",
+        # Request / framing auxiliaries
+        "رجاء",
+        "اشرح",
+        "وضح",
+        "صف",
+        "اعطني",
+        "ارني",
+        "اذكر",
+        "حدد",
+        "كان",
+        "يكون",
+        "تكون",
+        "تم",
+        "يتم",
+        "تتم",
+    }
+)
+
+_STOPWORDS: Final[frozenset[str]] = frozenset(_ENGLISH_STOPWORDS | _ARABIC_STOPWORDS)
+
 # Minimum IDF-weighted query coverage thresholds derived from Okapi BM25 / OOV IDF balance:
 # - Raw RRF is strictly rank-based in (0, 2/(rrf_k+1)] (~0.0328 for rrf_k=60), and TruncatedSVD
 #   cosine drops OOV query terms before L2-normalizing, so neither detects out-of-scope queries.
@@ -147,6 +248,7 @@ def _has_alpha(token: str) -> bool:
 
 
 def _tokenize(text: str) -> list[str]:
+    text = normalize_arabic(text)
     norm = re.sub(r"\bcan['\u2019]t\b", "cannot", text.lower())
     norm = re.sub(r"\bwon['\u2019]t\b", "will not", norm)
     norm = _CONTRACTION_NOT_RE.sub(r"\1 not", norm)
@@ -196,16 +298,16 @@ def _chunk_passes_relevance_gate(
 def _snippet_around(text: str, query_tokens: Sequence[str], max_len: int = 280) -> str:
     if len(text) <= max_len:
         return text
-    lower = text.lower()
-    candidates = [idx for tok in query_tokens if (idx := lower.find(tok)) >= 0]
+    norm_text = normalize_arabic(text).lower()
+    candidates = [idx for tok in query_tokens if (idx := norm_text.find(tok)) >= 0]
     if not candidates:
         return text[:max_len].rstrip() + "…"
     best_pos = candidates[0]
     best_cov = -1
     for cand in candidates:
         start_c = max(0, cand - 70)
-        end_c = min(len(text), start_c + max_len)
-        window = lower[start_c:end_c]
+        end_c = min(len(norm_text), start_c + max_len)
+        window = norm_text[start_c:end_c]
         cov = sum(1 for tok in query_tokens if tok in window)
         if cov > best_cov or (cov == best_cov and cand < best_pos):
             best_cov = cov
