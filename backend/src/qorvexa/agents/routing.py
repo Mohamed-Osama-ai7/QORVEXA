@@ -56,6 +56,7 @@ class PreparedWorkflow:
     permissions: frozenset[Permission]
     intake_task_id: str
     _arguments_json: str = field(repr=False)
+    required_permissions: frozenset[Permission]
 
     def inputs(self) -> dict[str, dict[str, JsonValue]]:
         return {self.intake_task_id: cast(dict[str, JsonValue], json.loads(self._arguments_json))}
@@ -141,6 +142,7 @@ class WorkflowRouter:
             frozenset(permissions),
             route.template.intake_task_id,
             snapshot,
+            route.required_permissions,
         )
 
     def run(

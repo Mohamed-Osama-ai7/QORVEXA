@@ -12,7 +12,44 @@ from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
-from qorvexa.agents.contracts import WorkflowResult, WorkflowScope
+from qorvexa.agents.contracts import (
+    Digest,
+    FrozenContract,
+    Identifier,
+    WorkflowResult,
+    WorkflowScope,
+)
+from qorvexa.auth.principal import Permission
+
+
+@dataclass(frozen=True, slots=True)
+class _ActorRunKey:
+    """Internal key and the actor's freshly checked permissions for this operation."""
+
+    digest: str
+    workflow_id: str
+    permissions: frozenset[Permission]
+    required_permissions: frozenset[Permission] | None = None
+
+
+type RunStorageKey = str | _ActorRunKey
+
+
+class _ActorRequestBinding(FrozenContract):
+    request_sha256: Digest
+    workflow_id: Identifier
+    permissions: tuple[Permission, ...]
+
+
+def _actor_partition(scope: WorkflowScope) -> str:
+    # Legacy keys always use the plain scope object, even if their string is arbitrary.
+    return f'["qorvexa/actor-run/1",{scope.model_dump_json()}]'
+
+
+def _location(scope: WorkflowScope, request_key: RunStorageKey) -> tuple[str, str]:
+    if isinstance(request_key, _ActorRunKey):
+        return _actor_partition(scope), request_key.digest
+    return scope.model_dump_json(), request_key
 
 
 class RunState(StrEnum):
@@ -33,6 +70,10 @@ class RunEventKind(StrEnum):
 
 class RunConflictError(ValueError):
     """An idempotency key was already bound to a different request."""
+
+
+class _ActorRunDeniedError(ValueError):
+    """This actor no longer holds the permissions used by their stored run."""
 
 
 class RunIntegrityError(RuntimeError):
@@ -99,18 +140,33 @@ class RunStore:
 
     @staticmethod
     def _lookup(
-        connection: sqlite3.Connection, scope: WorkflowScope, request_key: str
+        connection: sqlite3.Connection,
+        scope: WorkflowScope,
+        request_key: RunStorageKey,
+        *,
+        match_workflow: bool = True,
     ) -> sqlite3.Row | None:
-        return cast(
+        partition, stored_key = _location(scope, request_key)
+        row = cast(
             sqlite3.Row | None,
             connection.execute(
                 """
                 SELECT * FROM advisory_workflow_runs
                   WHERE tenant_id = ? AND scope_json = ? AND request_key = ?
                 """,
-                (scope.tenant_id, scope.model_dump_json(), request_key),
+                (scope.tenant_id, partition, stored_key),
             ).fetchone(),
         )
+        if row is not None and isinstance(request_key, _ActorRunKey):
+            try:
+                binding = _ActorRequestBinding.model_validate_json(row["request_sha256"])
+            except ValueError as exc:
+                raise RunIntegrityError("Stored actor run authorization is invalid") from exc
+            if match_workflow and binding.workflow_id != request_key.workflow_id:
+                return None
+            if not request_key.permissions.issuperset(binding.permissions):
+                raise _ActorRunDeniedError
+        return row
 
     @staticmethod
     def _record(row: sqlite3.Row, scope: WorkflowScope) -> RunRecord:
@@ -147,17 +203,29 @@ class RunStore:
     def claim(
         self,
         scope: WorkflowScope,
-        request_key: str,
+        request_key: RunStorageKey,
         request_sha256: str,
         *,
         now: float,
         expires_at: float,
     ) -> tuple[RunRecord, bool]:
+        partition, stored_key = _location(scope, request_key)
+        binding = request_sha256
+        if isinstance(request_key, _ActorRunKey):
+            if request_key.required_permissions is None or not request_key.permissions.issuperset(
+                request_key.required_permissions
+            ):
+                raise _ActorRunDeniedError
+            binding = _ActorRequestBinding(
+                request_sha256=request_sha256,
+                workflow_id=request_key.workflow_id,
+                permissions=tuple(sorted(request_key.required_permissions)),
+            ).model_dump_json()
         with self._connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
-            existing = self._lookup(connection, scope, request_key)
+            existing = self._lookup(connection, scope, request_key, match_workflow=False)
             if existing is not None:
-                if existing["request_sha256"] != request_sha256:
+                if existing["request_sha256"] != binding:
                     raise RunConflictError(
                         "Idempotency key is bound to a different workflow request"
                     )
@@ -172,9 +240,9 @@ class RunStore:
                 (
                     run_id,
                     scope.tenant_id,
-                    scope.model_dump_json(),
-                    request_key,
-                    request_sha256,
+                    partition,
+                    stored_key,
+                    binding,
                     expires_at,
                     RunState.RUNNING,
                 ),
@@ -188,9 +256,15 @@ class RunStore:
             active = connection.execute(
                 """
                 SELECT 1 FROM advisory_workflow_runs
-                  WHERE run_id = ? AND tenant_id = ? AND scope_json = ? AND state = 'running'
+                  WHERE run_id = ? AND tenant_id = ? AND scope_json IN (?, ?)
+                    AND state = 'running'
                 """,
-                (run.run_id, run.scope.tenant_id, run.scope.model_dump_json()),
+                (
+                    run.run_id,
+                    run.scope.tenant_id,
+                    run.scope.model_dump_json(),
+                    _actor_partition(run.scope),
+                ),
             ).fetchone()
             if active is None:
                 return False
@@ -198,7 +272,7 @@ class RunStore:
             return True
 
     def finalize(
-        self, run: RunRecord, request_key: str, result: WorkflowResult, *, now: float
+        self, run: RunRecord, request_key: RunStorageKey, result: WorkflowResult, *, now: float
     ) -> RunRecord:
         if result.scope != run.scope:
             raise RunIntegrityError("Workflow result scope does not match its run")
@@ -222,7 +296,7 @@ class RunStore:
             return RunRecord(run.run_id, run.scope, RunState.COMPLETED, result)
 
     def recover_expired(
-        self, scope: WorkflowScope, request_key: str, *, now: float
+        self, scope: WorkflowScope, request_key: RunStorageKey, *, now: float
     ) -> RunRecord | None:
         """Close an expired claim without invoking any workflow operation."""
         with self._connection() as connection:
@@ -242,7 +316,12 @@ class RunStore:
             )
             return RunRecord(current.run_id, scope, RunState.INTERRUPTED)
 
-    def events(self, scope: WorkflowScope, request_key: str) -> tuple[RunEvent, ...]:
+    def get(self, scope: WorkflowScope, request_key: RunStorageKey) -> RunRecord | None:
+        with self._connection() as connection:
+            row = self._lookup(connection, scope, request_key)
+            return self._record(row, scope) if row is not None else None
+
+    def events(self, scope: WorkflowScope, request_key: RunStorageKey) -> tuple[RunEvent, ...]:
         with self._connection() as connection:
             row = self._lookup(connection, scope, request_key)
             if row is None:
