@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
@@ -22,6 +23,12 @@ from qorvexa.auth.principal import Permission
 
 MAX_PROPOSAL_BYTES: Final = 4_096
 MAX_CANDIDATES: Final = 4
+MAX_PLANNING_TEXT_LENGTH: Final = 256
+_PLANNING_REQUEST: Final = re.compile(
+    r"(?:please[ \t]+)?review[ \t]+(?:the[ \t]+)?(?:production[ \t]+)?plan[ \t]+for[ \t]+"
+    r"(?P<selection>[a-z0-9][a-z0-9._:-]{0,127})\??",
+    re.IGNORECASE | re.ASCII,
+)
 
 
 class IntentClarificationReason(StrEnum):
@@ -30,6 +37,8 @@ class IntentClarificationReason(StrEnum):
     AMBIGUOUS_PROPOSAL = "ambiguous_proposal"
     UNSUPPORTED_ROUTE = "unsupported_route"
     CONTEXT_UNAVAILABLE = "context_unavailable"
+    MISSING_TEXT = "missing_text"
+    UNSUPPORTED_TEXT = "unsupported_text"
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,10 +107,43 @@ def prepare_planning_intent(
     ):
         return IntentClarification(IntentClarificationReason.UNSUPPORTED_ROUTE)
 
+    return _prepare_bound_case(
+        router, candidate.arguments.selection_key, scope, permissions, case_bindings
+    )
+
+
+def prepare_planning_text(
+    router: WorkflowRouter,
+    text: str,
+    *,
+    scope: WorkflowScope,
+    permissions: frozenset[Permission],
+    case_bindings: Mapping[tuple[WorkflowScope, str], PlanningRequest],
+) -> PreparedWorkflow | IntentClarification:
+    """Recognize an explicit request to review exactly one named production plan."""
+    if not isinstance(text, str) or len(text) > MAX_PLANNING_TEXT_LENGTH or not text.isascii():
+        return IntentClarification(IntentClarificationReason.UNSUPPORTED_TEXT)
+    request = text.strip(" \t")
+    if not request:
+        return IntentClarification(IntentClarificationReason.MISSING_TEXT)
+    match = _PLANNING_REQUEST.fullmatch(request)
+    if match is None:
+        return IntentClarification(IntentClarificationReason.UNSUPPORTED_TEXT)
+    return _prepare_bound_case(router, match["selection"], scope, permissions, case_bindings)
+
+
+def _prepare_bound_case(
+    router: WorkflowRouter,
+    selection_key: str,
+    scope: WorkflowScope,
+    permissions: frozenset[Permission],
+    case_bindings: Mapping[tuple[WorkflowScope, str], PlanningRequest],
+) -> PreparedWorkflow | IntentClarification:
+    route = VERIFIED_PLANNING_ROUTE
     unavailable = IntentClarification(IntentClarificationReason.CONTEXT_UNAVAILABLE)
     if scope.factory_id is None or Permission.ASSET_READ not in permissions:
         return unavailable
-    binding = case_bindings.get((scope, candidate.arguments.selection_key))
+    binding = case_bindings.get((scope, selection_key))
     if binding is None:
         return unavailable
 

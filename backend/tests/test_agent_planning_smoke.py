@@ -27,7 +27,7 @@ from qorvexa.agents.planning_adapter import (
     VerifiedPlanningEvidence,
     verified_planning_capability,
 )
-from qorvexa.agents.planning_intent import prepare_planning_intent
+from qorvexa.agents.planning_intent import prepare_planning_intent, prepare_planning_text
 from qorvexa.agents.routing import PreparedWorkflow, WorkflowRouter
 from qorvexa.auth.principal import Permission, Principal, Role
 from qorvexa.industrial.co_orchestration import CoOrchestrator
@@ -78,7 +78,19 @@ def test_planning_intent_produces_actor_owned_verified_review_evidence(
         ),
     )
     workflow = VERIFIED_PLANNING_ROUTE.workflow
-    prepared = prepare_planning_intent(
+    bindings = {
+        (case.scope, "reviewed-case"): PlanningRequest(
+            case_id="synthetic-shift", case_sha256=case.case_sha256
+        )
+    }
+    prepared = prepare_planning_text(
+        router,
+        "Please review the production plan for reviewed-case?",
+        scope=case.scope,
+        permissions=allowed,
+        case_bindings=bindings,
+    )
+    proposed = prepare_planning_intent(
         router,
         json.dumps(
             {
@@ -93,13 +105,11 @@ def test_planning_intent_produces_actor_owned_verified_review_evidence(
         ),
         scope=case.scope,
         permissions=allowed,
-        case_bindings={
-            (case.scope, "reviewed-case"): PlanningRequest(
-                case_id="synthetic-shift", case_sha256=case.case_sha256
-            )
-        },
+        case_bindings=bindings,
     )
     assert isinstance(prepared, PreparedWorkflow)
+    assert proposed == prepared
+    run_osco.assert_not_called()
     args = prepared.inputs()[prepared.intake_task_id]
     key = "synthetic-shift-acceptance"
 
