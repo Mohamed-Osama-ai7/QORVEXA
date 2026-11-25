@@ -11,3 +11,11 @@ Retries require both a capability registered with `replay_safe=True` and an adap
 If a worker exits before completing a run, an authorized caller may invoke `recover_expired(scope, key)` after the claim expires. Recovery records the run as interrupted and preserves its metadata. The original key continues to return that terminal state. Recovery never executes a handler, and a late worker cannot replace the interruption with its result.
 
 From `backend/`, run `uv run pytest tests/test_agent_runtime.py tests/test_agent_execution.py -q`.
+
+## Actor-owned runs
+
+Trusted application code can use `ActorRunService` with a verified principal and a fresh resource-grant lookup. Asset runs require an explicit principal asset grant. Factory runs require a grant from the calling service. The service checks the grant before preparing and starting a run, before returning results, and on each status, event, or recovery operation.
+
+An actor's idempotency key applies across workflows within the same tenant and resource. The stored request binds the approved workflow and its required permissions. An unrelated permission change preserves replay. A changed workflow or request conflicts when the actor still holds the original grants. Legacy internal runs use a separate storage partition.
+
+This service is a building block for the [proposed public lifecycle](AGENT_WORKFLOW_ROUTING.md). Public queueing, cancellation, listing, and reviewer access need the approved API contract and staging validation.

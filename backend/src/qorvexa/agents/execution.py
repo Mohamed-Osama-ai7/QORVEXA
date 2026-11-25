@@ -25,7 +25,14 @@ from qorvexa.agents.contracts import (
     encode_task_payload,
 )
 from qorvexa.agents.resource_budgets import ResourceBudgetPolicy, _resource_attempt, _ResourceLedger
-from qorvexa.agents.run_store import RunEvent, RunEventKind, RunRecord, RunStore
+from qorvexa.agents.run_store import (
+    RunEvent,
+    RunEventKind,
+    RunRecord,
+    RunStorageKey,
+    RunStore,
+    _ActorRunKey,
+)
 from qorvexa.agents.runtime import Supervisor, TaskInvocationError, WorkflowValidationError
 from qorvexa.auth.principal import Permission
 
@@ -256,13 +263,19 @@ class ExecutionService:
         workflow: WorkflowSpec,
         *,
         scope: WorkflowScope,
-        idempotency_key: str,
+        idempotency_key: RunStorageKey,
         inputs: Mapping[str, Mapping[str, JsonValue]] | None = None,
         permissions: frozenset[Permission] = frozenset(),
         policy: ExecutionPolicy = _DEFAULT_POLICY,
         cancellation: CancellationToken | None = None,
     ) -> RunRecord:
-        _KEY.validate_python(idempotency_key, strict=True)
+        if not isinstance(idempotency_key, _ActorRunKey):
+            _KEY.validate_python(idempotency_key, strict=True)
+        elif (
+            idempotency_key.required_permissions != permissions
+            or idempotency_key.workflow_id != workflow.workflow_id
+        ):
+            raise WorkflowValidationError("Actor run permission binding does not match execution")
         Supervisor(self._registry).validate(workflow)
         submitted = dict(inputs) if inputs is not None else {}
         if submitted.keys() - {task.task_id for task in workflow.tasks}:
@@ -302,8 +315,17 @@ class ExecutionService:
         result = supervisor.run(workflow, scope=scope, inputs=snapshots, permissions=permissions)
         return self._store.finalize(record, idempotency_key, result, now=self._wall_clock())
 
-    def recover_expired(self, scope: WorkflowScope, idempotency_key: str) -> RunRecord | None:
-        _KEY.validate_python(idempotency_key, strict=True)
+    def get(self, scope: WorkflowScope, idempotency_key: RunStorageKey) -> RunRecord | None:
+        return self._store.get(scope, idempotency_key)
+
+    def events(self, scope: WorkflowScope, idempotency_key: RunStorageKey) -> tuple[RunEvent, ...]:
+        return self._store.events(scope, idempotency_key)
+
+    def recover_expired(
+        self, scope: WorkflowScope, idempotency_key: RunStorageKey
+    ) -> RunRecord | None:
+        if not isinstance(idempotency_key, _ActorRunKey):
+            _KEY.validate_python(idempotency_key, strict=True)
         return self._store.recover_expired(scope, idempotency_key, now=self._wall_clock())
 
 
