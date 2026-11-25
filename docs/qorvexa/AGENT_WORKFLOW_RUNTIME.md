@@ -12,6 +12,10 @@ Invalid input and denied permission prevent a task from invoking its handler. Ha
 
 `TaskInvoker` is the invocation boundary for execution policies. The default implementation calls the handler synchronously. [`ExecutionService`](AGENT_WORKFLOW_EXECUTION.md) supplies durable execution controls for services that provide an idempotency key. Registered capabilities must stay advisory. Human approval belongs to the existing governed decision service.
 
-The existing Copilot query uses the synchronous supervisor for document retrieval only. The service resolves the caller's asset grant before invoking the capability and binds retrieval to the caller's tenant and asset. A retrieval failure stops synthesis. An authorized search with zero hits follows the existing evidence handling. The strict solver-to-simulation handoff is exercised with synthetic factory inputs in the integration suite.
+The existing Copilot query uses the synchronous supervisor for scoped document retrieval and incident assessment. It resolves the caller's asset grant and incident permission before invoking the relevant capability. A retrieval failure stops synthesis. An authorized search with zero hits follows the existing evidence handling.
+
+Incident assessment runs after Copilot has loaded the authorized incident and checked whether the question is grounded. The capability binds the caller's tenant and asset, the incident, and the evidence package. The RCA engine's hypotheses remain advisory for engineering review. Missing telemetry or a mismatched package or report yields no publishable assessment. An unexpected engine error surfaces as a workflow failure. From `backend/`, run `uv run pytest tests/test_copilot.py tests/test_copilot_incident_workflow.py tests/test_rca_foundation.py -q` for the Copilot and RCA regression suites.
+
+The strict solver-to-simulation handoff is exercised with synthetic factory inputs in the integration suite.
 
 From `backend/`, run `uv run pytest tests/test_agent_runtime.py tests/test_agent_parallel.py -q`.
