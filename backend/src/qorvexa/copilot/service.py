@@ -13,14 +13,12 @@ from __future__ import annotations
 import math
 import re
 from collections.abc import Callable
-from typing import Final, Literal, Protocol, cast
+from typing import Final, Literal, Protocol
 
-import pandas as pd
 from sqlalchemy.orm import Session
 
-from qorvexa.anomaly.evidence_package import build_event_evidence_package
 from qorvexa.anomaly.rca import analyze_event_evidence
-from qorvexa.anomaly.service import AnomalyService, DataUnavailableError, ModelUnavailableError
+from qorvexa.anomaly.service import AnomalyService
 from qorvexa.auth.principal import Permission, Principal
 from qorvexa.contracts.copilot import (
     CopilotCitation,
@@ -31,17 +29,14 @@ from qorvexa.contracts.copilot import (
     CopilotToolSpec,
 )
 from qorvexa.contracts.digital_twin import TwinSimulationRequest
-from qorvexa.contracts.events import (
-    EventEvidencePackage,
-    HumanObservationCategory,
-    HumanObservationOut,
-)
+from qorvexa.contracts.events import EventEvidencePackage
 from qorvexa.contracts.optimization import (
     EconomicAssumptions,
     MaintenanceDecisionRequest,
 )
 from qorvexa.contracts.rca import RcaAssessment, RcaHypothesisCategory
 from qorvexa.copilot.evidence_workflow import retrieve_document_evidence
+from qorvexa.copilot.incident_workflow import evaluate_incident_rca
 from qorvexa.db.models import EvidenceRow, HumanObservation, Incident
 from qorvexa.db.repository import IncidentRepo
 from qorvexa.decision.optimizer import compare_maintenance_options
@@ -252,19 +247,6 @@ _KG_GENERIC_TOKENS: Final[frozenset[str]] = frozenset(
 )
 
 
-def _to_observation_out(obs: HumanObservation) -> HumanObservationOut:
-    return HumanObservationOut(
-        id=obs.id,
-        incident_id=obs.incident_id,
-        asset_id=obs.asset_id,
-        actor_id=obs.actor_id,
-        category=cast(HumanObservationCategory, obs.category),
-        observed_at=obs.observed_at,
-        note=obs.note,
-        created_at=obs.created_at,
-    )
-
-
 def _extract_measured_features(
     ev_rows: list[EvidenceRow],
 ) -> tuple[float | None, float | None, float | None, list[str]]:
@@ -380,29 +362,6 @@ class ControlledCopilot:
         if self._anomaly_service is not None and asset_id == self._anomaly_asset_id:
             return self._anomaly_service
         return None
-
-    def _evaluate_incident_rca(
-        self,
-        inc: Incident,
-        obs_rows: list[HumanObservation],
-    ) -> RcaAssessment | None:
-        service = self._resolve_anomaly_service(inc.asset_id)
-        if service is None or inc.episode_end <= inc.episode_start:
-            return None
-        obs_out = [_to_observation_out(obs) for obs in obs_rows]
-        try:
-            pkg = build_event_evidence_package(
-                service,
-                asset_id=inc.asset_id,
-                event_start=pd.Timestamp(inc.episode_start),
-                event_end=pd.Timestamp(inc.episode_end),
-                raised_at=pd.Timestamp(inc.raised_at),
-                incident_id=inc.id,
-                human_observations=obs_out,
-            )
-        except (DataUnavailableError, ModelUnavailableError, ValueError):
-            return None
-        return self._rca_fn(pkg)
 
     def _question_supported(
         self,
@@ -554,7 +513,12 @@ class ControlledCopilot:
             with session_factory() as session:
                 repo = IncidentRepo(session, principal)
                 inc = repo.get(req.incident_id)
-                if inc is None or inc.asset_id != req.asset_id:
+                if (
+                    inc is None
+                    or inc.id != req.incident_id
+                    or inc.tenant_id != principal.tenant_id
+                    or inc.asset_id != req.asset_id
+                ):
                     raise KeyError(req.incident_id)
                 ev_rows = repo.evidence(inc)
                 obs_rows = repo.observations(inc)
@@ -727,7 +691,14 @@ class ControlledCopilot:
                 )
             )
 
-            rca = self._evaluate_incident_rca(inc, obs_rows)
+            rca = evaluate_incident_rca(
+                principal,
+                asset_id=req.asset_id,
+                incident=inc,
+                observations=obs_rows,
+                resolve_service=self._resolve_anomaly_service,
+                rca_fn=self._rca_fn,
+            )
             if rca is None:
                 inferred_hypothesis = "insufficient_evidence"
                 rca_abstained = True
