@@ -81,3 +81,31 @@ Packages: `backend/src/qorvexa/connectors/mqtt/`, `connectors/readonly.py`, `con
 * Not tested against a real broker (QoS semantics, retained messages, session persistence).
 * Topic convention and QoS defaults (1) are PROPOSED.
 * Connector health is not yet registered in any API route (`api/` is a shared file).
+
+---
+
+# Step 5: Read-only OPC UA ingestion (transport-agnostic)
+
+Packages: `backend/src/qorvexa/connectors/opcua/`, `connectors/simulated/opcua_transport.py` · tests: `backend/tests/test_opcua_readonly.py` (29 cases).
+
+**No OPC UA client library is imported and no socket is opened.** The connector runs on an `OpcUaTransport` protocol with `connect`, `close`, `namespaces`, `browse`, `read`, `create_subscription`, `poll_changes`, `delete_subscription`. There is **no write, method-call, node-management or history-update operation**. A real adapter (e.g. around `asyncua`) will implement only these, ideally against a server-side read-only account. Everything here is verified against `SimulatedOpcUaTransport`, **not a real OPC UA server**.
+
+| Concern | Behaviour |
+|---|---|
+| Read-only | `ensure_read_only()` refuses a client exposing `write_value`, `call_method`, `add_nodes`, ... at construction. A test wraps the transport in a recorder and proves the connector touches only the eight protocol operations. |
+| Approved nodes | `ApprovedNode(node_id, factory_id, equipment_id, tag_id, unit)`. Only these are read or subscribed. A reading the server returns for any other node is dropped and counted as `unapproved_node`. |
+| Discovery | `discover()` browses from `i=85` (bounded depth/size) and reports namespaces, approved nodes found / missing, and a **count** of unapproved variables seen; their identities are never exposed. |
+| Modes | `poll` (read all approved nodes each step) or `subscribe` (data-change only; the subscription is re-created after every reconnect and deleted on `close()`). |
+| Quality | StatusCode severity -> `DataQuality` through the shared mapper. A BAD status never carries a value. If the source timestamp is missing the server timestamp is used but quality is capped at UNCERTAIN (a server time is not the measurement time). |
+| Node errors | Unknown / access-denied / no-data / communication / other-bad are counted per category (`qorvexa_opcua_node_errors_total{connector,category}`) and still produce a record with `value=None`, never a substituted value. |
+| Staleness | An unchanged value with an unchanged source timestamp is a `DUPLICATE`; `TelemetryProcessor.stale_series()` then reports the series, so a hung source (server up, data frozen) is visible even though the connection is healthy. |
+| Reconnect / health / metrics | Same bounded backoff, `FAILED` state and `reset()`, `ConnectorHealth` and `qorvexa_connector_*` metrics as the MQTT connector. Register as an OPTIONAL dependency. |
+| Config | `OpcUaConnectionConfig` validates the endpoint with the existing `validate_edge_endpoint` (opc.tcp only, no URL credentials, host allowlist, no private/loopback/metadata addresses). Credentials and certificate paths are referenced by environment-variable **name** and resolved at connect time; the config holds no secret, and there is no unencrypted `none` security mode. |
+
+## Known limits / open decisions
+* Not tested against a real server: real session/subscription semantics, certificate trust, publishing intervals and keep-alives are untested.
+* The named StatusCodes in `status.py` should be checked against the OPC UA reference before use against a real server.
+* `validate_edge_endpoint` rejects private and loopback addresses, so a lab or plant server on a private network cannot be configured through it today. That is an existing, deliberate policy; the Technical Lead must decide how approved private endpoints are allowed.
+* The reconnect/health logic is duplicated between the MQTT and OPC UA connectors (about 50 lines); extract a shared base once a third connector (historian) needs it.
+* The real adapter needs `asyncua` and a `uv.lock` change (Technical Lead approval).
+* Simulator fix in this step: `SimulatedFactory.machine_ids` was added, and the simulated OPC UA server's time advances only with reads (not on connect).
