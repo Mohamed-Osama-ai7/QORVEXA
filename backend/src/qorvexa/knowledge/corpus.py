@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Final
+from typing import Final, Literal
 
 from pypdf import PdfReader
 
@@ -305,3 +305,55 @@ def build_verified_corpus(
                 )
             )
     return chunks
+
+
+def chunk_text_document(
+    text: str,
+    *,
+    doc_id: str,
+    title: str,
+    asset_id: str,
+    tenant_scope: str | None = None,
+    source_path: str = "dynamic/document.txt",
+    license_name: str = "Proprietary (Dynamic Ingestion)",
+    provenance_origin: Literal["observed", "derived"] = "observed",
+    max_chunk_chars: int = 1800,
+) -> list[KnowledgeDocumentChunk]:
+    """Lightweight text/markdown chunking helper for dynamic ingestion.
+
+    Splits raw text or Markdown into validated KnowledgeDocumentChunk instances.
+    Preserves document metadata, handles Arabic & English, and ensures deterministic chunk IDs.
+    """
+    clean_text = text.strip()
+    if not clean_text:
+        return []
+
+    # If document contains markdown headings, split on headings
+    if "\n## " in clean_text or clean_text.startswith("## "):
+        sections = _split_markdown_sections(clean_text)
+    else:
+        sections = [("Content", " ".join(clean_text.split()))]
+
+    chunks: list[KnowledgeDocumentChunk] = []
+    for s_idx, (sec_title, sec_body) in enumerate(sections):
+        segments = _split_long_chunk(sec_body, max_len=max_chunk_chars)
+        for sub_idx, segment in enumerate(segments):
+            if len(segment) < _MIN_CHUNK_CHARS:
+                continue
+            cid = f"{doc_id}:sec-{s_idx}" if sub_idx == 0 else f"{doc_id}:sec-{s_idx}-p{sub_idx}"
+            chunks.append(
+                KnowledgeDocumentChunk(
+                    chunk_id=cid,
+                    doc_id=doc_id,
+                    title=title,
+                    section=sec_title if sub_idx == 0 else f"{sec_title} (cont. {sub_idx})",
+                    asset_id=asset_id,
+                    tenant_scope=tenant_scope,
+                    source_path=source_path,
+                    license=license_name,
+                    provenance_origin=provenance_origin,
+                    text=segment,
+                )
+            )
+    return chunks
+

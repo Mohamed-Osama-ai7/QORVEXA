@@ -1,6 +1,10 @@
 """Hybrid RAG, hardened PDF ingestion, typed Knowledge Graph, and retrieval evaluation."""
 
-from qorvexa.knowledge.corpus import build_verified_corpus, extract_pdf_chunks
+from qorvexa.knowledge.corpus import (
+    build_verified_corpus,
+    chunk_text_document,
+    extract_pdf_chunks,
+)
 from qorvexa.knowledge.embeddings import (
     DEFAULT_MULTILINGUAL_MODEL,
     EmbeddingError,
@@ -45,6 +49,7 @@ __all__ = [
     "TextEmbedder",
     "TextReranker",
     "build_verified_corpus",
+    "chunk_text_document",
     "evaluate_retrieval_modes",
     "extract_pdf_chunks",
     "get_embedder",

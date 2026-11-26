@@ -559,6 +559,241 @@ class HybridRagIndex:
             self._partitions[key] = built
         return built
 
+    def _invalidate_partitions_for(
+        self, affected_assets: set[str], affected_tenants: set[str | None]
+    ) -> None:
+        """Invalidate cached partitions overlapping affected assets and tenants."""
+        with self._lock:
+            keys_to_del: list[tuple[str, frozenset[str]]] = []
+            for t_id, asset_set in list(self._partitions.keys()):
+                asset_match = bool(asset_set.intersection(affected_assets))
+                tenant_match = (None in affected_tenants) or (t_id in affected_tenants)
+                if asset_match and tenant_match:
+                    keys_to_del.append((t_id, asset_set))
+            for k in keys_to_del:
+                self._partitions.pop(k, None)
+
+    def add_chunks(self, chunks: Sequence[KnowledgeDocumentChunk]) -> int:
+        """Add new chunks to the index.
+
+        Semantics:
+        - Validates all incoming chunks.
+        - Fails if any incoming chunk ID already exists in the index (no silent overwrites).
+        - Protects against duplicate chunk IDs within the incoming batch.
+        - Atomically appends chunks and invalidates only affected partition caches.
+        - Returns count of newly added chunks.
+        """
+        if not chunks:
+            return 0
+
+        # Validate types and check internal duplicates
+        seen_incoming: set[str] = set()
+        incoming_list: list[KnowledgeDocumentChunk] = []
+        for c in chunks:
+            if not isinstance(c, KnowledgeDocumentChunk):
+                raise TypeError(f"Expected KnowledgeDocumentChunk, got {type(c).__name__}")
+            if c.chunk_id in seen_incoming:
+                raise ValueError(f"Duplicate chunk_id '{c.chunk_id}' within incoming batch.")
+            seen_incoming.add(c.chunk_id)
+            incoming_list.append(c)
+
+        with self._lock:
+            existing_ids = {c.chunk_id for c in self._chunks}
+            collision = seen_incoming.intersection(existing_ids)
+            if collision:
+                first_collision = next(iter(collision))
+                raise ValueError(
+                    f"Chunk ID '{first_collision}' already exists in index. "
+                    "Use upsert_chunks() to replace existing chunks."
+                )
+
+            # Atomic append
+            self._chunks.extend(incoming_list)
+            affected_assets = {c.asset_id for c in incoming_list}
+            affected_tenants = {c.tenant_scope for c in incoming_list}
+
+            # Invalidate affected partitions
+            keys_to_del = [
+                (t_id, asset_set)
+                for (t_id, asset_set) in self._partitions
+                if asset_set.intersection(affected_assets)
+                and (None in affected_tenants or t_id in affected_tenants)
+            ]
+            for k in keys_to_del:
+                self._partitions.pop(k, None)
+
+        return len(incoming_list)
+
+    def upsert_chunks(self, chunks: Sequence[KnowledgeDocumentChunk]) -> int:
+        """Deterministically upsert chunks (insert new or replace existing with matching IDs).
+
+        Semantics:
+        - Validates all incoming chunks.
+        - Replaces existing chunk with matching chunk_id while preserving list integrity.
+        - Enforces that existing chunks cannot be replaced if tenant_scope mismatches.
+        - Atomically updates index and invalidates affected partition caches.
+        - Returns count of upserted chunks.
+        """
+        if not chunks:
+            return 0
+
+        seen_incoming: set[str] = set()
+        incoming_map: dict[str, KnowledgeDocumentChunk] = {}
+        for c in chunks:
+            if not isinstance(c, KnowledgeDocumentChunk):
+                raise TypeError(f"Expected KnowledgeDocumentChunk, got {type(c).__name__}")
+            if c.chunk_id in seen_incoming:
+                raise ValueError(f"Duplicate chunk_id '{c.chunk_id}' within incoming batch.")
+            seen_incoming.add(c.chunk_id)
+            incoming_map[c.chunk_id] = c
+
+        with self._lock:
+            # Check tenant boundaries on existing chunks being replaced
+            existing_by_id = {c.chunk_id: c for c in self._chunks}
+            for cid, new_chunk in incoming_map.items():
+                if cid in existing_by_id:
+                    old_chunk = existing_by_id[cid]
+                    # If old chunk has tenant_scope, the new chunk must have identical tenant_scope
+                    if old_chunk.tenant_scope != new_chunk.tenant_scope:
+                        raise PermissionError(
+                            f"Cannot overwrite chunk '{cid}' belonging to tenant "
+                            f"'{old_chunk.tenant_scope}' with tenant '{new_chunk.tenant_scope}'."
+                        )
+
+            affected_assets = {c.asset_id for c in incoming_map.values()}
+            affected_tenants = {c.tenant_scope for c in incoming_map.values()}
+
+            # Build new list atomically
+            new_chunks_list: list[KnowledgeDocumentChunk] = []
+            for c in self._chunks:
+                if c.chunk_id in incoming_map:
+                    new_chunks_list.append(incoming_map.pop(c.chunk_id))
+                else:
+                    new_chunks_list.append(c)
+            # Add remaining brand-new chunks
+            for remaining_chunk in incoming_map.values():
+                new_chunks_list.append(remaining_chunk)
+
+            self._chunks = new_chunks_list
+
+            # Invalidate affected partitions
+            keys_to_del = [
+                (t_id, asset_set)
+                for (t_id, asset_set) in self._partitions
+                if asset_set.intersection(affected_assets)
+                and (None in affected_tenants or t_id in affected_tenants)
+            ]
+            for k in keys_to_del:
+                self._partitions.pop(k, None)
+
+        return len(chunks)
+
+    def delete_chunks(
+        self,
+        chunk_ids: Sequence[str],
+        *,
+        tenant_id: str,
+    ) -> int:
+        """Delete specific chunks matching chunk_ids, strictly scoped to tenant_id.
+
+        Security semantics:
+        - tenant_id is required and non-empty. Cross-tenant deletion is strictly forbidden.
+        - Global/shared chunks (tenant_scope is None) cannot be deleted by a tenant.
+        - Returns count of deleted chunks.
+        """
+        if not tenant_id or not tenant_id.strip():
+            raise ValueError("tenant_id must be provided for deletion.")
+        if not chunk_ids:
+            return 0
+
+        target_ids = set(chunk_ids)
+        with self._lock:
+            retained: list[KnowledgeDocumentChunk] = []
+            deleted_assets: set[str] = set()
+            deleted_count = 0
+
+            for c in self._chunks:
+                if c.chunk_id in target_ids:
+                    # Enforce tenant ownership
+                    if c.tenant_scope == tenant_id:
+                        deleted_count += 1
+                        deleted_assets.add(c.asset_id)
+                        continue
+                    elif c.tenant_scope is not None and c.tenant_scope != tenant_id:
+                        raise PermissionError(
+                            f"Tenant '{tenant_id}' cannot delete chunk '{c.chunk_id}' "
+                            f"belonging to tenant '{c.tenant_scope}'."
+                        )
+                    elif c.tenant_scope is None:
+                        raise PermissionError(
+                            f"Tenant '{tenant_id}' cannot delete global chunk '{c.chunk_id}'."
+                        )
+                retained.append(c)
+
+            if deleted_count > 0:
+                self._chunks = retained
+                keys_to_del = [
+                    (t_id, asset_set)
+                    for (t_id, asset_set) in self._partitions
+                    if t_id == tenant_id and asset_set.intersection(deleted_assets)
+                ]
+                for k in keys_to_del:
+                    self._partitions.pop(k, None)
+
+            return deleted_count
+
+    def delete_document(
+        self,
+        doc_id: str,
+        *,
+        tenant_id: str,
+    ) -> int:
+        """Delete all chunks belonging to doc_id, strictly scoped to tenant_id.
+
+        Security semantics:
+        - tenant_id is required and non-empty.
+        - Shared chunks (tenant_scope is None) cannot be deleted by a tenant.
+        - Returns count of deleted chunks.
+        """
+        if not tenant_id or not tenant_id.strip():
+            raise ValueError("tenant_id must be provided for deletion.")
+        if not doc_id or not doc_id.strip():
+            return 0
+
+        with self._lock:
+            retained: list[KnowledgeDocumentChunk] = []
+            deleted_assets: set[str] = set()
+            deleted_count = 0
+
+            for c in self._chunks:
+                if c.doc_id == doc_id:
+                    if c.tenant_scope == tenant_id:
+                        deleted_count += 1
+                        deleted_assets.add(c.asset_id)
+                        continue
+                    elif c.tenant_scope is not None and c.tenant_scope != tenant_id:
+                        raise PermissionError(
+                            f"Tenant '{tenant_id}' cannot delete document '{doc_id}' "
+                            f"belonging to tenant '{c.tenant_scope}'."
+                        )
+                    elif c.tenant_scope is None:
+                        raise PermissionError(
+                            f"Tenant '{tenant_id}' cannot delete shared/global document '{doc_id}'."
+                        )
+                retained.append(c)
+
+            if deleted_count > 0:
+                self._chunks = retained
+                keys_to_del = [
+                    (t_id, asset_set)
+                    for (t_id, asset_set) in self._partitions
+                    if t_id == tenant_id and asset_set.intersection(deleted_assets)
+                ]
+                for k in keys_to_del:
+                    self._partitions.pop(k, None)
+
+            return deleted_count
+
     def search(
         self,
         query: str,
