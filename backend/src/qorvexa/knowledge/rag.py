@@ -25,6 +25,7 @@ from qorvexa.knowledge.kg import IndustrialKnowledgeGraph, infer_linked_kg_nodes
 
 if TYPE_CHECKING:
     from qorvexa.knowledge.embeddings import TextEmbedder
+    from qorvexa.knowledge.reranker import TextReranker
 
 SearchMode = Literal["bm25_only", "dense_svd_only", "dense_neural_only", "hybrid_rrf"]
 _TOKEN_RE = re.compile(r"[a-z0-9_\u0621-\u064A]+")
@@ -465,6 +466,7 @@ class HybridRagIndex:
         *,
         kg: IndustrialKnowledgeGraph | None = None,
         embedder: TextEmbedder | None = None,
+        reranker: TextReranker | None = None,
         k1: float = 1.5,
         b: float = 0.75,
         rrf_k: int = 60,
@@ -472,6 +474,7 @@ class HybridRagIndex:
         self._chunks = list(chunks)
         self._kg = kg or IndustrialKnowledgeGraph()
         self._embedder = embedder
+        self._reranker = reranker
         self._k1 = k1
         self._b = b
         self._rrf_k = rrf_k
@@ -489,6 +492,10 @@ class HybridRagIndex:
     @property
     def embedder(self) -> TextEmbedder | None:
         return self._embedder
+
+    @property
+    def reranker(self) -> TextReranker | None:
+        return self._reranker
 
     @property
     def dense_backend(self) -> str:
@@ -533,6 +540,8 @@ class HybridRagIndex:
         allowed_asset_ids: set[str],
         top_k: int = 5,
         mode: SearchMode = "hybrid_rrf",
+        rerank: bool = True,
+        rerank_top_n: int = 10,
     ) -> HybridSearchResponse:
         slice_index = self._partition(tenant_id=tenant_id, allowed_asset_ids=allowed_asset_ids)
         if mode == "dense_neural_only" and slice_index.dense_backend != "neural":
@@ -558,6 +567,7 @@ class HybridRagIndex:
                     "Hybrid RAG retrieval across verified documentation only; inspect citations "
                     "and causal-vs-correlation tags before acting."
                 ),
+                reranked=False,
             )
 
         bm25 = slice_index.bm25_scores(q_tokens)
@@ -589,6 +599,7 @@ class HybridRagIndex:
                     "Query did not meet the minimum content relevance gate for verified "
                     "documentation; abstained instead of returning unrelated matches."
                 ),
+                reranked=False,
             )
 
         indices = list(range(n_docs))
@@ -613,6 +624,11 @@ class HybridRagIndex:
             key=lambda idx: (-rrf_scores[idx], -bm25[idx], scoped[idx].chunk_id),
         )
         limit = max(1, min(top_k, 20))
+        candidate_budget = (
+            max(limit, min(rerank_top_n, 50))
+            if (rerank and self._reranker is not None)
+            else limit
+        )
         non_empty: list[int] = []
         for idx in ordered:
             if rrf_scores[idx] <= 0.0:
@@ -623,8 +639,26 @@ class HybridRagIndex:
             if n_docs >= 3 and n_m < 2 and idf_c < _MIN_TAIL_HIT_IDF_COV:
                 continue
             non_empty.append(idx)
-            if len(non_empty) >= limit:
+            if len(non_empty) >= candidate_budget:
                 break
+
+        rerank_scores: dict[int, float] = {}
+        rerank_applied = False
+        if rerank and self._reranker is not None and non_empty:
+            pairs = [
+                (query, f"{scoped[idx].title} {scoped[idx].section}: {scoped[idx].text}")
+                for idx in non_empty
+            ]
+            raw_rerank_scores = self._reranker.score_pairs(pairs)
+            for idx, score in zip(non_empty, raw_rerank_scores, strict=True):
+                rerank_scores[idx] = score
+
+            # Re-rank candidates by cross-encoder score descending, breaking ties with RRF
+            non_empty.sort(
+                key=lambda idx: (-rerank_scores[idx], -rrf_scores[idx], scoped[idx].chunk_id)
+            )
+            rerank_applied = True
+            non_empty = non_empty[:limit]
 
         hits: list[HybridSearchHit] = []
         linked_all: list[str] = []
@@ -638,6 +672,7 @@ class HybridRagIndex:
             for nid in linked:
                 if nid not in linked_all:
                     linked_all.append(nid)
+            r_score = round(rerank_scores[idx], 4) if rerank_applied else None
             hits.append(
                 HybridSearchHit(
                     rank=rank,
@@ -653,6 +688,7 @@ class HybridRagIndex:
                     bm25_score=round(bm25[idx], 4),
                     semantic_score=round(dense[idx], 4),
                     rrf_score=round(rrf_scores[idx], 6),
+                    rerank_score=r_score,
                     linked_node_ids=linked,
                 )
             )
@@ -662,14 +698,21 @@ class HybridRagIndex:
             if linked_all
             else []
         )
+        safety_note = (
+            "Retrieved knowledge preserves source license/origin tags, neural cross-encoder "
+            "reranking, and causal-vs-correlation KG semantics. Advisory reference only."
+            if rerank_applied
+            else (
+                "Retrieved knowledge preserves source license/origin tags and "
+                "causal-vs-correlation KG semantics. Advisory reference only."
+            )
+        )
         return HybridSearchResponse(
             query=query,
             total_indexed_chunks=len(scoped),
             accessible_chunks=len(scoped),
             items=hits,
             related_kg_edges=related_edges,
-            safety_note=(
-                "Retrieved knowledge preserves source license/origin tags and "
-                "causal-vs-correlation KG semantics. Advisory reference only."
-            ),
+            safety_note=safety_note,
+            reranked=rerank_applied,
         )
