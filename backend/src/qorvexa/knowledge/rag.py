@@ -331,11 +331,15 @@ class _ScopedSliceIndex:
         chunks: Sequence[KnowledgeDocumentChunk],
         *,
         embedder: TextEmbedder | None = None,
+        kg: IndustrialKnowledgeGraph | None = None,
+        allowed_asset_ids: set[str] | None = None,
         k1: float,
         b: float,
     ) -> None:
         self.chunks = list(chunks)
         self._embedder = embedder
+        self._kg = kg or IndustrialKnowledgeGraph()
+        self._allowed_asset_ids = allowed_asset_ids
         self._dense_backend = "neural" if embedder is not None else "tfidf_svd"
         self._k1 = k1
         self._b = b
@@ -347,6 +351,14 @@ class _ScopedSliceIndex:
         self._avg_len: float = (
             sum(self._doc_lens) / len(self._doc_lens) if self._doc_lens else 1.0
         ) or 1.0
+        self._chunk_kg_nodes: list[list[str]] = [
+            infer_linked_kg_nodes(
+                f"{c.title} {c.section} {c.text}",
+                allowed_asset_ids=self._allowed_asset_ids,
+                kg=self._kg,
+            )
+            for c in self.chunks
+        ]
 
         df: Counter[str] = Counter()
         for tf in self._doc_tf:
@@ -451,6 +463,19 @@ class _ScopedSliceIndex:
         sims = self._dense_matrix @ q_norm
         return [float(sims[pos]) for pos in range(n)]
 
+    def graph_scores(self, node_weights: dict[str, float]) -> list[float]:
+        n = len(self.chunks)
+        if not node_weights or n == 0:
+            return [0.0] * n
+        scores: list[float] = []
+        for nodes in self._chunk_kg_nodes:
+            if not nodes:
+                scores.append(0.0)
+                continue
+            best_w = max((node_weights.get(nid, 0.0) for nid in nodes), default=0.0)
+            scores.append(float(best_w))
+        return scores
+
 
 class HybridRagIndex:
     """Tenant- and asset-scoped hybrid lexical + neural / latent-semantic retriever.
@@ -522,6 +547,8 @@ class HybridRagIndex:
         built = _ScopedSliceIndex(
             scoped,
             embedder=self._embedder,
+            kg=self._kg,
+            allowed_asset_ids=allowed_asset_ids,
             k1=self._k1,
             b=self._b,
         )
@@ -542,6 +569,8 @@ class HybridRagIndex:
         mode: SearchMode = "hybrid_rrf",
         rerank: bool = True,
         rerank_top_n: int = 10,
+        graph_augmented: bool = False,
+        graph_depth: int = 1,
     ) -> HybridSearchResponse:
         slice_index = self._partition(tenant_id=tenant_id, allowed_asset_ids=allowed_asset_ids)
         if mode == "dense_neural_only" and slice_index.dense_backend != "neural":
@@ -556,13 +585,32 @@ class HybridRagIndex:
             )
         scoped = slice_index.chunks
         q_tokens = list(dict.fromkeys(extract_content_tokens(query)))
-        if not scoped or not q_tokens:
+
+        # Query entity linking and graph expansion
+        query_nodes = infer_linked_kg_nodes(
+            query,
+            allowed_asset_ids=allowed_asset_ids,
+            kg=self._kg,
+        )
+        graph_scores: list[float] = [0.0] * len(scoped)
+        expanded_weights: dict[str, float] = {}
+        if graph_augmented and query_nodes:
+            expanded_weights = self._kg.expand_seeds(
+                query_nodes,
+                allowed_asset_ids=allowed_asset_ids,
+                max_depth=graph_depth,
+            )
+            graph_scores = slice_index.graph_scores(expanded_weights)
+
+        has_graph_signal = graph_augmented and any(s > 0.0 for s in graph_scores)
+        if not scoped or (not q_tokens and not has_graph_signal):
             return HybridSearchResponse(
                 query=query,
                 total_indexed_chunks=len(scoped),
                 accessible_chunks=len(scoped),
                 items=[],
                 related_kg_edges=[],
+                query_kg_node_ids=query_nodes if graph_augmented else [],
                 safety_note=(
                     "Hybrid RAG retrieval across verified documentation only; inspect citations "
                     "and causal-vs-correlation tags before acting."
@@ -588,13 +636,17 @@ class HybridRagIndex:
             )
             for n_m, tok_c, idf_c, alpha_m in coverages
         )
-        if not any_passes:
+        has_graph_relevance = (
+            graph_augmented and bool(query_nodes) and any(s > 0.0 for s in graph_scores)
+        )
+        if not any_passes and not has_graph_relevance:
             return HybridSearchResponse(
                 query=query,
                 total_indexed_chunks=n_docs,
                 accessible_chunks=n_docs,
                 items=[],
                 related_kg_edges=[],
+                query_kg_node_ids=query_nodes if graph_augmented else [],
                 safety_note=(
                     "Query did not meet the minimum content relevance gate for verified "
                     "documentation; abstained instead of returning unrelated matches."
@@ -608,6 +660,14 @@ class HybridRagIndex:
         bm25_pos = {idx: pos for pos, idx in enumerate(bm25_ranked, start=1)}
         dense_pos = {idx: pos for pos, idx in enumerate(dense_ranked, start=1)}
 
+        graph_pos: dict[int, int] = {}
+        if has_graph_signal:
+            graph_ranked = sorted(
+                indices,
+                key=lambda idx: (-graph_scores[idx], scoped[idx].chunk_id),
+            )
+            graph_pos = {idx: pos for pos, idx in enumerate(graph_ranked, start=1)}
+
         rrf_scores: dict[int, float] = {}
         for idx in indices:
             if mode == "bm25_only":
@@ -617,7 +677,12 @@ class HybridRagIndex:
             else:
                 b_term = 1.0 / (self._rrf_k + bm25_pos[idx]) if bm25[idx] > 0.0 else 0.0
                 d_term = 1.0 / (self._rrf_k + dense_pos[idx]) if dense[idx] > 0.0 else 0.0
-                rrf_scores[idx] = b_term + d_term
+                g_term = (
+                    (1.0 / (self._rrf_k + graph_pos[idx]))
+                    if (has_graph_signal and graph_scores[idx] > 0.0)
+                    else 0.0
+                )
+                rrf_scores[idx] = b_term + d_term + g_term
 
         ordered = sorted(
             indices,
@@ -634,9 +699,10 @@ class HybridRagIndex:
             if rrf_scores[idx] <= 0.0:
                 continue
             n_m, _tok_c, idf_c, alpha_m = coverages[idx]
-            if bm25[idx] <= 0.0 or not alpha_m:
+            is_graph_hit = graph_augmented and graph_scores[idx] > 0.0
+            if (bm25[idx] <= 0.0 or not alpha_m) and not is_graph_hit:
                 continue
-            if n_docs >= 3 and n_m < 2 and idf_c < _MIN_TAIL_HIT_IDF_COV:
+            if n_docs >= 3 and n_m < 2 and idf_c < _MIN_TAIL_HIT_IDF_COV and not is_graph_hit:
                 continue
             non_empty.append(idx)
             if len(non_empty) >= candidate_budget:
@@ -673,6 +739,11 @@ class HybridRagIndex:
                 if nid not in linked_all:
                     linked_all.append(nid)
             r_score = round(rerank_scores[idx], 4) if rerank_applied else None
+            g_score = (
+                round(graph_scores[idx], 4)
+                if (graph_augmented and graph_scores[idx] > 0.0)
+                else None
+            )
             hits.append(
                 HybridSearchHit(
                     rank=rank,
@@ -689,22 +760,32 @@ class HybridRagIndex:
                     semantic_score=round(dense[idx], 4),
                     rrf_score=round(rrf_scores[idx], 6),
                     rerank_score=r_score,
+                    graph_score=g_score,
                     linked_node_ids=linked,
                 )
             )
 
+        all_connected = set(linked_all)
+        if graph_augmented and query_nodes:
+            all_connected.update(query_nodes)
         related_edges = (
-            self._kg.edges_for_nodes(linked_all, allowed_asset_ids=allowed_asset_ids)[:12]
-            if linked_all
+            self._kg.edges_for_nodes(list(all_connected), allowed_asset_ids=allowed_asset_ids)[:12]
+            if all_connected
             else []
         )
         safety_note = (
             "Retrieved knowledge preserves source license/origin tags, neural cross-encoder "
-            "reranking, and causal-vs-correlation KG semantics. Advisory reference only."
-            if rerank_applied
+            "reranking, graph-augmented retrieval, and causal-vs-correlation KG semantics. "
+            "Advisory reference only."
+            if rerank_applied and has_graph_signal
             else (
-                "Retrieved knowledge preserves source license/origin tags and "
-                "causal-vs-correlation KG semantics. Advisory reference only."
+                "Retrieved knowledge preserves source license/origin tags, neural cross-encoder "
+                "reranking, and causal-vs-correlation KG semantics. Advisory reference only."
+                if rerank_applied
+                else (
+                    "Retrieved knowledge preserves source license/origin tags and "
+                    "causal-vs-correlation KG semantics. Advisory reference only."
+                )
             )
         )
         return HybridSearchResponse(
@@ -713,6 +794,7 @@ class HybridRagIndex:
             accessible_chunks=len(scoped),
             items=hits,
             related_kg_edges=related_edges,
+            query_kg_node_ids=query_nodes if graph_augmented else [],
             safety_note=safety_note,
             reranked=rerank_applied,
         )

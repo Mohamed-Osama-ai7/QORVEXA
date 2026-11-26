@@ -1,3 +1,4 @@
+# ruff: noqa: RUF001, RUF003, E501
 """Typed industrial Knowledge Graph with explicit causal vs correlational edge semantics."""
 
 from __future__ import annotations
@@ -514,16 +515,97 @@ class IndustrialKnowledgeGraph:
             epistemic_legend=EPISTEMIC_LEGEND,
         )
 
+    def expand_seeds(
+        self,
+        seed_node_ids: Sequence[str],
+        *,
+        allowed_asset_ids: set[str],
+        max_depth: int = 1,
+        include_correlations: bool = False,
+    ) -> dict[str, float]:
+        """Expand seed nodes along authorized graph edges, returning {node_id: relevance_weight}.
+
+        Epistemic relationship handling:
+        - Seed nodes receive initial weight 1.0.
+        - physical_mechanism: factor 0.9 (direct physical containment or connection).
+        - causal_hypothesis: factor 0.7 (candidate causal attribution with explicit uncertainty).
+        - structural_membership: factor 0.5 (taxonomic and operating scope groupings).
+        - correlational_indicator: factor 0.0 (excluded by default; correlation != causation).
+
+        Security invariant:
+        - Traversal visits only nodes and edges whose source and target asset_ids are authorized.
+        """
+        bounded_depth = min(max(max_depth, 1), 3)
+        accessible_nodes = {
+            nid: node for nid, node in self._nodes.items() if node.asset_id in allowed_asset_ids
+        }
+
+        valid_seeds = [sid for sid in seed_node_ids if sid in accessible_nodes]
+        if not valid_seeds:
+            return {}
+
+        weights: dict[str, float] = {sid: 1.0 for sid in valid_seeds}
+        visited_depth: dict[str, int] = {sid: 0 for sid in valid_seeds}
+        queue: deque[tuple[str, int, float]] = deque([(sid, 0, 1.0) for sid in valid_seeds])
+
+        epistemic_decay: dict[EpistemicType, float] = {
+            "physical_mechanism": 0.9,
+            "causal_hypothesis": 0.7,
+            "structural_membership": 0.5,
+            "correlational_indicator": 0.1 if include_correlations else 0.0,
+        }
+
+        while queue:
+            cur_id, cur_depth, cur_weight = queue.popleft()
+            if cur_depth >= bounded_depth:
+                continue
+
+            for edge in self._edges:
+                if edge.source_id != cur_id and edge.target_id != cur_id:
+                    continue
+
+                factor = epistemic_decay.get(edge.epistemic_type, 0.0)
+                if factor <= 0.0:
+                    continue
+
+                other_id = edge.target_id if edge.source_id == cur_id else edge.source_id
+                if other_id not in accessible_nodes:
+                    continue
+
+                next_weight = round(cur_weight * factor, 4)
+                if other_id not in weights or next_weight > weights[other_id]:
+                    weights[other_id] = next_weight
+
+                if other_id not in visited_depth or cur_depth + 1 < visited_depth[other_id]:
+                    visited_depth[other_id] = cur_depth + 1
+                    queue.append((other_id, cur_depth + 1, next_weight))
+
+        return weights
+
+
+_ARABIC_DIACRITICS_RE: re.Pattern[str] = re.compile(r"[\u064B-\u065F\u0670]")
+_ARABIC_CHAR_TRANS: dict[int, str] = str.maketrans(
+    {"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ى": "ي", "ة": "ه"}
+)
+
+
+def _normalize_text(text: str) -> str:
+    cleaned = _ARABIC_DIACRITICS_RE.sub("", text).replace("\u0640", "")
+    return cleaned.translate(_ARABIC_CHAR_TRANS).lower()
+
 
 _LINK_RULES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
-    (re.compile(rf"(?<![a-z0-9_]){re.escape(needle)}(?![a-z0-9_])"), node_id)
+    (re.compile(rf"(?<![a-z0-9_\u0621-\u064A]){re.escape(needle)}(?![a-z0-9_\u0621-\u064A])"), node_id)
     for needle, node_id in (
+        # English / Latin terms
         ("tp3", "sensor:TP3"),
         ("tp2", "sensor:TP2"),
         ("reservoirs", "sensor:Reservoirs"),
         ("reservoir", "sensor:Reservoirs"),
         ("motor_current", "sensor:Motor_current"),
+        ("motor current", "sensor:Motor_current"),
         ("oil_temperature", "sensor:Oil_temperature"),
+        ("oil temperature", "sensor:Oil_temperature"),
         ("h1", "sensor:H1"),
         ("dv_pressure", "sensor:DV_pressure"),
         ("lps", "sensor:LPS"),
@@ -532,16 +614,74 @@ _LINK_RULES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
         ("air leak", "mode:air_leakage"),
         ("air leakage", "mode:air_leakage"),
         ("air_leakage", "mode:air_leakage"),
+        ("pneumatic air leak", "mode:air_leakage"),
+        ("pneumatic air leakage", "mode:air_leakage"),
         ("abnormal_high_demand", "mode:abnormal_high_demand"),
         ("high demand", "mode:abnormal_high_demand"),
         ("sensor_malfunction", "mode:sensor_malfunction"),
+        ("sensor freeze", "mode:sensor_malfunction"),
         ("telemetry_inconsistency", "mode:telemetry_inconsistency"),
         ("pca_spe", "event:non_leak_warning"),
         ("duty_rule", "event:air_leak_alarm"),
         ("unloaded", "regime:unloaded"),
         ("loaded", "regime:loaded"),
+        ("compressor stage", "comp:compressor-stage"),
+        ("screw compressor", "comp:compressor-stage"),
+        ("air dryer", "comp:air-dryer-towers"),
+        ("oil circuit", "comp:oil-circuit"),
+        ("pneumatic panel", "comp:pneumatic-reservoirs"),
         ("ai4i", "asset:ai4i-milling-bench"),
         ("ai4i2020", "asset:ai4i-milling-bench"),
+        # Arabic technical terms (normalized: ا, ي, ه, without diacritics)
+        ("تسريب هواء", "mode:air_leakage"),
+        ("تسريب الهواء", "mode:air_leakage"),
+        ("تسريب هوائي", "mode:air_leakage"),
+        ("تسريب الضاغط", "mode:air_leakage"),
+        ("تهريب هواء", "mode:air_leakage"),
+        ("تهريب الهواء", "mode:air_leakage"),
+        ("ضغط اللوحه", "sensor:TP3"),
+        ("ضغط لوحه", "sensor:TP3"),
+        ("ضغط الضاغط", "sensor:TP2"),
+        ("خزان الهواء", "sensor:Reservoirs"),
+        ("خزانات الهواء", "sensor:Reservoirs"),
+        ("خزان رئيسي", "sensor:Reservoirs"),
+        ("خزانات", "sensor:Reservoirs"),
+        ("تيار المحرك", "sensor:Motor_current"),
+        ("سحب التيار", "sensor:Motor_current"),
+        ("حراره الزيت", "sensor:Oil_temperature"),
+        ("درجه حراره الزيت", "sensor:Oil_temperature"),
+        ("حراره زيت", "sensor:Oil_temperature"),
+        ("مفتاح ضغط منخفض", "sensor:LPS"),
+        ("ضغط منخفض", "sensor:LPS"),
+        ("صمام تفريغ", "sensor:COMP_DV_eletric"),
+        ("صمام كهربي", "sensor:COMP_DV_eletric"),
+        ("صمام كهربائي", "sensor:COMP_DV_eletric"),
+        ("صمام الهواء", "sensor:COMP_DV_eletric"),
+        ("صمامات الهواء", "sensor:COMP_DV_eletric"),
+        ("فلتر هيدروليكي", "sensor:H1"),
+        ("ضغط المجفف", "sensor:DV_pressure"),
+        ("ضاغط الهواء", "comp:compressor-stage"),
+        ("مرحله الضاغط", "comp:compressor-stage"),
+        ("الضاغط", "comp:compressor-stage"),
+        ("ضاغط", "comp:compressor-stage"),
+        ("مجفف الهواء", "comp:air-dryer-towers"),
+        ("دوره الزيت", "comp:oil-circuit"),
+        ("دائره الزيت", "comp:oil-circuit"),
+        ("شبكه الهواء", "comp:pneumatic-reservoirs"),
+        ("لوحه الهواء", "comp:pneumatic-reservoirs"),
+        ("انذار تسريب", "event:air_leak_alarm"),
+        ("انذار تسريب الهواء", "event:air_leak_alarm"),
+        ("تحميل", "regime:loaded"),
+        ("وضع التحميل", "regime:loaded"),
+        ("وضع التفريغ", "regime:unloaded"),
+        ("وضع تفريغ", "regime:unloaded"),
+        ("تشغيل بدون حمل", "regime:unloaded"),
+        ("بدون حمل", "regime:unloaded"),
+        ("عطل حساس", "mode:sensor_malfunction"),
+        ("تجمد حساس", "mode:sensor_malfunction"),
+        ("تعارض الاشارات", "mode:telemetry_inconsistency"),
+        ("تناقض الاشارات", "mode:telemetry_inconsistency"),
+        ("طاحونه", "asset:ai4i-milling-bench"),
     )
 )
 
@@ -552,8 +692,8 @@ def infer_linked_kg_nodes(
     allowed_asset_ids: set[str] | None = None,
     kg: IndustrialKnowledgeGraph | None = None,
 ) -> list[str]:
-    """Deterministically link corpus chunks to authorized Knowledge Graph entities."""
-    lower = text.lower()
+    """Deterministically link corpus chunks and queries to authorized Knowledge Graph entities."""
+    norm_text = _normalize_text(text)
     hits: list[str] = []
     for pattern, node_id in _LINK_RULES:
         if node_id in hits:
@@ -562,6 +702,6 @@ def infer_linked_kg_nodes(
             node = kg.node(node_id)
             if node is None or node.asset_id not in allowed_asset_ids:
                 continue
-        if pattern.search(lower):
+        if pattern.search(norm_text):
             hits.append(node_id)
     return hits

@@ -85,6 +85,7 @@ class HybridSearchHit(BaseModel):
     semantic_score: float
     rrf_score: float
     rerank_score: float | None = None
+    graph_score: float | None = None
     linked_node_ids: list[str] = Field(default_factory=list)
 
 
@@ -98,6 +99,7 @@ class HybridSearchResponse(BaseModel):
     accessible_chunks: int = Field(ge=0)
     items: list[HybridSearchHit]
     related_kg_edges: list[KgEdge] = Field(default_factory=list)
+    query_kg_node_ids: list[str] = Field(default_factory=list)
     safety_note: str
     reranked: bool = False
 
