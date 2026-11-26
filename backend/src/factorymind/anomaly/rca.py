@@ -13,6 +13,8 @@ import re
 from dataclasses import dataclass
 from typing import Final
 
+from factorymind.causal.metropt3 import METROPT3_AIR_LEAKAGE_GRAPH
+from factorymind.causal.scm import METROPT3_FEATURE_SCM
 from factorymind.contracts.events import (
     DerivedFeatureSummary,
     EventEvidencePackage,
@@ -25,6 +27,7 @@ from factorymind.contracts.rca import (
     RankedHypothesis,
     RcaAssessment,
     RcaConfidenceBand,
+    RcaHypothesisCategory,
     RelativeSupport,
     VerificationStep,
 )
@@ -36,6 +39,27 @@ _LEAK_DECAY_SLOPE_MAX: Final = -0.05  # bar/min when unloaded
 _LOW_PRESSURE_BAR: Final = 8.0
 _WARM_OIL_DELTA_C: Final = 4.0
 _MIN_DIAGNOSTIC_SUPPORT: Final = 0.25
+_CAUSAL_EDGE_PAIRS: Final[dict[RcaHypothesisCategory, frozenset[tuple[str, str]]]] = {
+    "air_leakage": frozenset(
+        {
+            ("metropt3.air_leakage", "metropt3.load_duty"),
+            ("metropt3.air_leakage", "metropt3.unloaded_tp3_slope"),
+        }
+    ),
+    "abnormal_high_demand": frozenset({("metropt3.downstream_air_demand", "metropt3.load_duty")}),
+    "concurrent_conditions": frozenset(
+        {
+            ("metropt3.air_leakage", "metropt3.load_duty"),
+            ("metropt3.air_leakage", "metropt3.unloaded_tp3_slope"),
+            ("metropt3.downstream_air_demand", "metropt3.load_duty"),
+        }
+    ),
+}
+_SCM_TARGETS_BY_CATEGORY: Final[dict[RcaHypothesisCategory, frozenset[str]]] = {
+    "air_leakage": frozenset({"metropt3.load_duty", "metropt3.unloaded_tp3_slope"}),
+    "abnormal_high_demand": frozenset({"metropt3.load_duty", "metropt3.unloaded_tp3_slope"}),
+    "concurrent_conditions": frozenset({"metropt3.load_duty", "metropt3.unloaded_tp3_slope"}),
+}
 
 _CONTINUOUS_CORE_SENSORS: Final[frozenset[str]] = frozenset(
     {"TP3", "TP2", "Reservoirs", "Motor_current", "Oil_temperature"}
@@ -352,6 +376,44 @@ def _common_missing_refs(
             )
         )
     return refs
+
+
+def _causal_context(
+    pkg: EventEvidencePackage,
+) -> tuple[
+    str | None,
+    str | None,
+    dict[RcaHypothesisCategory, list[str]],
+    dict[RcaHypothesisCategory, list[str]],
+]:
+    """Link MetroPT-3 candidates to existing graph hypotheses and feature equations."""
+    edge_refs: dict[RcaHypothesisCategory, list[str]] = {}
+    equation_refs: dict[RcaHypothesisCategory, list[str]] = {}
+    if (
+        pkg.provenance.dataset_id != METROPT3_AIR_LEAKAGE_GRAPH.dataset_id
+        or pkg.asset_id != METROPT3_AIR_LEAKAGE_GRAPH.asset_id
+    ):
+        return None, None, edge_refs, equation_refs
+
+    METROPT3_FEATURE_SCM.validate_against(METROPT3_AIR_LEAKAGE_GRAPH)
+    for category, pairs in _CAUSAL_EDGE_PAIRS.items():
+        edge_refs[category] = sorted(
+            edge.edge_id
+            for edge in METROPT3_AIR_LEAKAGE_GRAPH.edges
+            if (edge.source_id, edge.target_id) in pairs
+        )
+    for category, targets in _SCM_TARGETS_BY_CATEGORY.items():
+        equation_refs[category] = sorted(
+            equation.equation_id
+            for equation in METROPT3_FEATURE_SCM.equations
+            if equation.target_id in targets
+        )
+    return (
+        METROPT3_AIR_LEAKAGE_GRAPH.graph_id,
+        METROPT3_FEATURE_SCM.scm_id,
+        edge_refs,
+        equation_refs,
+    )
 
 
 def _duty_elevated(ex: _ExtractedSignals) -> bool:
@@ -1361,6 +1423,7 @@ def analyze_event_evidence(pkg: EventEvidencePackage) -> RcaAssessment:
             pool.append(insuff_hyp)
         ordered = sorted(pool, key=lambda h: (-h.support_score, h.hypothesis_id))
 
+    graph_id, scm_id, edge_refs, equation_refs = _causal_context(pkg)
     ranked: list[RankedHypothesis] = []
     top_score = ordered[0].support_score
     for idx, hyp in enumerate(ordered, start=1):
@@ -1386,6 +1449,9 @@ def analyze_event_evidence(pkg: EventEvidencePackage) -> RcaAssessment:
                     "rank": idx,
                     "relative_support": rel,
                     "confidence_band": band,
+                    "causal_conclusion_status": "not_established",
+                    "causal_graph_edge_ids": edge_refs.get(hyp.category, []),
+                    "scm_equation_ids": equation_refs.get(hyp.category, []),
                 }
             )
         )
@@ -1400,7 +1466,7 @@ def analyze_event_evidence(pkg: EventEvidencePackage) -> RcaAssessment:
         alts = [h.category for h in ranked[1:] if h.relative_support == "plausible_alternative"]
         alt_txt = f" Plausible competing explanations preserved: {', '.join(alts)}." if alts else ""
         summary = (
-            f"Top ranked hypothesis: {primary.title} "
+            f"Top ranked candidate (not a confirmed root cause): {primary.title} "
             f"(support_score={primary.support_score:.2f}, confidence={primary.confidence_band})."
             + alt_txt
         )
@@ -1436,6 +1502,32 @@ def analyze_event_evidence(pkg: EventEvidencePackage) -> RcaAssessment:
         quality_status=pkg.quality.overall_status,
         confidence_penalty_factor=pkg.quality.confidence_penalty_factor,
         ranked_hypotheses=ranked,
+        root_cause_confirmed=False,
+        causal_graph_id=graph_id,
+        scm_id=scm_id,
+        ranking_method_note=(
+            "Candidates are ranked by fixed category-specific evidence rules and support scores, "
+            "with data-quality and contradiction penalties where defined; scores are consistency "
+            "indices, not probabilities. 'Primary' means top-ranked candidate only."
+        ),
+        temporal_ordering_note=(
+            "Evidence is organized as pre-event baseline, event onset/evolution/peak, and recovery "
+            "or persistence. Temporal sequence is descriptive and does not by itself establish "
+            "cause; MetroPT-3 operator-report timing remains uncertain."
+        ),
+        causal_context_note=(
+            (
+                f"Candidates link to graph {graph_id} and feature SCM {scm_id}. "
+                "Graph edges remain documented hypotheses; SCM equation references identify "
+                "deterministic feature definitions only. No causal root cause is established."
+            )
+            if graph_id is not None and scm_id is not None
+            else (
+                "No approved causal graph or SCM matches this package's dataset and asset. "
+                "Candidates remain heuristic evidence assessments; no causal root cause is "
+                "established."
+            )
+        ),
         correlation_vs_causation_boundary=[
             "Detector scores and robust z-scores reflect distributional departure, not causal "
             "proof.",
@@ -1443,6 +1535,8 @@ def analyze_event_evidence(pkg: EventEvidencePackage) -> RcaAssessment:
             "tags.",
             "Conflicting valve signals or frozen sensors weaken air-leak attribution until "
             "field-verified.",
+            "Every ranked hypothesis remains a candidate; this assessment does not establish a "
+            "confirmed causal root cause.",
         ],
         provenance=pkg.provenance,
     )

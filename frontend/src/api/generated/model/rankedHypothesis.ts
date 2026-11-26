@@ -16,6 +16,8 @@ import type { VerificationStep } from './verificationStep';
  */
 export interface RankedHypothesis {
   category: RankedHypothesisCategory;
+  causal_conclusion_status?: 'not_established';
+  causal_graph_edge_ids?: string[];
   confidence_band: RankedHypothesisConfidenceBand;
   contradicting_evidence?: EvidenceReference[];
   correlation_vs_causation_note: string;
@@ -25,6 +27,7 @@ export interface RankedHypothesis {
   /** @minimum 1 */
   rank: number;
   relative_support: RankedHypothesisRelativeSupport;
+  scm_equation_ids?: string[];
   /**
      * @minimum 0
      * @maximum 1

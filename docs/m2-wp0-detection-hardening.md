@@ -74,6 +74,53 @@ Reproduce with `uv run python -m factorymind.anomaly.cli train` (about 35 s afte
    included in `model_card.json`, `/api/v1/anomaly/model`, and the `ModelCard` UI with an explicit
    calibration limitation notice.
 
+## Standalone PCA-SPE baseline
+
+`factorymind.anomaly.baseline.train_and_evaluate_pca_spe_baseline` provides a small reproducible
+baseline using the existing `window_features`, `PcaSpe`, `ExceedanceCalibrator`, `AlarmPolicy`,
+and `evaluate` utilities. Callers supply three strictly chronological MetroPT-3 telemetry
+partitions (train, calibration, evaluation); their windows must not overlap. The detector is fitted
+without labels on valid, non-stopped, non-extreme-duty (`load_duty <= 0.9`) training windows.
+The threshold is the calibrated alpha-quantile from the same reference-normal criteria in the
+later calibration period. Reported failure intervals are rejected if they overlap training or
+calibration and used only for weak-label evaluation.
+
+The report includes reference score quantiles and summaries across load-duty bands to expose
+normal operating variation; false alarm episodes/day, window classification metrics, event
+detection, and delay come from the established evaluator. Detection delay is meaningful only
+against the four coarse operator-reported leak intervals; it is not a measured physical onset.
+Any window containing a missing raw sensor sample is retained in the score output but left
+unscored, so it cannot silently become a normal window; such windows are excluded from scored-time
+metrics and break alarm continuity. PCA SPE is a multivariate reconstruction-error anomaly score,
+not a failure probability or root-cause result. Existing dataset limitations remain: one
+compressor, weak labels, unknown report timezone, non-stationary normal conditions, and no
+guarantee that alarms outside reported intervals are false positives.
+
+On the official MetroPT-3 archive (SHA-256
+`aab991a970e58210de853bb8078ce0e63abb4d9412fdc5c79792dae3d8e1721a`), using the configured
+chronological periods (train Feb 1–Mar 17, calibration Mar 17–Apr 1, evaluation Apr 1–Sep 2),
+the reproducible default baseline (`PCA variance=0.95`, `alpha=0.01`, persistence 3, seed 42)
+produced:
+
+| Evaluation | Result |
+|---|---:|
+| Train / calibration normal-reference windows | 3,331 / 1,200 |
+| Evaluation / scored windows | 18,099 / 17,744 |
+| Evaluation missing-sensor windows | 0 |
+| Raw SPE threshold | 20.7902 |
+| Window average precision / precision / recall / F1 | 0.5224 / 0.3590 / 0.9919 / 0.5272 |
+| Confusion against padded operator-report windows (TP / FP / FN / TN) | 489 / 873 / 4 / 16,378 |
+| Event reports detected | 4 / 4 |
+| Delay from reported start (F1 / F2 / F3 / F4) | +60 / +10 / +20 / −70 min |
+| False-alarm episodes / all-valid-day rate / operating-day rate | 16 / 0.130 / 0.165 per day |
+
+These are a single chronological holdout result, not a population-level performance claim. The
+reported intervals are weak/coarse labels, so window false positives and alarm episodes may
+include real unreported abnormalities. Calibration exceedance also varies by load-duty band
+(0.23–0.34% at 0.0–0.3 duty, 4.55–6.98% at 0.3–0.9), illustrating operating-condition drift.
+No missing sensor windows occurred in this archive run; the focused tests verify that injected
+missing-sensor windows are withheld from scoring instead of being called normal.
+
 ## Known limitations
 
 - Four coarse reports on one compressor and one failure mode; LOEO supports per-event reporting, not statistical generalization.

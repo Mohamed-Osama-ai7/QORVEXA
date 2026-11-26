@@ -30,6 +30,7 @@ RcaHypothesisCategory = Literal[
 ]
 RelativeSupport = Literal["primary", "plausible_alternative", "weak", "ruled_out"]
 RcaConfidenceBand = Literal["high", "moderate", "low", "abstained"]
+CausalConclusionStatus = Literal["not_established"]
 
 
 class EvidenceReference(BaseModel):
@@ -74,6 +75,9 @@ class RankedHypothesis(BaseModel):
     missing_evidence: list[EvidenceReference] = Field(default_factory=list)
     correlation_vs_causation_note: str
     verification_steps: list[VerificationStep] = Field(default_factory=list)
+    causal_conclusion_status: CausalConclusionStatus = "not_established"
+    causal_graph_edge_ids: list[str] = Field(default_factory=list)
+    scm_equation_ids: list[str] = Field(default_factory=list)
 
 
 class RcaAssessment(BaseModel):
@@ -100,6 +104,22 @@ class RcaAssessment(BaseModel):
     ranked_hypotheses: list[RankedHypothesis]
     correlation_vs_causation_boundary: list[str]
     provenance: ProvenanceRecord
+    root_cause_confirmed: Literal[False] = False
+    causal_graph_id: str | None = None
+    scm_id: str | None = None
+    ranking_method_note: str = (
+        "Candidates are ranked by fixed category-specific evidence rules and support scores, "
+        "with data-quality and contradiction penalties where defined; scores are consistency "
+        "indices, not probabilities. 'Primary' means top-ranked candidate only."
+    )
+    temporal_ordering_note: str = (
+        "Evidence is organized as pre-event baseline, event onset/evolution/peak, and recovery "
+        "or persistence. Temporal sequence is descriptive and does not by itself establish cause."
+    )
+    causal_context_note: str = (
+        "Causal graph edges are hypotheses; SCM equation references identify deterministic "
+        "feature definitions only. No causal root cause is established."
+    )
     advisory: str = (
         "Advisory root-cause hypotheses for human engineering review. Grounded strictly in the "
         "associated EventEvidencePackage; FactoryMind never actuates or controls equipment."

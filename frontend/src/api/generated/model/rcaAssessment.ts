@@ -18,6 +18,8 @@ export interface RcaAssessment {
   abstention_reason?: string | null;
   advisory?: string;
   asset_id: string;
+  causal_context_note?: string;
+  causal_graph_id?: string | null;
   /**
      * @minimum 0
      * @maximum 1
@@ -33,8 +35,12 @@ export interface RcaAssessment {
   provenance: ProvenanceRecord;
   quality_status: RcaAssessmentQualityStatus;
   ranked_hypotheses: RankedHypothesis[];
+  ranking_method_note?: string;
   rca_id: string;
+  root_cause_confirmed?: false;
+  scm_id?: string | null;
   score_meaning_note?: string;
   summary: string;
+  temporal_ordering_note?: string;
   uncertainty_note: string;
 }

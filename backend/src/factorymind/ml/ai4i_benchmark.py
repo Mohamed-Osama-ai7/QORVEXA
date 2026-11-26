@@ -29,12 +29,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from factorymind.contracts.ml_engine import (
+    ModelCalibrationMetrics,
     ModelComparisonRow,
     ModelPromotionContract,
     ModelPromotionGate,
     MultiModelBenchmarkReport,
 )
 from factorymind.data import ai4i2020
+from factorymind.data.metropt3 import DataValidationError
 from factorymind.ml.uncertainty import MahalanobisOodDetector, compute_calibration_metrics
 
 
@@ -94,6 +96,47 @@ class Ai4iModelBundle:
     mode_heads: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class Ai4iBaselineReport:
+    """Time-ordered evaluation summary for the single-model AI4I baseline."""
+
+    model_id: str
+    dataset_id: str
+    archive_sha256: str | None
+    random_state: int
+    target_column: str
+    validation_strategy: str
+    feature_columns: tuple[str, ...]
+    excluded_columns: tuple[str, ...]
+    split_counts: dict[str, int]
+    split_positive_counts: dict[str, int]
+    split_udi_ranges: dict[str, tuple[int, int]]
+    calibration_metrics: ModelCalibrationMetrics
+    test_metrics: ModelCalibrationMetrics
+
+
+@dataclass(frozen=True)
+class Ai4iBaselineModel:
+    """Fitted logistic-regression baseline and its training-only preprocessing."""
+
+    preprocessor: ColumnTransformer
+    candidate: CalibratedCandidate
+    feature_columns: tuple[str, ...]
+
+    def predict_proba(self, frame: pd.DataFrame) -> np.ndarray:
+        missing = [column for column in self.feature_columns if column not in frame.columns]
+        if missing:
+            raise DataValidationError(f"Missing baseline feature columns: {missing}")
+        transformed = np.asarray(
+            self.preprocessor.transform(frame.loc[:, list(self.feature_columns)]),
+            dtype="float64",
+        )
+        return self.candidate.predict_proba(transformed)
+
+    def predict(self, frame: pd.DataFrame) -> np.ndarray:
+        return (self.predict_proba(frame) >= self.candidate.threshold).astype("int64")
+
+
 def _pick_threshold(y_cal: np.ndarray, p_cal: np.ndarray) -> float:
     best_thr, best_f1 = 0.5, -1.0
     for thr in np.linspace(0.15, 0.85, 29):
@@ -103,6 +146,139 @@ def _pick_threshold(y_cal: np.ndarray, p_cal: np.ndarray) -> float:
             best_f1 = score
             best_thr = float(thr)
     return round(best_thr, 4)
+
+
+def _build_ai4i_preprocessor() -> ColumnTransformer:
+    return ColumnTransformer(
+        transformers=[
+            ("num", StandardScaler(), list(ai4i2020.NUMERIC_FEATURES)),
+            (
+                "cat",
+                OneHotEncoder(
+                    categories=[list(ai4i2020.PRODUCT_TYPES)],
+                    handle_unknown="ignore",
+                    sparse_output=False,
+                ),
+                ["Type"],
+            ),
+        ],
+        remainder="drop",
+    )
+
+
+def train_and_evaluate_ai4i_baseline(
+    frame: pd.DataFrame,
+    *,
+    random_state: int = 42,
+    archive_sha256: str | None = None,
+) -> tuple[Ai4iBaselineModel, Ai4iBaselineReport]:
+    """Train a logistic baseline with contiguous UDI-ordered train/cal/test partitions.
+
+    UCI describes AI4I as time-series data, but its CSV has no timestamp or machine identifier.
+    UDI is used only as the source row-order proxy for splitting and is never a model feature.
+    """
+    normalized = ai4i2020.normalize(frame)
+    quality = ai4i2020.assess_quality(normalized)
+    ai4i2020.validate_contract(quality, expected_rows=None)
+    if quality.out_of_range:
+        raise DataValidationError(f"Out-of-range AI4I feature values: {quality.out_of_range}")
+
+    udi = pd.to_numeric(normalized["UDI"], errors="coerce").to_numpy(dtype="float64")
+    if (
+        not np.isfinite(udi).all()
+        or np.any(udi != np.floor(udi))
+        or len(np.unique(udi)) != len(udi)
+    ):
+        raise DataValidationError("UDI must contain unique finite integer row-order identifiers")
+
+    ordered = normalized.assign(UDI=udi.astype("int64")).sort_values("UDI", kind="stable")
+    n_rows = len(ordered)
+    train_end = int(n_rows * 0.60)
+    calibration_end = int(n_rows * 0.80)
+    if train_end == 0 or calibration_end <= train_end or calibration_end == n_rows:
+        raise DataValidationError("AI4I data is too small for 60/20/20 ordered splits")
+
+    partitions = {
+        "train": ordered.iloc[:train_end],
+        "calibration": ordered.iloc[train_end:calibration_end],
+        "test": ordered.iloc[calibration_end:],
+    }
+    labels = {
+        name: partition[ai4i2020.TARGET_COLUMN].to_numpy(dtype="int64")
+        for name, partition in partitions.items()
+    }
+    for name, values in labels.items():
+        if len(np.unique(values)) != 2:
+            raise DataValidationError(f"The {name} split must contain both machine-failure classes")
+
+    x_train = partitions["train"].loc[:, list(ai4i2020.FEATURE_COLUMNS)]
+    x_cal = partitions["calibration"].loc[:, list(ai4i2020.FEATURE_COLUMNS)]
+    x_test = partitions["test"].loc[:, list(ai4i2020.FEATURE_COLUMNS)]
+    y_train = labels["train"]
+    y_cal = labels["calibration"]
+    y_test = labels["test"]
+
+    preprocessor = _build_ai4i_preprocessor()
+    x_train_encoded = np.asarray(preprocessor.fit_transform(x_train), dtype="float64")
+    x_cal_encoded = np.asarray(preprocessor.transform(x_cal), dtype="float64")
+    x_test_encoded = np.asarray(preprocessor.transform(x_test), dtype="float64")
+
+    estimator = LogisticRegression(max_iter=1000, random_state=random_state)
+    estimator.fit(x_train_encoded, y_train)
+    raw_cal_probs = np.asarray(estimator.predict_proba(x_cal_encoded)[:, 1], dtype="float64")
+    raw_cal_metrics = compute_calibration_metrics(y_cal, raw_cal_probs, threshold=0.5)
+    platt = PlattCalibrator.fit(raw_cal_probs, y_cal)
+    platt_cal_probs = platt.transform(raw_cal_probs)
+    use_platt = (
+        compute_calibration_metrics(y_cal, platt_cal_probs, threshold=0.5).brier_score
+        < raw_cal_metrics.brier_score
+    )
+    calibrator = platt if use_platt else None
+    cal_probs = platt_cal_probs if use_platt else raw_cal_probs
+    threshold = _pick_threshold(y_cal, cal_probs)
+    candidate = CalibratedCandidate(
+        model_id="ai4i-logreg-chronological",
+        model_family="LogisticRegression",
+        estimator=estimator,
+        calibrator=calibrator,
+        threshold=threshold,
+    )
+    cal_metrics = compute_calibration_metrics(y_cal, cal_probs, threshold=threshold)
+    test_probs = candidate.predict_proba(x_test_encoded)
+    test_metrics = compute_calibration_metrics(y_test, test_probs, threshold=threshold)
+
+    report = Ai4iBaselineReport(
+        model_id=candidate.model_id,
+        dataset_id=ai4i2020.DATASET_ID,
+        archive_sha256=archive_sha256,
+        random_state=random_state,
+        target_column=ai4i2020.TARGET_COLUMN,
+        validation_strategy=(
+            "Contiguous 60/20/20 train/calibration/test splits ordered by UDI; "
+            "UDI is a row-order proxy only, not a feature. No timestamp or machine ID is supplied."
+        ),
+        feature_columns=ai4i2020.FEATURE_COLUMNS,
+        excluded_columns=ai4i2020.EXCLUDED_COLUMNS,
+        split_counts={name: len(partition) for name, partition in partitions.items()},
+        split_positive_counts={name: int(values.sum()) for name, values in labels.items()},
+        split_udi_ranges={
+            name: (
+                int(partition["UDI"].iloc[0]),
+                int(partition["UDI"].iloc[-1]),
+            )
+            for name, partition in partitions.items()
+        },
+        calibration_metrics=cal_metrics,
+        test_metrics=test_metrics,
+    )
+    return (
+        Ai4iBaselineModel(
+            preprocessor=preprocessor,
+            candidate=candidate,
+            feature_columns=ai4i2020.FEATURE_COLUMNS,
+        ),
+        report,
+    )
 
 
 def train_and_evaluate_ai4i(
@@ -135,21 +311,7 @@ def train_and_evaluate_ai4i(
         random_state=random_state,
     )
 
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", StandardScaler(), list(ai4i2020.NUMERIC_FEATURES)),
-            (
-                "cat",
-                OneHotEncoder(
-                    categories=[list(ai4i2020.PRODUCT_TYPES)],
-                    handle_unknown="ignore",
-                    sparse_output=False,
-                ),
-                ["Type"],
-            ),
-        ],
-        remainder="drop",
-    )
+    preprocessor = _build_ai4i_preprocessor()
     x_tr_enc = np.asarray(preprocessor.fit_transform(x_train), dtype="float64")
     x_cal_enc = np.asarray(preprocessor.transform(x_cal), dtype="float64")
     x_te_enc = np.asarray(preprocessor.transform(x_test), dtype="float64")

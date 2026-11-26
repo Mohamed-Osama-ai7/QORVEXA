@@ -11,7 +11,11 @@ import pytest
 
 from factorymind.contracts.ml_engine import ABSTENTION_MESSAGE
 from factorymind.data import ai4i2020
-from factorymind.ml.ai4i_benchmark import save_ai4i_artifacts, train_and_evaluate_ai4i
+from factorymind.ml.ai4i_benchmark import (
+    save_ai4i_artifacts,
+    train_and_evaluate_ai4i,
+    train_and_evaluate_ai4i_baseline,
+)
 from factorymind.ml.orchestrator import (
     BenchmarkUnavailableError,
     MultiModelOrchestrator,
@@ -94,6 +98,51 @@ def test_mahalanobis_ood_and_ece_behave_monotonically() -> None:
 
     ece = expected_calibration_error(np.array([0, 0, 1, 1]), np.array([0.05, 0.1, 0.9, 0.95]))
     assert 0.0 <= ece <= 0.1
+
+
+def test_ai4i_baseline_uses_ordered_leakage_free_splits_reproducibly() -> None:
+    frame = _synthetic_ai4i_frame(900).sample(frac=1.0, random_state=17).reset_index(drop=True)
+    original = frame.copy(deep=True)
+
+    model, report = train_and_evaluate_ai4i_baseline(frame, random_state=42)
+    repeated_model, repeated_report = train_and_evaluate_ai4i_baseline(frame, random_state=42)
+
+    assert report.model_id == "ai4i-logreg-chronological"
+    assert report.archive_sha256 is None
+    assert report.random_state == 42
+    assert report.target_column == ai4i2020.TARGET_COLUMN
+    assert report.feature_columns == ai4i2020.FEATURE_COLUMNS
+    assert set(report.feature_columns).isdisjoint(report.excluded_columns)
+    assert "UDI" in report.excluded_columns
+    assert "Machine failure" in report.excluded_columns
+    assert "TWF" in report.excluded_columns
+    assert "RNF" in report.excluded_columns
+    assert report.split_counts == {"train": 540, "calibration": 180, "test": 180}
+    assert all(value > 0 for value in report.split_positive_counts.values())
+
+    train_range = report.split_udi_ranges["train"]
+    calibration_range = report.split_udi_ranges["calibration"]
+    test_range = report.split_udi_ranges["test"]
+    assert train_range[1] < calibration_range[0] < calibration_range[1] < test_range[0]
+    assert report.test_metrics == repeated_report.test_metrics
+    assert report.calibration_metrics == repeated_report.calibration_metrics
+    assert model.candidate.threshold == repeated_model.candidate.threshold
+    assert report.test_metrics.pr_auc >= 0.0
+    assert report.test_metrics.recall_at_threshold >= 0.0
+
+    held_out = frame.loc[frame["UDI"] >= test_range[0]]
+    probabilities = model.predict_proba(held_out)
+    assert len(probabilities) == report.split_counts["test"]
+    assert ((probabilities >= 0.0) & (probabilities <= 1.0)).all()
+    assert (model.predict(held_out) == (probabilities >= model.candidate.threshold)).all()
+    pd.testing.assert_frame_equal(frame, original)
+
+
+def test_ai4i_baseline_rejects_duplicate_row_order_identifiers() -> None:
+    frame = _synthetic_ai4i_frame(360)
+    frame.loc[1, "UDI"] = frame.loc[0, "UDI"]
+    with pytest.raises(ai4i2020.DataValidationError, match="unique finite integer"):
+        train_and_evaluate_ai4i_baseline(frame)
 
 
 def test_orchestrator_abstention_gates_and_bundle_integrity(tmp_path: Path) -> None:

@@ -4904,6 +4904,19 @@
             "title": "Category",
             "type": "string"
           },
+          "causal_conclusion_status": {
+            "const": "not_established",
+            "default": "not_established",
+            "title": "Causal Conclusion Status",
+            "type": "string"
+          },
+          "causal_graph_edge_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Causal Graph Edge Ids",
+            "type": "array"
+          },
           "confidence_band": {
             "enum": [
               "high",
@@ -4954,6 +4967,13 @@
             ],
             "title": "Relative Support",
             "type": "string"
+          },
+          "scm_equation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scm Equation Ids",
+            "type": "array"
           },
           "support_score": {
             "maximum": 1.0,
@@ -5020,6 +5040,22 @@
           "asset_id": {
             "title": "Asset Id",
             "type": "string"
+          },
+          "causal_context_note": {
+            "default": "Causal graph edges are hypotheses; SCM equation references identify deterministic feature definitions only. No causal root cause is established.",
+            "title": "Causal Context Note",
+            "type": "string"
+          },
+          "causal_graph_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Causal Graph Id"
           },
           "confidence_penalty_factor": {
             "maximum": 1.0,
@@ -5094,9 +5130,31 @@
             "title": "Ranked Hypotheses",
             "type": "array"
           },
+          "ranking_method_note": {
+            "default": "Candidates are ranked by fixed category-specific evidence rules and support scores, with data-quality and contradiction penalties where defined; scores are consistency indices, not probabilities. 'Primary' means top-ranked candidate only.",
+            "title": "Ranking Method Note",
+            "type": "string"
+          },
           "rca_id": {
             "title": "Rca Id",
             "type": "string"
+          },
+          "root_cause_confirmed": {
+            "const": false,
+            "default": false,
+            "title": "Root Cause Confirmed",
+            "type": "boolean"
+          },
+          "scm_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scm Id"
           },
           "score_meaning_note": {
             "default": "support_score is a deterministic physical-evidence consistency index (0..1), NOT a calibrated failure probability.",
@@ -5105,6 +5163,11 @@
           },
           "summary": {
             "title": "Summary",
+            "type": "string"
+          },
+          "temporal_ordering_note": {
+            "default": "Evidence is organized as pre-event baseline, event onset/evolution/peak, and recovery or persistence. Temporal sequence is descriptive and does not by itself establish cause.",
+            "title": "Temporal Ordering Note",
             "type": "string"
           },
           "uncertainty_note": {

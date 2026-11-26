@@ -1,6 +1,12 @@
 """Multi-model ML engine, Mahalanobis OOD detection, probability calibration, and abstention."""
 
-from factorymind.ml.ai4i_benchmark import run_ai4i_benchmark, train_and_evaluate_ai4i
+from factorymind.ml.ai4i_benchmark import (
+    Ai4iBaselineModel,
+    Ai4iBaselineReport,
+    run_ai4i_benchmark,
+    train_and_evaluate_ai4i,
+    train_and_evaluate_ai4i_baseline,
+)
 from factorymind.ml.orchestrator import (
     BenchmarkUnavailableError,
     MultiModelOrchestrator,
@@ -14,6 +20,8 @@ from factorymind.ml.uncertainty import (
 )
 
 __all__ = [
+    "Ai4iBaselineModel",
+    "Ai4iBaselineReport",
     "BenchmarkUnavailableError",
     "MahalanobisOodDetector",
     "MultiModelOrchestrator",
@@ -23,4 +31,5 @@ __all__ = [
     "load_verified_ai4i_bundle",
     "run_ai4i_benchmark",
     "train_and_evaluate_ai4i",
+    "train_and_evaluate_ai4i_baseline",
 ]

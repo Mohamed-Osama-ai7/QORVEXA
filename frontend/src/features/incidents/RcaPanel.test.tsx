@@ -16,9 +16,15 @@ const sampleRca: RcaAssessment = {
   primary_category: 'air_leakage',
   primary_title: 'Pneumatic air leakage downstream or at APU fittings',
   summary:
-    'Top ranked hypothesis: Pneumatic air leakage (support_score=0.67, confidence=moderate).',
+    'Top ranked candidate (not a confirmed root cause): Pneumatic air leakage (support_score=0.67, confidence=moderate).',
   uncertainty_note:
     'Ranked scores index consistency with available telemetry; they are not calibrated probabilities.',
+  root_cause_confirmed: false,
+  causal_graph_id: 'metropt3.air-leakage-hypotheses.v1',
+  scm_id: 'metropt3.deterministic-feature-scm.v1',
+  ranking_method_note: 'Fixed evidence-consistency rules; not probabilities.',
+  temporal_ordering_note: 'Baseline, event phases, then recovery.',
+  causal_context_note: 'Graph edges are hypotheses; SCM equations are feature definitions.',
   quality_status: 'sufficient',
   confidence_penalty_factor: 1.0,
   score_meaning_note:
@@ -56,6 +62,12 @@ const sampleRca: RcaAssessment = {
       ],
       correlation_vs_causation_note:
         'Duty exceedance correlates with leaks but does not prove cause.',
+      causal_conclusion_status: 'not_established',
+      causal_graph_edge_ids: [
+        'hyp.air-leakage-to-load-duty',
+        'hyp.air-leakage-to-unloaded-pressure-decay',
+      ],
+      scm_equation_ids: ['eq.metropt3.load-duty.v1', 'eq.metropt3.unloaded-tp3-slope.v1'],
       verification_steps: [
         {
           step_id: 'ver:leak_acoustic',
@@ -81,6 +93,9 @@ const sampleRca: RcaAssessment = {
       missing_evidence: [],
       correlation_vs_causation_note:
         'Heavy operational demand stays an alternative without flowmeter.',
+      causal_conclusion_status: 'not_established',
+      causal_graph_edge_ids: ['hyp.downstream-demand-to-load-duty'],
+      scm_equation_ids: ['eq.metropt3.load-duty.v1', 'eq.metropt3.unloaded-tp3-slope.v1'],
       verification_steps: [],
     },
   ],
@@ -103,7 +118,15 @@ const sampleRca: RcaAssessment = {
 describe('RcaPanel', () => {
   it('renders ranked hypotheses, origin badges, verification steps, and abstention alert', async () => {
     render(<RcaPanel rca={sampleRca} />)
-    expect(screen.getByText('Top rank: air_leakage')).toBeInTheDocument()
+    expect(
+      screen.getByText('Top candidate: air_leakage · root cause not confirmed'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getAllByText(
+        (_, element) =>
+          element?.tagName === 'P' && element.textContent?.includes('not_established') === true,
+      ).length,
+    ).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/support index: 0.67/)).toBeInTheDocument()
     expect(screen.getAllByText('Derived feature').length).toBeGreaterThanOrEqual(2)
     expect(screen.getByText(/Check flexible hoses/)).toBeInTheDocument()
