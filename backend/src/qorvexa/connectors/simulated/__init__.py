@@ -7,6 +7,7 @@ from qorvexa.connectors.simulated.factory import (
     SimulatedMachine,
     mqtt_topic,
 )
+from qorvexa.connectors.simulated.opcua_transport import SimulatedOpcUaTransport, opcua_node_id
 from qorvexa.connectors.simulated.transport import SimulatedMqttTransport
 
 __all__ = [
@@ -15,5 +16,7 @@ __all__ = [
     "SimulatedFactory",
     "SimulatedMachine",
     "SimulatedMqttTransport",
+    "SimulatedOpcUaTransport",
     "mqtt_topic",
+    "opcua_node_id",
 ]

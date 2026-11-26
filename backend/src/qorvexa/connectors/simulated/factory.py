@@ -105,6 +105,10 @@ class SimulatedFactory:
         ]
         self._tick = 0
 
+    @property
+    def machine_ids(self) -> tuple[str, ...]:
+        return tuple(m.spec.equipment_id for m in self._machines)
+
     # -- generation --------------------------------------------------------------------------
 
     def frames(self, ticks: int) -> Iterator[Frame]:
