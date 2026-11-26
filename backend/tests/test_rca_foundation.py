@@ -43,11 +43,41 @@ def test_rca_clean_leak_vs_concurrent_and_grounding(tmp_path: Path) -> None:
     assert res_clean.matches_expectation
     assert rca_clean.primary_category == "air_leakage"
     assert not rca_clean.abstained
+    assert rca_clean.root_cause_confirmed is False
+    assert rca_clean.causal_graph_id == "metropt3.air-leakage-hypotheses.v1"
+    assert rca_clean.scm_id == "metropt3.deterministic-feature-scm.v1"
+    assert "top-ranked candidate only" in rca_clean.ranking_method_note
+    assert "does not by itself establish cause" in rca_clean.temporal_ordering_note
+    leak_hyp = next(h for h in rca_clean.ranked_hypotheses if h.category == "air_leakage")
+    assert leak_hyp.causal_conclusion_status == "not_established"
+    assert set(leak_hyp.causal_graph_edge_ids) == {
+        "hyp.air-leakage-to-load-duty",
+        "hyp.air-leakage-to-unloaded-pressure-decay",
+    }
+    assert set(leak_hyp.scm_equation_ids) == {
+        "eq.metropt3.load-duty.v1",
+        "eq.metropt3.unloaded-tp3-slope.v1",
+    }
     assert any(h.category == "abnormal_high_demand" for h in rca_clean.ranked_hypotheses)
     assert all(
         "never actuate" in step.safety_note.lower()
         for hyp in rca_clean.ranked_hypotheses
         for step in hyp.verification_steps
+    )
+
+    unmatched_pkg = pkg_clean.model_copy(
+        update={
+            "provenance": pkg_clean.provenance.model_copy(
+                update={"dataset_id": "unregistered-dataset"}
+            )
+        }
+    )
+    unmatched_rca = analyze_event_evidence(unmatched_pkg)
+    assert unmatched_rca.causal_graph_id is None
+    assert unmatched_rca.scm_id is None
+    assert all(
+        not hyp.causal_graph_edge_ids and not hyp.scm_equation_ids
+        for hyp in unmatched_rca.ranked_hypotheses
     )
 
     # F2 in _make_wp_a_service has high motor current + COMP=0 + DV_eletric=1

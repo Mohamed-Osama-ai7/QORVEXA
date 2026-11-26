@@ -24,6 +24,48 @@ M3-WP1 adds a specialized multi-model ML orchestrator, Ledoit-Wolf Mahalanobis o
   - Strictly excludes `UDI`, `Product ID`, `Machine failure`, `TWF`, `HDF`, `PWF`, `OSF`, and `RNF`.
   - Stratified disjoint `6,000 train / 2,000 cal / 2,000 test` split (`PlattCalibrator` and thresholds fitted strictly on `cal`; test evaluated once).
 
+The previously reported three-model comparison later in this section retains this stratified
+random split and should not be read as a time-ordered generalization estimate. UCI describes AI4I
+as multivariate time-series data and notes that temperature variables follow random walks. A
+separate logistic-regression baseline uses contiguous UDI-ordered splits for a temporal holdout
+check.
+
+### Chronological Logistic-Regression Baseline
+
+`train_and_evaluate_ai4i_baseline` in `factorymind.ml.ai4i_benchmark` trains one reproducible
+logistic-regression baseline with the shared feature preprocessing, Platt calibration, threshold
+selection, and `compute_calibration_metrics` utility:
+
+- The target is the per-row `Machine failure` label. Inputs are `Type` (one-hot encoded) and the
+  five physical variables (standardized); the preprocessor is fitted on training rows only.
+- Rows are sorted by unique integer `UDI`, then split contiguously 60% train / 20% calibration /
+  20% test. `UDI` is used only as an ordering proxy and is excluded from all model features.
+- `Product ID`, `Machine failure`, `TWF`, `HDF`, `PWF`, `OSF`, and `RNF` remain excluded from
+  inputs. The threshold is chosen on calibration rows; final metrics are calculated once on the
+  later test rows.
+- The report includes ROC-AUC, PR-AUC, Brier score, ECE, precision, recall, F1, split sizes,
+  failure counts, and each split's UDI range. PR-AUC and recall are especially relevant for the
+  imbalanced failure target; ROC-AUC is reported as a secondary ranking metric.
+- The result records the random seed and can carry the verified source archive SHA-256 when the
+  caller supplies it.
+
+### Official UCI #601 Chronological Baseline Result
+
+The official archive was downloaded through the existing checksum-verifying adapter. With
+`random_state=42`, the contiguous split used UDI ranges `1-6000` (255 failures), `6001-8000`
+(45 failures), and `8001-10000` (39 failures). The threshold `0.275` was selected on calibration
+rows and applied unchanged to the later test partition:
+
+| Model | Test rows | ROC-AUC | PR-AUC | Brier | ECE (10-bin) | F1 | Precision | Recall |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `ai4i-logreg-chronological` | 2,000 | 0.8815 | 0.4030 | 0.0156 | 0.0101 | 0.2222 | 0.8333 | 0.1282 |
+
+This is a synthetic, same-row failure-classification baseline, not a demonstrated advance warning
+or remaining-useful-life model: the CSV supplies no explicit timestamp, machine identifier, or
+failure lead time, and its failure labels are generated from the physical feature values. UDI
+supplies an ordering proxy but cannot establish actual elapsed time or enable machine-grouped
+validation.
+
 ### Measured Held-Out Test Performance (Real UCI #601 Archive, `2,000` Test Rows)
 
 | Model | Family | ROC-AUC | PR-AUC | Brier | ECE (10-bin) | F1 @ Threshold | Selective Acc |

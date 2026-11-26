@@ -19,6 +19,9 @@ M2-WP4 adds a deterministic, evidence-grounded, uncertainty-aware physical multi
   - Ranks candidates (`1..N`) with `relative_support` (`primary`, `plausible_alternative`, `weak`, `ruled_out`), `support_score` (`0..1` physical-evidence consistency index — explicitly documented as **not** a calibrated failure probability), and `confidence_band` (`high`, `moderate`, `low`, `abstained`).
   - Separates `supporting_evidence`, `contradicting_evidence`, and `missing_evidence` as explicit `EvidenceReference` citations pointing directly to phases/signals/features inside the source `EventEvidencePackage`.
   - Attaches explicit `correlation_vs_causation_note`, global `correlation_vs_causation_boundary`, and non-actuating `VerificationStep` checklists (`safety_note` enforcing advisory-only physical inspection).
+  - Reports `root_cause_confirmed=false` and candidate-level `causal_conclusion_status="not_established"`; “primary” denotes rank only, never a confirmed cause.
+  - For the matching MetroPT-3 asset, links relevant hypotheses to the existing Member 4 causal graph edge IDs and deterministic feature SCM equation IDs. These are traceability references: graph edges remain hypotheses and SCM equations remain feature definitions.
+  - Exposes the fixed rule-based ranking caveat and the descriptive baseline/event/recovery temporal ordering in the response.
 
 ---
 

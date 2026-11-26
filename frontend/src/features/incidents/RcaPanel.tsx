@@ -66,6 +66,8 @@ function HypothesisCard({ hyp, defaultOpen }: { hyp: RankedHypothesis; defaultOp
   const contradicting = hyp.contradicting_evidence ?? []
   const missing = hyp.missing_evidence ?? []
   const steps = hyp.verification_steps ?? []
+  const graphEdges = hyp.causal_graph_edge_ids ?? []
+  const scmEquations = hyp.scm_equation_ids ?? []
 
   return (
     <div className="rounded border border-border p-3 text-xs">
@@ -100,6 +102,22 @@ function HypothesisCard({ hyp, defaultOpen }: { hyp: RankedHypothesis; defaultOp
         <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
           <p className="text-muted">
             <strong className="text-ink">Mechanism:</strong> {hyp.physical_mechanism}
+          </p>
+          <p className="text-muted">
+            <strong className="text-ink">Causal status:</strong>{' '}
+            {hyp.causal_conclusion_status ?? 'not_established'}
+            {graphEdges.length > 0 && (
+              <>
+                {' · Graph hypothesis edges: '}
+                <span className="font-mono">{graphEdges.join(', ')}</span>
+              </>
+            )}
+            {scmEquations.length > 0 && (
+              <>
+                {' · Feature definitions: '}
+                <span className="font-mono">{scmEquations.join(', ')}</span>
+              </>
+            )}
           </p>
           <EvidenceRefList title="Supporting evidence" refs={supporting} />
           <EvidenceRefList title="Contradicting evidence" refs={contradicting} />
@@ -149,7 +167,9 @@ export function RcaPanel({ rca, headingLevel = 'h2' }: RcaPanelProps) {
           Explainable root-cause analysis (advisory)
         </Heading>
         <span className={`rounded border px-2 py-0.5 text-xs font-medium ${topStyle}`}>
-          {rca.abstained ? 'Abstained: insufficient evidence' : `Top rank: ${rca.primary_category}`}
+          {rca.abstained
+            ? 'Abstained: insufficient evidence'
+            : `Top candidate: ${rca.primary_category} · root cause not confirmed`}
         </span>
       </div>
 
@@ -166,6 +186,15 @@ export function RcaPanel({ rca, headingLevel = 'h2' }: RcaPanelProps) {
         <p className="font-medium text-ink">{rca.summary}</p>
         <p className="mt-1 text-muted">{rca.uncertainty_note}</p>
         {rca.score_meaning_note && <p className="mt-1 text-muted">{rca.score_meaning_note}</p>}
+        <p className="mt-1 text-muted">
+          <strong className="text-ink">Ranking:</strong> {rca.ranking_method_note}
+        </p>
+        <p className="mt-1 text-muted">
+          <strong className="text-ink">Temporal ordering:</strong> {rca.temporal_ordering_note}
+        </p>
+        <p className="mt-1 text-muted">
+          <strong className="text-ink">Causal context:</strong> {rca.causal_context_note}
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">

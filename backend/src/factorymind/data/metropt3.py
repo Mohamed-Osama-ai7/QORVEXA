@@ -10,6 +10,12 @@ Labels: the dataset is unlabelled. The operator's failure reports (four air-leak
 used as weak event labels for evaluation only. The report table on the source page has
 numbering errors (two rows labelled "#1") and ambiguous maintenance-date alignment; only the
 start/end times are used here.
+
+The adapter treats timestamps as timezone-naive local train time and does not infer a timezone.
+Sensor units come from the dataset documentation; numeric values are checked against generous
+plausibility bounds, which cannot verify calibration or prove the unit used by an upstream source.
+Normalization keeps only the timestamp and registered sensor allowlist, so identifiers and labels
+cannot enter the telemetry features. The verified source archive remains unchanged.
 """
 
 from __future__ import annotations
@@ -98,6 +104,7 @@ class QualityReport:
     start: str
     end: str
     duplicate_timestamps: int
+    out_of_order_timestamps: int
     null_values: int
     out_of_range: dict[str, int]
     non_binary_digital: dict[str, int]
@@ -142,24 +149,67 @@ def read_raw(archive: Path) -> pd.DataFrame:
 
 
 def normalise(frame: pd.DataFrame) -> pd.DataFrame:
-    """Apply the column contract: timestamp index, float sensors, no source index column."""
+    """Apply the allowlisted schema without mutating input or inferring timestamp timezones."""
+    if not frame.columns.is_unique:
+        raise DataValidationError("Duplicate column names are not allowed")
     missing = [c for c in ("timestamp", *SENSORS) if c not in frame.columns]
     if missing:
         raise DataValidationError(f"Missing required columns: {missing}")
-    out = frame.loc[:, ["timestamp", *SENSORS]].copy()
+
     try:
-        out["timestamp"] = pd.to_datetime(out["timestamp"], format="%Y-%m-%d %H:%M:%S")
-    except (ValueError, TypeError) as exc:
+        timestamp_index = pd.DatetimeIndex(
+            pd.to_datetime(frame["timestamp"], format="%Y-%m-%d %H:%M:%S", errors="raise")
+        )
+    except (ValueError, TypeError, OverflowError) as exc:
         raise DataValidationError(f"Unparseable timestamps: {exc}") from exc
-    out = out.set_index("timestamp")
+    if timestamp_index.tz is not None:
+        raise DataValidationError(
+            "Timezone-aware timestamps are not supported; source timezone is unspecified"
+        )
+    if timestamp_index.hasnans:
+        raise DataValidationError("Timestamps must not be missing")
+
+    out = frame.loc[:, list(SENSORS)].copy(deep=True)
+    out.index = timestamp_index
+    out.index.name = "timestamp"
     for column in SENSORS:
-        out[column] = pd.to_numeric(out[column], errors="coerce").astype("float64")
+        try:
+            out[column] = pd.to_numeric(out[column], errors="raise").astype("float64")
+        except (ValueError, TypeError) as exc:
+            raise DataValidationError(
+                f"Sensor column {column} contains non-numeric values"
+            ) from exc
     return out
 
 
-def assess_quality(frame: pd.DataFrame) -> QualityReport:
+def _validate_sensor_frame(frame: pd.DataFrame) -> pd.DatetimeIndex:
+    if not frame.columns.is_unique:
+        raise DataValidationError("Duplicate column names are not allowed")
+    missing = [column for column in SENSORS if column not in frame.columns]
+    if missing:
+        raise DataValidationError(f"Missing required sensor columns: {missing}")
+    if not isinstance(frame.index, pd.DatetimeIndex):
+        raise DataValidationError("Telemetry index must be a DatetimeIndex")
     index = pd.DatetimeIndex(frame.index)
-    deltas = index.to_series().diff().dt.total_seconds().to_numpy()[1:]
+    if index.tz is not None:
+        raise DataValidationError(
+            "Timezone-aware timestamps are not supported; source timezone is unspecified"
+        )
+    if index.hasnans:
+        raise DataValidationError("Timestamps must not be missing")
+    non_numeric = [
+        column for column in SENSORS if not pd.api.types.is_numeric_dtype(frame[column].dtype)
+    ]
+    if non_numeric:
+        raise DataValidationError(f"Sensor columns must be numeric: {non_numeric}")
+    return index
+
+
+def assess_quality(frame: pd.DataFrame) -> QualityReport:
+    index = _validate_sensor_frame(frame)
+    source_deltas = index.to_series().diff().dt.total_seconds().to_numpy()[1:]
+    ordered_unique = index.unique().sort_values()
+    deltas = ordered_unique.to_series().diff().dt.total_seconds().to_numpy()[1:]
     gaps = deltas[deltas > 60]
     out_of_range = {
         col: int(((frame[col] < lo) | (frame[col] > hi)).sum())
@@ -174,7 +224,8 @@ def assess_quality(frame: pd.DataFrame) -> QualityReport:
         start=str(index.min()),
         end=str(index.max()),
         duplicate_timestamps=int(index.duplicated().sum()),
-        null_values=int(frame.isna().sum().sum()),
+        out_of_order_timestamps=int(np.count_nonzero(source_deltas < 0)),
+        null_values=int(frame.loc[:, list(SENSORS)].isna().sum().sum()),
         out_of_range={k: v for k, v in out_of_range.items() if v},
         non_binary_digital={k: v for k, v in non_binary.items() if v},
         median_period_s=float(np.median(deltas)) if len(deltas) else float("nan"),
@@ -184,11 +235,14 @@ def assess_quality(frame: pd.DataFrame) -> QualityReport:
 
 
 def clean(frame: pd.DataFrame) -> pd.DataFrame:
-    """Enforce ordering, drop duplicate timestamps/null rows and physically invalid values.
+    """Return a cleaned copy using only registered sensors.
 
-    Gaps are *not* interpolated: evidence used for diagnosis must stay observed.
+    Duplicate timestamps keep the first row after sorting. Out-of-range analog values and
+    non-binary digital values become missing, then any incomplete row is dropped. Gaps are not
+    interpolated. The input frame is never mutated.
     """
-    out = frame.sort_index()
+    _validate_sensor_frame(frame)
+    out = frame.loc[:, list(SENSORS)].copy(deep=True).sort_index()
     out = out[~out.index.duplicated(keep="first")]
     for col, (lo, hi) in VALID_RANGES.items():
         out.loc[(out[col] < lo) | (out[col] > hi), col] = np.nan
@@ -204,6 +258,8 @@ def validate_contract(report: QualityReport, *, expected_rows: int | None = EXPE
         problems.append(f"row count {report.rows} != expected {expected_rows}")
     if report.duplicate_timestamps:
         problems.append(f"{report.duplicate_timestamps} duplicate timestamps")
+    if report.out_of_order_timestamps:
+        problems.append(f"{report.out_of_order_timestamps} out-of-order timestamps")
     if not MIN_PERIOD_S <= report.median_period_s <= MAX_PERIOD_S:
         problems.append(
             f"median sampling period {report.median_period_s}s outside "
@@ -231,6 +287,18 @@ def prepare(raw_dir: Path, processed_dir: Path) -> dict[str, object]:
         "archive_sha256": ARCHIVE_SHA256,
         "raw_quality": raw_report.to_dict(),
         "rows_after_cleaning": len(cleaned),
+        "cleaning": {
+            "rows_before": raw_report.rows,
+            "rows_removed": raw_report.rows - len(cleaned),
+            "duplicate_policy": (
+                "prepare rejects duplicate timestamps; clean() keeps the first after sorting"
+            ),
+            "invalid_measurement_policy": (
+                "out-of-range analog and non-binary digital values become missing; "
+                "rows with any missing measurement are dropped"
+            ),
+            "gap_policy": "preserve_without_interpolation",
+        },
         "failure_reports": [
             {"id": f.report_id, "start": f.start.isoformat(), "end": f.end.isoformat()}
             for f in FAILURE_REPORTS
