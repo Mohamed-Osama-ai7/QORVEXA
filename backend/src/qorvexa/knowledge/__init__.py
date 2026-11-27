@@ -16,6 +16,11 @@ from qorvexa.knowledge.embeddings import (
     get_embedder,
 )
 from qorvexa.knowledge.eval import evaluate_retrieval_modes
+from qorvexa.knowledge.expander import (
+    PassThroughQueryExpander,
+    QueryExpander,
+    RuleBasedQueryExpander,
+)
 from qorvexa.knowledge.kg import EPISTEMIC_LEGEND, IndustrialKnowledgeGraph
 from qorvexa.knowledge.rag import HybridRagIndex, SearchMode
 from qorvexa.knowledge.reranker import (
@@ -41,9 +46,12 @@ __all__ = [
     "MockNeuralEmbedder",
     "ModelLoadError",
     "NeuralEmbeddingsUnavailableError",
+    "PassThroughQueryExpander",
+    "QueryExpander",
     "RerankError",
     "RerankerModelLoadError",
     "RerankerUnavailableError",
+    "RuleBasedQueryExpander",
     "SearchMode",
     "SentenceTransformerEmbedder",
     "TextEmbedder",

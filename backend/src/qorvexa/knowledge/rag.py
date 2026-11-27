@@ -25,6 +25,7 @@ from qorvexa.knowledge.kg import IndustrialKnowledgeGraph, infer_linked_kg_nodes
 
 if TYPE_CHECKING:
     from qorvexa.knowledge.embeddings import TextEmbedder
+    from qorvexa.knowledge.expander import QueryExpander
     from qorvexa.knowledge.reranker import TextReranker
 
 SearchMode = Literal["bm25_only", "dense_svd_only", "dense_neural_only", "hybrid_rrf"]
@@ -492,6 +493,7 @@ class HybridRagIndex:
         kg: IndustrialKnowledgeGraph | None = None,
         embedder: TextEmbedder | None = None,
         reranker: TextReranker | None = None,
+        expander: QueryExpander | None = None,
         k1: float = 1.5,
         b: float = 0.75,
         rrf_k: int = 60,
@@ -500,6 +502,7 @@ class HybridRagIndex:
         self._kg = kg or IndustrialKnowledgeGraph()
         self._embedder = embedder
         self._reranker = reranker
+        self._expander = expander
         self._k1 = k1
         self._b = b
         self._rrf_k = rrf_k
@@ -521,6 +524,10 @@ class HybridRagIndex:
     @property
     def reranker(self) -> TextReranker | None:
         return self._reranker
+
+    @property
+    def expander(self) -> QueryExpander | None:
+        return self._expander
 
     @property
     def dense_backend(self) -> str:
@@ -806,6 +813,8 @@ class HybridRagIndex:
         rerank_top_n: int = 10,
         graph_augmented: bool = False,
         graph_depth: int = 1,
+        multi_query: bool = False,
+        max_query_variants: int = 3,
     ) -> HybridSearchResponse:
         slice_index = self._partition(tenant_id=tenant_id, allowed_asset_ids=allowed_asset_ids)
         if mode == "dense_neural_only" and slice_index.dense_backend != "neural":
@@ -819,14 +828,33 @@ class HybridRagIndex:
                 f"dense backend is '{slice_index.dense_backend}'."
             )
         scoped = slice_index.chunks
+
+        # Resolve query variants if multi_query enabled
+        variants: list[str] = [query]
+        if multi_query:
+            expander = self._expander
+            if expander is None:
+                from qorvexa.knowledge.expander import RuleBasedQueryExpander
+                expander = RuleBasedQueryExpander()
+            expanded = expander.expand_query(query, max_variants=max_query_variants)
+            if expanded:
+                variants = expanded
+
         q_tokens = list(dict.fromkeys(extract_content_tokens(query)))
 
-        # Query entity linking and graph expansion
-        query_nodes = infer_linked_kg_nodes(
-            query,
-            allowed_asset_ids=allowed_asset_ids,
-            kg=self._kg,
-        )
+        # Query entity linking and graph expansion across variants
+        all_query_nodes: list[str] = []
+        for q_v in variants:
+            nodes_v = infer_linked_kg_nodes(
+                q_v,
+                allowed_asset_ids=allowed_asset_ids,
+                kg=self._kg,
+            )
+            for nid in nodes_v:
+                if nid not in all_query_nodes:
+                    all_query_nodes.append(nid)
+
+        query_nodes = all_query_nodes
         graph_scores: list[float] = [0.0] * len(scoped)
         expanded_weights: dict[str, float] = {}
         if graph_augmented and query_nodes:
@@ -846,6 +874,7 @@ class HybridRagIndex:
                 items=[],
                 related_kg_edges=[],
                 query_kg_node_ids=query_nodes if graph_augmented else [],
+                query_variants=variants if multi_query else [],
                 safety_note=(
                     "Hybrid RAG retrieval across verified documentation only; inspect citations "
                     "and causal-vs-correlation tags before acting."
@@ -874,7 +903,31 @@ class HybridRagIndex:
         has_graph_relevance = (
             graph_augmented and bool(query_nodes) and any(s > 0.0 for s in graph_scores)
         )
-        if not any_passes and not has_graph_relevance:
+        # If multi_query is enabled, test if any variant passes relevance gate on corpus
+        variant_passes = False
+        if multi_query and not any_passes and not has_graph_relevance:
+            for q_var in variants[1:]:
+                v_toks = list(dict.fromkeys(extract_content_tokens(q_var)))
+                if not v_toks:
+                    continue
+                v_covs = slice_index.chunk_coverages(v_toks)
+                v_oov = slice_index.has_alpha_oov(v_toks)
+                if any(
+                    _chunk_passes_relevance_gate(
+                        n_matched=n_m,
+                        has_alpha_match=alpha_m,
+                        has_alpha_oov=v_oov,
+                        q_len=len(v_toks),
+                        tok_cov=tok_c,
+                        idf_cov=idf_c,
+                        n_docs=n_docs,
+                    )
+                    for n_m, tok_c, idf_c, alpha_m in v_covs
+                ):
+                    variant_passes = True
+                    break
+
+        if not any_passes and not has_graph_relevance and not variant_passes:
             return HybridSearchResponse(
                 query=query,
                 total_indexed_chunks=n_docs,
@@ -882,6 +935,7 @@ class HybridRagIndex:
                 items=[],
                 related_kg_edges=[],
                 query_kg_node_ids=query_nodes if graph_augmented else [],
+                query_variants=variants if multi_query else [],
                 safety_note=(
                     "Query did not meet the minimum content relevance gate for verified "
                     "documentation; abstained instead of returning unrelated matches."
@@ -919,6 +973,37 @@ class HybridRagIndex:
                 )
                 rrf_scores[idx] = b_term + d_term + g_term
 
+        # If multi_query is active, fuse ranks from additional query variants
+        single_modes = ("bm25_only", "dense_svd_only", "dense_neural_only")
+        if multi_query and len(variants) > 1 and mode not in single_modes:
+            variant_weight = 0.6  # Give secondary variants controlled additive influence
+            for q_var in variants[1:]:
+                v_tokens = list(dict.fromkeys(extract_content_tokens(q_var)))
+                v_bm25 = slice_index.bm25_scores(v_tokens) if v_tokens else [0.0] * n_docs
+                v_dense = slice_index.dense_scores(q_var)
+
+                v_bm25_ranked = sorted(
+                    indices, key=lambda idx: (-v_bm25[idx], scoped[idx].chunk_id)
+                )
+                v_dense_ranked = sorted(
+                    indices, key=lambda idx: (-v_dense[idx], scoped[idx].chunk_id)
+                )
+                v_b_pos = {idx: pos for pos, idx in enumerate(v_bm25_ranked, start=1)}
+                v_d_pos = {idx: pos for pos, idx in enumerate(v_dense_ranked, start=1)}
+
+                for idx in indices:
+                    b_v = (
+                        (variant_weight / (self._rrf_k + v_b_pos[idx]))
+                        if v_bm25[idx] > 0.0
+                        else 0.0
+                    )
+                    d_v = (
+                        (variant_weight / (self._rrf_k + v_d_pos[idx]))
+                        if v_dense[idx] > 0.0
+                        else 0.0
+                    )
+                    rrf_scores[idx] += b_v + d_v
+
         ordered = sorted(
             indices,
             key=lambda idx: (-rrf_scores[idx], -bm25[idx], scoped[idx].chunk_id),
@@ -935,9 +1020,11 @@ class HybridRagIndex:
                 continue
             n_m, _tok_c, idf_c, alpha_m = coverages[idx]
             is_graph_hit = graph_augmented and graph_scores[idx] > 0.0
-            if (bm25[idx] <= 0.0 or not alpha_m) and not is_graph_hit:
+            is_multi_hit = multi_query and len(variants) > 1 and rrf_scores[idx] > 0.0
+            if (bm25[idx] <= 0.0 or not alpha_m) and not is_graph_hit and not is_multi_hit:
                 continue
-            if n_docs >= 3 and n_m < 2 and idf_c < _MIN_TAIL_HIT_IDF_COV and not is_graph_hit:
+            has_low_tail_cov = n_docs >= 3 and n_m < 2 and idf_c < _MIN_TAIL_HIT_IDF_COV
+            if has_low_tail_cov and not is_graph_hit and not is_multi_hit:
                 continue
             non_empty.append(idx)
             if len(non_empty) >= candidate_budget:
@@ -1030,6 +1117,7 @@ class HybridRagIndex:
             items=hits,
             related_kg_edges=related_edges,
             query_kg_node_ids=query_nodes if graph_augmented else [],
+            query_variants=variants if multi_query else [],
             safety_note=safety_note,
             reranked=rerank_applied,
         )

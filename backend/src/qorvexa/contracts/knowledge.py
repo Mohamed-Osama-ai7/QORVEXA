@@ -100,6 +100,7 @@ class HybridSearchResponse(BaseModel):
     items: list[HybridSearchHit]
     related_kg_edges: list[KgEdge] = Field(default_factory=list)
     query_kg_node_ids: list[str] = Field(default_factory=list)
+    query_variants: list[str] = Field(default_factory=list)
     safety_note: str
     reranked: bool = False
 
