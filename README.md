@@ -1,5 +1,5 @@
 # QORVEXA — Industrial Decision Intelligence Platform
-
+FactoryMind
 > **From Industrial Complexity to Verified Operational Decisions.**
 
 [![Live Platform Demo](https://img.shields.io/badge/Live%20Demo-qorvexa--delta.vercel.app-0ea5e9?style=flat-square)](https://qorvexa-delta.vercel.app)
